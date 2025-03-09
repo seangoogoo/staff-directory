@@ -180,6 +180,7 @@ Jensen SIU <contact@jensen-siu.net>
 
 ## To Do
 - Remove the login from the Public staff directory views
+- Add email address to the staff model
 - Setup a functional registering confirmation email or remove this option
 - Test the password reset page
 - Add an administrator profile page
