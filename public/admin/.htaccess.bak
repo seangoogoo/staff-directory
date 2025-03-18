@@ -1,0 +1,4 @@
+AuthType Basic
+AuthName "Staff Directory Admin Area"
+AuthUserFile .htpasswd
+Require valid-user

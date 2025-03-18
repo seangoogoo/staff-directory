@@ -1,0 +1,164 @@
+// Import common styles
+@import 'variables';
+@import 'common';
+@import 'login-modal';
+
+// Header Styles
+.main-header {
+  background-color: $primary-color;
+  color: white;
+  padding: 1rem 0;
+
+  .container {
+    @include media-md {
+      @include flex-between;
+    }
+  }
+
+  .site-title {
+    margin: 0;
+    font-size: 1.8rem;
+  }
+}
+
+.main-nav {
+  ul {
+    list-style: none;
+    display: flex;
+    margin: 1rem;
+
+    @include media-md {
+      margin: 0;
+    }
+  }
+
+  .icon-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #e2e6ea;
+    transform: scale(1);
+    transition: all 0.2s ease;
+    &:hover {
+      background: #f8f9fa;
+      text-decoration: none;
+      transform: scale(1.05);
+      // i {
+      //   transform: translateY(-2px);
+      // }
+    }
+    i {
+      transition: all 0.2s ease;
+      font-size: 1.5rem;
+      color: #3a4250;
+    }
+  }
+
+  li {
+    margin-right: 1.5rem;
+  }
+
+  a {
+    color: white;
+    font-weight: bold;
+  }
+}
+
+// Main Content
+main {
+  padding: 2rem 0;
+}
+
+.page-title {
+  margin-bottom: 1.5rem;
+  color: $dark-color;
+}
+
+// Search and Filter Controls
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  align-items: center;
+
+  @include media-sm {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.search-box {
+  flex: 1;
+  min-width: 250px;
+
+  @include media-sm {
+    width: 100%;
+  }
+}
+
+.filter-box,
+.sort-box {
+  min-width: 180px;
+
+  @include media-sm {
+    width: 100%;
+  }
+}
+
+// Staff Cards Grid
+.staff-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-block: 1.5rem;
+
+  @include media-sm {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+}
+
+.staff-card {
+  background-color: white;
+  border-radius: 5px;
+  box-shadow: $box-shadow;
+  overflow: hidden;
+  transition: transform $transition-time ease;
+
+  &:hover {
+    transform: translateY(-5px);
+  }
+
+  .staff-image {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+  }
+
+  .staff-details {
+    padding: 1rem;
+  }
+
+  .staff-name {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: $dark-color;
+  }
+
+  .staff-job {
+    font-weight: bold;
+    margin-bottom: 0.3rem;
+  }
+
+  .staff-department {
+    color: #666;
+    margin-bottom: 0.5rem;
+  }
+
+  .staff-email {
+    word-break: break-all;
+  }
+}

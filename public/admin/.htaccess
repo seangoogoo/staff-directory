@@ -1,0 +1,14 @@
+# Form-based Authentication
+# Authentication now handled by PHP sessions instead of HTTP Basic Auth
+
+# Protect sensitive files
+<FilesMatch "\.(htaccess|htpasswd|ini|phps|fla|psd|log|sh)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Note: <Directory> directives are not allowed in .htaccess files
+# The auth directory is already accessible by default
+
+# Disable directory browsing
+Options -Indexes

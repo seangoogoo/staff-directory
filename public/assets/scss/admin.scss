@@ -1,0 +1,152 @@
+// Import common styles
+@import 'variables';
+@import 'common';
+@import 'login-modal';
+
+// Native button styling
+.btn,
+a.btn {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  background-color: $primary-color;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  text-decoration: none;
+  gap: 0.5rem;
+  &:hover {
+    background-color: darken($primary-color, 10%);
+    text-decoration: none;
+  }
+
+  &.outline-secondary {
+    color: $secondary-color;
+    border: 1px solid $secondary-color;
+    background-color: transparent;
+    &:hover {
+      background-color: rgba(41, 128, 185, 0.1);
+    }
+  }
+
+  &.outline-danger {
+    color: $danger-color;
+    border: 1px solid $danger-color;
+    background-color: transparent;
+    &:hover {
+      background-color: rgba(231, 76, 60, 0.1);
+    }
+  }
+}
+
+// Table action buttons
+.action-buttons .btn,
+td.action-buttons a.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  text-decoration: none;
+  margin: 0 3px;
+
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+
+// Admin Header Styles
+.admin-header {
+  background-color: $primary-color;
+  color: white;
+  padding: 1rem 0;
+
+  .container {
+    @include media-md {
+      @include flex-between;
+    }
+  }
+
+  .admin-title {
+    margin: 0;
+    font-size: 1.8rem;
+  }
+}
+
+.admin-nav {
+  ul {
+    list-style: none;
+    display: flex;
+    margin-top: 1rem;
+
+    @include media-md {
+      margin-top: 0;
+    }
+  }
+
+  li {
+    margin-right: 1.5rem;
+  }
+
+  a {
+    color: white;
+    font-weight: bold;
+  }
+}
+
+// Admin Table Styles
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-block: 1.5rem;
+  background-color: white;
+  box-shadow: $box-shadow;
+
+  th,
+  td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+
+  th {
+    background-color: $light-color;
+  }
+
+  img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+}
+
+// .outline-secondary {
+//   background-color: $primary-color;
+// }
+
+// .outline-danger {
+//   background-color: $danger-color;
+// }
+
+// Admin Page Specific Styles
+.staff-form {
+  background-color: white;
+  padding: 1.5rem;
+  margin-block: 1.5rem;
+  border-radius: 5px;
+  box-shadow: $box-shadow;
+
+  .profile-preview {
+    margin-bottom: 1rem;
+    text-align: center;
+
+    img {
+      max-width: 200px;
+      height: auto;
+      border-radius: 5px;
+    }
+  }
+}
