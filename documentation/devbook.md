@@ -2,6 +2,86 @@
 
 ## Version History
 
+### Version 1.2 - March 19, 2025
+*Department Management System Implementation*
+
+#### Database Schema Improvements
+- Created a proper relational database structure for departments
+  - Added a new `departments` table with columns:
+    - `id` (Primary Key, auto-incrementing)
+    - `name` (Unique, VARCHAR)
+    - `description` (TEXT)
+    - `created_at` (TIMESTAMP)
+    - `updated_at` (TIMESTAMP)
+  - Modified the `staff_members` table to use foreign keys
+    - Changed `department` text field to `department_id` integer
+    - Added proper foreign key constraint with ON DELETE RESTRICT
+    - Ensured data integrity between staff and departments
+- Provided a comprehensive migration path
+  - Created migration script (`migrate_departments.sql`)
+  - Backup of existing staff data
+  - Automatic extraction of departments from existing records
+  - Default departments population
+  - Foreign key relationship setup
+
+#### Department Management Interface
+- Implemented a full CRUD interface for department management
+  - Added "Departments" navigation item to admin area
+  - Created new departments.php admin page with two-panel layout:
+    - Department list with actions (view, edit, delete)
+    - Add/Edit form for department management
+  - Implemented validation to prevent deletion of departments in use
+  - Added staff count indicator to show departments in use
+
+#### Database Architecture Changes
+
+The database schema has been updated to support proper relational data management:
+
+```sql
+-- Departments table
+CREATE TABLE `departments` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `description` text,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Modified staff_members table
+ALTER TABLE `staff_members` 
+  ADD COLUMN `department_id` int(11) NOT NULL AFTER `last_name`,
+  ADD KEY `department_id` (`department_id`),
+  ADD CONSTRAINT `staff_members_ibfk_1` 
+  FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) 
+  ON DELETE RESTRICT ON UPDATE CASCADE;
+```
+
+##### Default Departments
+
+The system is pre-configured with the following departments:
+- IT (Information Technology)
+- Marketing
+- HR (Human Resources)
+- Finance
+- Operations
+
+#### Application Code Updates
+
+- Updated admin interface to use department dropdowns
+  - Modified add.php and edit.php forms to use select elements
+  - Changed SQL queries to reference department_id instead of department name
+  - Updated parameter binding from string (`s`) to integer (`i`) for department_id
+- Added new helper functions in functions.php:
+  - `get_all_departments()` - Returns complete department records
+  - `get_all_department_names()` - Returns only department names for dropdowns
+  - `get_department_by_id()` - Retrieves a department by ID
+  - `get_department_by_name()` - Retrieves a department by name
+- Updated existing functions to work with the new structure
+  - Modified `get_all_staff_members()` to JOIN with the departments table
+  - Updated `get_staff_member_by_id()` to include department information
+
 ### Version 1.1 - March 18, 2025
 *Authentication System Optimization & Environment Configuration*
 

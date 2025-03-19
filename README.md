@@ -1,4 +1,4 @@
-# Staff Directory Application -- Version 1.1
+# Staff Directory Application -- Version 1.2
 
 A web-based staff directory application that allows administrators to manage staff members and provides a user-friendly interface for employees to browse the directory.
 
@@ -35,12 +35,14 @@ The application follows a secure directory structure:
 ├── `public/`                       # Web accessible files (the web root)
 │   ├── `admin/`                    # Admin interface files
 │   │   ├── `auth/`                 # Authentication system
+│   │   │   ├── `auth_config.php`   # Centralized auth configuration
 │   │   │   ├── `auth.php`          # Authentication utility functions
 │   │   │   ├── `check_login.php`   # Login validation
 │   │   │   ├── `login-modal.php`   # Login modal template
 │   │   │   ├── `login.php`         # Login form page
 │   │   │   └── `logout.php`        # Logout functionality
 │   │   ├── `add.php`               # Add new staff member
+│   │   ├── `departments.php`       # Department management interface
 │   │   ├── `edit.php`              # Edit existing staff member
 │   │   └── `index.php`             # Admin dashboard page
 │   ├── `assets/`                   # CSS, JavaScript, images and other assets
@@ -65,8 +67,9 @@ The application follows a secure directory structure:
 │   │   └── `header.php`            # Frontend page header
 │   ├── `uploads/`                  # User uploaded content
 │   └── `index.php`                 # Main entry point
-├── `database/`                     # Database schema
-│   └── `staff_dir.sql`             # SQL database schema and initial data
+├── `database/`                     # Database schema and migration scripts
+│   ├── `migrate_departments.sql`   # Migration script for department management
+│   └── `staff_dir.sql`             # Initial database schema and data
 ├── `documentation/`                # Project documentation
 │   └── `devbook.md`                # Developer documentation
 └── `env/`                          # Environment variables (outside web root for security)

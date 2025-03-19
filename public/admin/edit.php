@@ -1,6 +1,9 @@
 <?php
 require_once '../includes/admin_header.php';
 
+// Get all departments for dropdown
+$departments = get_all_departments($conn);
+
 // Check if ID is provided
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     header("Location: index.php");
@@ -21,12 +24,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Sanitize and validate input
     $first_name = sanitize_input($_POST['first_name']);
     $last_name = sanitize_input($_POST['last_name']);
-    $department = sanitize_input($_POST['department']);
+    $department_id = sanitize_input($_POST['department_id']);
     $job_title = sanitize_input($_POST['job_title']);
     $email = sanitize_input($_POST['email']);
 
     // Validate required fields
-    if (empty($first_name) || empty($last_name) || empty($department) || empty($job_title) || empty($email)) {
+    if (empty($first_name) || empty($last_name) || empty($department_id) || empty($job_title) || empty($email)) {
         $error_message = "All fields are required.";
     } else {
         // Keep existing profile picture by default
@@ -68,14 +71,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sql = "UPDATE staff_members SET
                     first_name = ?,
                     last_name = ?,
-                    department = ?,
+                    department_id = ?,
                     job_title = ?,
                     email = ?,
                     profile_picture = ?
                     WHERE id = ?";
 
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssssssi", $first_name, $last_name, $department, $job_title, $email, $profile_picture, $id);
+            $stmt->bind_param("sisssssi", $first_name, $last_name, $department_id, $job_title, $email, $profile_picture, $id);
 
             if ($stmt->execute()) {
                 // Redirect to admin dashboard with success message
@@ -110,8 +113,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="form-group">
-            <label for="department">Department/Service</label>
-            <input type="text" id="department" name="department" value="<?php echo $staff['department']; ?>" required>
+            <label for="department_id">Department/Service</label>
+            <select id="department_id" name="department_id" required>
+                <option value="">Select a Department</option>
+                <?php foreach ($departments as $dept): ?>
+                    <option value="<?php echo $dept['id']; ?>" <?php echo ($staff['department_id'] == $dept['id']) ? 'selected' : ''; ?>>
+                        <?php echo $dept['name']; ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
         </div>
 
         <div class="form-group">

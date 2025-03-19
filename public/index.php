@@ -10,8 +10,8 @@ $sort_order = isset($_GET['order']) ? sanitize_input($_GET['order']) : 'ASC';
 // Get all staff members
 $staff_members = get_all_staff_members($conn, $sort_by, $sort_order, $search, $department);
 
-// Get all departments for filter dropdown
-$departments = get_all_departments($conn);
+// Get all department names for filter dropdown
+$departments = get_all_department_names($conn);
 ?>
 
 <h1 class="page-title">Staff Directory</h1>

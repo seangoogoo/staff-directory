@@ -102,13 +102,15 @@ function get_all_staff_members($conn, $sort_by = 'last_name', $sort_order = 'ASC
     $params = [];
     $types = '';
     
-    // Start building the prepared statement
-    $sql = "SELECT * FROM staff_members WHERE 1=1";
+    // Start building the prepared statement - JOIN with departments table
+    $sql = "SELECT s.*, d.name as department FROM staff_members s "
+         . "JOIN departments d ON s.department_id = d.id "
+         . "WHERE 1=1";
     
     // Add search condition if provided
     if (!empty($search)) {
         $search_param = "%{$search}%";
-        $sql .= " AND (first_name LIKE ? OR last_name LIKE ? OR job_title LIKE ?)";
+        $sql .= " AND (s.first_name LIKE ? OR s.last_name LIKE ? OR s.job_title LIKE ?)";
         $types .= 'sss';
         $params[] = $search_param;
         $params[] = $search_param;
@@ -117,9 +119,16 @@ function get_all_staff_members($conn, $sort_by = 'last_name', $sort_order = 'ASC
     
     // Add department filter if provided
     if (!empty($department)) {
-        $sql .= " AND department = ?";
+        $sql .= " AND d.name = ?";
         $types .= 's';
         $params[] = $department;
+    }
+    
+    // Adjust sort field if it's department
+    if ($sort_by === 'department') {
+        $sort_by = 'd.name';
+    } else {
+        $sort_by = 's.' . $sort_by;
     }
     
     // Add sorting - these values are already validated above
@@ -150,7 +159,10 @@ function get_all_staff_members($conn, $sort_by = 'last_name', $sort_order = 'ASC
  * Get a staff member by ID
  */
 function get_staff_member_by_id($conn, $id) {
-    $sql = "SELECT * FROM staff_members WHERE id = ?";
+    $sql = "SELECT s.*, d.name as department, d.id as department_id "
+         . "FROM staff_members s "
+         . "JOIN departments d ON s.department_id = d.id "
+         . "WHERE s.id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param('i', $id);
     $stmt->execute();
@@ -167,10 +179,10 @@ function get_staff_member_by_id($conn, $id) {
 }
 
 /**
- * Get all unique departments
+ * Get all departments
  */
 function get_all_departments($conn) {
-    $sql = "SELECT DISTINCT department FROM staff_members ORDER BY department";
+    $sql = "SELECT id, name, description FROM departments ORDER BY name";
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -178,7 +190,27 @@ function get_all_departments($conn) {
 
     if ($result->num_rows > 0) {
         while($row = $result->fetch_assoc()) {
-            $departments[] = $row['department'];
+            $departments[] = $row;
+        }
+    }
+    
+    $stmt->close();
+    return $departments;
+}
+
+/**
+ * Get all department names
+ */
+function get_all_department_names($conn) {
+    $sql = "SELECT name FROM departments ORDER BY name";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $departments = [];
+
+    if ($result->num_rows > 0) {
+        while($row = $result->fetch_assoc()) {
+            $departments[] = $row['name'];
         }
     }
     
@@ -211,5 +243,45 @@ function delete_staff_member($conn, $id) {
     }
 
     return false;
+}
+
+/**
+ * Get department by ID
+ */
+function get_department_by_id($conn, $id) {
+    $sql = "SELECT * FROM departments WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        $department = $result->fetch_assoc();
+        $stmt->close();
+        return $department;
+    }
+    
+    $stmt->close();
+    return null;
+}
+
+/**
+ * Get department by name
+ */
+function get_department_by_name($conn, $name) {
+    $sql = "SELECT * FROM departments WHERE name = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('s', $name);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        $department = $result->fetch_assoc();
+        $stmt->close();
+        return $department;
+    }
+    
+    $stmt->close();
+    return null;
 }
 ?>

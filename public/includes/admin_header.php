@@ -25,6 +25,7 @@ require_login();
             <nav class="admin-nav">
                 <ul>
                     <li><a href="/admin/index.php">Dashboard</a></li>
+                    <li><a href="/admin/departments.php">Departments management</a></li>
                     <li><a href="/" target="_blank">View Staff directory</a></li>
                     <li><a href="/admin/auth/logout.php">Logout</a></li>
                 </ul>
