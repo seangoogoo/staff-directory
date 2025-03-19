@@ -50,11 +50,11 @@ CREATE TABLE `departments` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Modified staff_members table
-ALTER TABLE `staff_members` 
+ALTER TABLE `staff_members`
   ADD COLUMN `department_id` int(11) NOT NULL AFTER `last_name`,
   ADD KEY `department_id` (`department_id`),
-  ADD CONSTRAINT `staff_members_ibfk_1` 
-  FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) 
+  ADD CONSTRAINT `staff_members_ibfk_1`
+  FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`)
   ON DELETE RESTRICT ON UPDATE CASCADE;
 ```
 
@@ -355,9 +355,9 @@ graph TD
 ### Planned Improvements
 
 #### Version 1.2 (Planned)
-- Create a Git repository for version control
+- ~~Create a Git repository for version control~~
 - Add internationalization support (FR/EN translation files)
-- Department management section (Database table and admin interface)
+- ~~Department management section (Database table and admin interface)~~
 - Create a setting panel in the admin to set a custom logo and manage colors
 - Advanced search features for Staff Members Management
 
