@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
 // Import variables
 @import 'variables';
 
@@ -13,10 +14,10 @@ html, body {
 }
 
 body {
-  font-family: $font-family;
+  @include font-outfit;
   line-height: 1.6;
-  color: #333;
-  background-color: #f4f6f9;
+  color: $text-dark;
+  background-color: $bg-lighter;
   display: grid;
   grid-template-rows: auto 1fr auto;
 }
@@ -38,38 +39,62 @@ a {
 input,
 select {
   padding: 0.5rem;
-  border: 1px solid #ddd;
+  border: 1px solid $border-light;
   border-radius: 4px;
-  font-size: 1rem;
+  font-size: $font-size-base;
+  background-color: transparent;
 }
 
-// Apply base styles to button elements
-button {
+// Button styles
+.btn {
+  @include button;
+  text-decoration: none;
+  gap: 0.5rem;
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
   border: 1px solid transparent;
   appearance: none;
-}
 
-.btn {
-  @include button;
-  text-decoration: none;
-  gap: 0.5rem;
   &:hover {
     text-decoration: none;
   }
 
+  // Button variations
   &-secondary {
     background-color: transparent;
-    color: #666;
-    border: 1px solid #ccc;
+    color: $text-muted;
+    border: 1px solid $border-medium;
 
     &:hover {
       background-color: #eee;
       color: #444;
-      border-color: #bbb;
+      border-color: $border-dark;
     }
+  }
+
+  &-danger {
+    background-color: $danger-color;
+    color: $text-light;
+
+    &:hover {
+      background-color: darken($danger-color, 10%);
+    }
+  }
+
+  &-success {
+    background-color: $success-color;
+    color: $text-light;
+
+    &:hover {
+      background-color: darken($success-color, 10%);
+    }
+  }
+
+  // Button sizes
+  &-sm {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.9rem;
   }
 }
 
@@ -81,18 +106,25 @@ button {
 label {
   display: block;
   margin-bottom: 0.5rem;
-  font-weight: bold;
+  font-weight: 300;
 }
 
 input[type="text"],
 input[type="email"],
+input[type="password"],
 select,
 textarea {
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid #ddd;
+  border: 1px solid $border-light;
   border-radius: 4px;
-  font-size: 1rem;
+  font-size: $font-size-base;
+
+  &:focus {
+    border-color: $primary-color;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba($primary-color, 0.25);
+  }
 }
 
 .form-actions {
@@ -110,25 +142,28 @@ textarea {
   border-radius: 0.25rem;
 
   &-success {
-    color: #155724;
-    background-color: #d4edda;
-    border-color: #c3e6cb;
+    color: darken($success-color, 30%);
+    background-color: lighten($success-color, 40%);
+    border-color: lighten($success-color, 30%);
   }
 
   &-danger {
-    color: #721c24;
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
+    color: darken($danger-color, 30%);
+    background-color: lighten($danger-color, 40%);
+    border-color: lighten($danger-color, 30%);
+  }
+
+  &-info {
+    color: darken($primary-color, 30%);
+    background-color: lighten($primary-color, 40%);
+    border-color: lighten($primary-color, 30%);
   }
 }
 
 // Footer Styles (common elements)
 .main-footer,
 .admin-footer {
-  background-color: $dark-color;
-  color: white;
   padding: 1rem 0;
-  // grid-area: footer;
 }
 
 // File Upload & Dropzone Styles
@@ -160,7 +195,7 @@ textarea {
 
   .dropzone-icon {
     font-size: 4rem;
-    color: #888;
+    color: lighten($text-muted, 10%);
     margin-bottom: 0.75rem;
 
     i {
@@ -171,12 +206,12 @@ textarea {
   .dropzone-text {
     margin-bottom: 0.5rem;
     font-weight: 500;
-    color: #333;
+    color: $text-dark;
   }
 
   .dropzone-subtext {
-    font-size: 0.85rem;
-    color: #666;
+    font-size: $font-size-small;
+    color: $text-muted;
   }
 
   .dropzone-file-info {
@@ -218,9 +253,11 @@ textarea {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     transition: all 0.2s ease;
     font-size: 14px;
+    display: flex;
     justify-content: center;
     align-items: center;
     display: none; /* Hidden by default, will be shown by JS when there's an image */
+
     > i {
       font-size: 1.2rem;
     }

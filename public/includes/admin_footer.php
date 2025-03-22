@@ -4,7 +4,7 @@
             <p>&copy; <?php echo date('Y'); ?> Staff Directory Admin Panel</p>
         </div>
     </footer>
-    
+
     <?php
     // Output any missing image messages as console logs
     if (isset($missing_images) && !empty($missing_images)) {
@@ -20,7 +20,5 @@
         </script>';
     }
     ?>
-    
-    <!-- Login modal removed - not needed in admin area since users are already authenticated -->
 </body>
 </html>

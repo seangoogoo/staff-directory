@@ -18,12 +18,19 @@ require_once __DIR__ . '/functions.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Staff Directory</title>
     <link rel="stylesheet" href="/assets/vendor/lineicons/lineicons.css">
-    <link rel="stylesheet" href="/assets/css/frontend.css">
+    <?php
+    // Add timestamp to CSS URL in dev mode to force cache refresh
+    $css_url = "/assets/css/frontend.css";
+    if (isset($_ENV['DEV_MODE']) && $_ENV['DEV_MODE'] === 'true') {
+        $css_url .= "?v=" . time();
+    }
+    ?>
+    <link rel="stylesheet" href="<?php echo $css_url; ?>">
 </head>
 <body>
     <header class="main-header">
         <div class="container">
-            <h1 class="site-title">Staff Directory</h1>
+            <span class="site-title">Staff Directory</span>
             <nav class="main-nav">
                 <ul>
                     <li><a href="#" id="adminLink" class="icon-link" title="Admin Area"><i class="lni lni-user-4"></i></a></li>

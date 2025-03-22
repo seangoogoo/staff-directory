@@ -16,17 +16,24 @@ require_login();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Staff Directory</title>
     <link rel="stylesheet" href="/assets/vendor/lineicons/lineicons.css">
-    <link rel="stylesheet" href="/assets/css/admin.css">
+    <?php
+    // Add timestamp to CSS URL in dev mode to force cache refresh
+    $css_url = "/assets/css/admin.css";
+    if (isset($_ENV['DEV_MODE']) && $_ENV['DEV_MODE'] === 'true') {
+        $css_url .= "?v=" . time();
+    }
+    ?>
+    <link rel="stylesheet" href="<?php echo $css_url; ?>">
 </head>
 <body class="admin-area">
     <header class="admin-header">
         <div class="container">
-            <h1 class="admin-title">Staff Directory Admin</h1>
+            <span class="admin-title">Admin</span>
             <nav class="admin-nav">
                 <ul>
-                    <li><a href="/admin/index.php">Dashboard</a></li>
-                    <li><a href="/admin/departments.php">Departments management</a></li>
-                    <li><a href="/" target="_blank">View Staff directory</a></li>
+                    <li><a href="/admin/index.php">Manage staff members</a></li>
+                    <li><a href="/admin/departments.php">Manage departments</a></li>
+                    <li><a href="/" target="_blank">View Front-end</a></li>
                     <li><a href="/admin/auth/logout.php">Logout</a></li>
                 </ul>
             </nav>

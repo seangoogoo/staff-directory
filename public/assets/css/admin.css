@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap");
 *, *:before, *:after {
   -webkit-box-sizing: border-box;
           box-sizing: border-box;
@@ -10,7 +11,8 @@ html, body {
 }
 
 body {
-  font-family: "Arial", sans-serif;
+  font-family: "Outfit", sans-serif;
+  font-optical-sizing: auto;
   line-height: 1.6;
   color: #333;
   background-color: #f4f6f9;
@@ -26,7 +28,7 @@ body {
 }
 
 a {
-  color: #3498db;
+  color: #b9c9d4;
   text-decoration: none;
 }
 a:hover {
@@ -39,16 +41,7 @@ select {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 1rem;
-}
-
-button {
-  font-family: inherit;
-  font-size: inherit;
-  line-height: inherit;
-  border: 1px solid transparent;
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
+  background-color: transparent;
 }
 
 .btn {
@@ -59,12 +52,19 @@ button {
       -ms-flex-align: center;
           align-items: center;
   cursor: pointer;
-  background-color: #3498db;
+  background-color: #b9c9d4;
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 4px;
   text-decoration: none;
   gap: 0.5rem;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  border: 1px solid transparent;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
 }
 .btn:hover {
   background-color: #2980b9;
@@ -82,6 +82,25 @@ button {
   color: #444;
   border-color: #bbb;
 }
+.btn-danger {
+  background-color: #e74c3c;
+  color: #fff;
+}
+.btn-danger:hover {
+  background-color: #d62c1a;
+}
+.btn-success {
+  background-color: #2ecc71;
+  color: #fff;
+}
+.btn-success:hover {
+  background-color: #25a25a;
+}
+.btn-sm, .action-buttons .btn,
+td.action-buttons a.btn {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.9rem;
+}
 
 .form-group {
   margin-bottom: 1rem;
@@ -90,11 +109,12 @@ button {
 label {
   display: block;
   margin-bottom: 0.5rem;
-  font-weight: bold;
+  font-weight: 300;
 }
 
 input[type=text],
 input[type=email],
+input[type=password],
 select,
 textarea {
   width: 100%;
@@ -102,6 +122,16 @@ textarea {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 1rem;
+}
+input[type=text]:focus,
+input[type=email]:focus,
+input[type=password]:focus,
+select:focus,
+textarea:focus {
+  border-color: #b9c9d4;
+  outline: none;
+  -webkit-box-shadow: 0 0 0 0.2rem rgba(185, 201, 212, 0.25);
+          box-shadow: 0 0 0 0.2rem rgba(185, 201, 212, 0.25);
 }
 
 .form-actions {
@@ -122,20 +152,23 @@ textarea {
   border-radius: 0.25rem;
 }
 .alert-success {
-  color: #155724;
-  background-color: #d4edda;
-  border-color: #c3e6cb;
+  color: #124f2c;
+  background-color: #d1f5e0;
+  border-color: #a8ebc4;
 }
 .alert-danger {
-  color: #721c24;
-  background-color: #f8d7da;
-  border-color: #f5c6cb;
+  color: #7b190f;
+  background-color: #fdf3f2;
+  border-color: #f8c9c4;
+}
+.alert-info {
+  color: #5d7f97;
+  background-color: white;
+  border-color: white;
 }
 
 .main-footer,
 .admin-footer {
-  background-color: #2c3e50;
-  color: white;
   padding: 1rem 0;
 }
 
@@ -166,16 +199,16 @@ textarea {
           align-items: center;
 }
 .dropzone:hover {
-  border-color: #3498db;
-  background-color: rgba(52, 152, 219, 0.05);
+  border-color: #b9c9d4;
+  background-color: rgba(185, 201, 212, 0.05);
 }
 .dropzone.dragover {
-  border-color: #3498db;
-  background-color: rgba(52, 152, 219, 0.1);
+  border-color: #b9c9d4;
+  background-color: rgba(185, 201, 212, 0.1);
 }
 .dropzone .dropzone-icon {
   font-size: 4rem;
-  color: #888;
+  color: gray;
   margin-bottom: 0.75rem;
 }
 .dropzone .dropzone-icon i {
@@ -191,7 +224,7 @@ textarea {
   color: #666;
 }
 .dropzone .dropzone-file-info {
-  background-color: rgba(52, 152, 219, 0.1);
+  background-color: rgba(185, 201, 212, 0.1);
   padding: 0.5rem;
   border-radius: 4px;
   margin-top: 0.75rem;
@@ -230,6 +263,9 @@ textarea {
   -webkit-transition: all 0.2s ease;
   transition: all 0.2s ease;
   font-size: 14px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
   -webkit-box-pack: center;
       -ms-flex-pack: center;
           justify-content: center;
@@ -291,7 +327,7 @@ input[type=file].dropzone-input {
 }
 
 .modal-content {
-  background-color: white;
+  background-color: #fff;
   border-radius: 8px;
   -webkit-box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
           box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
@@ -309,11 +345,11 @@ input[type=file].dropzone-input {
       -ms-flex-align: center;
           align-items: center;
   padding: 15px 20px;
-  border-bottom: 1px solid #eee;
-  background-color: #f8f9fa;
+  border-bottom: 1px solid #ddd;
+  background-color: #f9f9f9;
 }
 .modal-header .modal-title {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 600;
   color: #333;
   margin: 0;
@@ -322,7 +358,7 @@ input[type=file].dropzone-input {
   background: none;
   border: none;
   font-size: 1.5rem;
-  color: #777;
+  color: #737373;
   cursor: pointer;
   padding: 0;
   line-height: 1;
@@ -338,22 +374,10 @@ input[type=file].dropzone-input {
 .alert {
   padding: 12px 15px;
   margin-bottom: 20px;
-  border-radius: 4px;
-}
-.alert.alert-danger {
-  color: #721c24;
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
 }
 
 .form-group {
   margin-bottom: 20px;
-}
-.form-group label {
-  display: block;
-  font-weight: 500;
-  margin-bottom: 8px;
-  color: #333;
 }
 .form-group input[type=text],
 .form-group input[type=password] {
@@ -369,9 +393,9 @@ input[type=file].dropzone-input {
 }
 .form-group input[type=text]:focus,
 .form-group input[type=password]:focus {
-  border-color: #3498db;
-  -webkit-box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
-          box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+  border-color: #b9c9d4;
+  -webkit-box-shadow: 0 0 0 0.2rem rgba(185, 201, 212, 0.25);
+          box-shadow: 0 0 0 0.2rem rgba(185, 201, 212, 0.25);
   outline: none;
 }
 
@@ -400,39 +424,18 @@ input[type=file].dropzone-input {
   transition: background-color 0.2s;
 }
 .form-actions .submit-btn {
-  background-color: #3498db;
+  background-color: #b9c9d4;
   color: white;
   border: none;
 }
 .form-actions .submit-btn:hover {
-  background-color: #217dbb;
+  background-color: #99b1c1;
 }
 
 body.modal-open {
   overflow: hidden;
 }
 
-.btn,
-a.btn {
-  display: -webkit-inline-box;
-  display: -ms-inline-flexbox;
-  display: inline-flex;
-  -webkit-box-align: center;
-      -ms-flex-align: center;
-          align-items: center;
-  cursor: pointer;
-  background-color: #3498db;
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  text-decoration: none;
-  gap: 0.5rem;
-}
-.btn:hover,
-a.btn:hover {
-  background-color: #217dbb;
-  text-decoration: none;
-}
 .btn.outline-secondary,
 a.btn.outline-secondary {
   color: #2980b9;
@@ -456,26 +459,11 @@ a.btn.outline-danger:hover {
 
 .action-buttons .btn,
 td.action-buttons a.btn {
-  display: -webkit-inline-box;
-  display: -ms-inline-flexbox;
-  display: inline-flex;
-  -webkit-box-align: center;
-      -ms-flex-align: center;
-          align-items: center;
-  gap: 0.25rem;
-  padding: 0.35rem 0.75rem;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  text-decoration: none;
   margin: 0 3px;
-}
-.action-buttons .btn:hover,
-td.action-buttons a.btn:hover {
-  text-decoration: none;
 }
 
 .admin-header {
-  background-color: #3498db;
+  background-color: #b9c9d4;
   color: white;
   padding: 1rem 0;
 }
@@ -502,19 +490,19 @@ td.action-buttons a.btn:hover {
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
-  margin-top: 1rem;
+  -webkit-column-gap: 1.5rem;
+     -moz-column-gap: 1.5rem;
+          column-gap: 1.5rem;
+  margin: 0;
+  padding: 0;
 }
 @media (min-width: 768px) {
   .admin-nav ul {
     margin-top: 0;
   }
 }
-.admin-nav li {
-  margin-right: 1.5rem;
-}
 .admin-nav a {
   color: white;
-  font-weight: bold;
 }
 
 .admin-table {
@@ -540,6 +528,8 @@ td.action-buttons a.btn:hover {
   -o-object-fit: cover;
      object-fit: cover;
   border-radius: 50%;
+  -webkit-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .staff-form {

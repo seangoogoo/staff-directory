@@ -1,12 +1,38 @@
-// Variables
-$primary-color: #3498db;
+// Color Variables
+$primary-color: #b9c9d4;
 $secondary-color: #2980b9;
 $light-color: #ecf0f1;
 $dark-color: #2c3e50;
 $danger-color: #e74c3c;
 $success-color: #2ecc71;
 
-$font-family: 'Arial', sans-serif;
+// Text Colors
+$text-dark: #333;
+$text-muted: #666;
+$text-light: #fff;
+
+// Border Colors
+$border-light: #ddd;
+$border-medium: #ccc;
+$border-dark: #bbb;
+
+// Background Colors
+$bg-light: #f9f9f9;
+$bg-lighter: #f4f6f9;
+$bg-white: #fff;
+
+// Typography
+$font-size-base: 1rem;
+$font-size-small: 0.85rem;
+$font-size-large: 1.2rem;
+
+// Font mixin
+@mixin font-outfit {
+  font-family: "Outfit", sans-serif;
+  font-optical-sizing: auto;
+}
+
+// Effects
 $box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 $transition-time: 0.3s;
 
@@ -14,13 +40,7 @@ $transition-time: 0.3s;
 $breakpoint-medium: 768px;
 $breakpoint-small: 767px;
 
-// Mixins
-@mixin flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
+// Mixins - only keeping the ones that are used
 @mixin flex-between {
   display: flex;
   align-items: center;

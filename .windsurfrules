@@ -1,0 +1,7 @@
+1. Local test server is: https://staffdirectory.local
+2. Only edit scss files in public/assets/scss folder for styling the application
+3. SCSS files are compiled using the Live Sass Compiler plugin
+4. Avoids creating redundant CSS rules
+5. .env file is placed in staff_dir_env folder
+6. Think to add comments to your code
+7. Always refer to documentation/devbook.md for project documentation
