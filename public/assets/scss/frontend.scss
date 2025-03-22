@@ -5,7 +5,7 @@
 
 // Header Styles
 .main-header {
-  background-color: $primary-color;
+  background-color: $bg-color;
   color: white;
   padding: 1rem 0;
 
@@ -126,11 +126,6 @@ main {
   border-radius: 5px;
   box-shadow: $box-shadow;
   overflow: hidden;
-  transition: transform $transition-time ease;
-
-  &:hover {
-    transform: translateY(-5px);
-  }
 
   .staff-image {
     width: 100%;

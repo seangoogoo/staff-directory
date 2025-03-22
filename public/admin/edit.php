@@ -117,12 +117,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <select id="department_id" name="department_id" required>
                 <option value="">Select a Department</option>
                 <?php foreach ($departments as $dept): ?>
-                    <option value="<?php echo $dept['id']; ?>" <?php echo ($staff['department_id'] == $dept['id']) ? 'selected' : ''; ?>>
+                    <!-- Add data-color attribute to use with JavaScript -->
+                    <option value="<?php echo $dept['id']; ?>" 
+                            data-color="<?php echo $dept['color']; ?>" 
+                            <?php echo ($staff['department_id'] == $dept['id']) ? 'selected' : ''; ?>>
                         <?php echo $dept['name']; ?>
                     </option>
                 <?php endforeach; ?>
             </select>
+            
+            <!-- Department color preview -->
+            <div id="department-color-preview" class="mt-2" style="display: <?php echo $staff['department_id'] ? 'block' : 'none'; ?>">
+                <?php if ($staff['department_id']): 
+                    // Get the selected department's color
+                    $selected_dept = null;
+                    foreach ($departments as $dept) {
+                        if ($dept['id'] == $staff['department_id']) {
+                            $selected_dept = $dept;
+                            break;
+                        }
+                    }
+                    
+                    if ($selected_dept):
+                        // Get proper text color contrast class
+                        $text_class = get_text_contrast_class($selected_dept['color']);
+                    ?>
+                    <div class="pill <?php echo $text_class; ?>" style="background-color: <?php echo $selected_dept['color']; ?>">
+                        Selected: <?php echo $selected_dept['name']; ?>
+                    </div>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </div>
         </div>
+        
+        <!-- Add JavaScript to update department color preview on selection change -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const departmentSelect = document.getElementById('department_id');
+                const colorPreview = document.getElementById('department-color-preview');
+                
+                departmentSelect.addEventListener('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    const color = selectedOption.getAttribute('data-color');
+                    const deptName = selectedOption.textContent.trim();
+                    
+                    if (color && deptName) {
+                        // Calculate if text should be light or dark
+                        // Using same logic as get_text_contrast_class() PHP function
+                        const hex = color.replace('#', '');
+                        const r = parseInt(hex.substr(0, 2), 16);
+                        const g = parseInt(hex.substr(2, 2), 16);
+                        const b = parseInt(hex.substr(4, 2), 16);
+                        const luminance = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+                        const textClass = (luminance > 150) ? 'dark-text' : 'light-text';
+                        
+                        // Update preview
+                        colorPreview.innerHTML = `
+                            <div class="pill ${textClass}" style="background-color: ${color}">
+                                Selected: ${deptName}
+                            </div>
+                        `;
+                        colorPreview.style.display = 'block';
+                    } else {
+                        colorPreview.style.display = 'none';
+                    }
+                });
+            });
+        </script>
 
         <div class="form-group">
             <label for="job_title">Job Title</label>

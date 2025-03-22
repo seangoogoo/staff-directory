@@ -28,7 +28,7 @@ body {
 }
 
 a {
-  color: #b9c9d4;
+  color: #3c97d4;
   text-decoration: none;
 }
 a:hover {
@@ -52,7 +52,7 @@ select {
       -ms-flex-align: center;
           align-items: center;
   cursor: pointer;
-  background-color: #b9c9d4;
+  background-color: #3c97d4;
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 4px;
@@ -128,10 +128,10 @@ input[type=email]:focus,
 input[type=password]:focus,
 select:focus,
 textarea:focus {
-  border-color: #b9c9d4;
+  border-color: #3c97d4;
   outline: none;
-  -webkit-box-shadow: 0 0 0 0.2rem rgba(185, 201, 212, 0.25);
-          box-shadow: 0 0 0 0.2rem rgba(185, 201, 212, 0.25);
+  -webkit-box-shadow: 0 0 0 0.2rem rgba(60, 151, 212, 0.25);
+          box-shadow: 0 0 0 0.2rem rgba(60, 151, 212, 0.25);
 }
 
 .form-actions {
@@ -162,9 +162,9 @@ textarea:focus {
   border-color: #f8c9c4;
 }
 .alert-info {
-  color: #5d7f97;
-  background-color: white;
-  border-color: white;
+  color: #164362;
+  background-color: #e3f0f9;
+  border-color: #b9daf0;
 }
 
 .main-footer,
@@ -199,12 +199,12 @@ textarea:focus {
           align-items: center;
 }
 .dropzone:hover {
-  border-color: #b9c9d4;
-  background-color: rgba(185, 201, 212, 0.05);
+  border-color: #3c97d4;
+  background-color: rgba(60, 151, 212, 0.05);
 }
 .dropzone.dragover {
-  border-color: #b9c9d4;
-  background-color: rgba(185, 201, 212, 0.1);
+  border-color: #3c97d4;
+  background-color: rgba(60, 151, 212, 0.1);
 }
 .dropzone .dropzone-icon {
   font-size: 4rem;
@@ -224,7 +224,7 @@ textarea:focus {
   color: #666;
 }
 .dropzone .dropzone-file-info {
-  background-color: rgba(185, 201, 212, 0.1);
+  background-color: rgba(60, 151, 212, 0.1);
   padding: 0.5rem;
   border-radius: 4px;
   margin-top: 0.75rem;
@@ -297,6 +297,35 @@ input[type=file].dropzone-input {
     margin: 0 auto;
   }
 }
+.pill {
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.875rem;
+  line-height: 1;
+  border-radius: 2rem;
+  background-color: #f9f9f9;
+  color: #333;
+  max-width: 100%;
+}
+.pill.color-pill {
+  font-family: monospace;
+  font-size: 0.6rem;
+  line-height: 0.9;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+.pill.dark-text {
+  color: #333;
+}
+.pill.light-text {
+  color: white;
+}
+
 .modal {
   display: none;
   position: fixed;
@@ -393,9 +422,9 @@ input[type=file].dropzone-input {
 }
 .form-group input[type=text]:focus,
 .form-group input[type=password]:focus {
-  border-color: #b9c9d4;
-  -webkit-box-shadow: 0 0 0 0.2rem rgba(185, 201, 212, 0.25);
-          box-shadow: 0 0 0 0.2rem rgba(185, 201, 212, 0.25);
+  border-color: #3c97d4;
+  -webkit-box-shadow: 0 0 0 0.2rem rgba(60, 151, 212, 0.25);
+          box-shadow: 0 0 0 0.2rem rgba(60, 151, 212, 0.25);
   outline: none;
 }
 
@@ -424,12 +453,12 @@ input[type=file].dropzone-input {
   transition: background-color 0.2s;
 }
 .form-actions .submit-btn {
-  background-color: #b9c9d4;
+  background-color: #3c97d4;
   color: white;
   border: none;
 }
 .form-actions .submit-btn:hover {
-  background-color: #99b1c1;
+  background-color: #287cb5;
 }
 
 body.modal-open {
@@ -460,6 +489,25 @@ a.btn.outline-danger:hover {
 .action-buttons .btn,
 td.action-buttons a.btn {
   margin: 0 3px;
+}
+
+.color-preview {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.form-group input[type=color] {
+  height: 40px;
+  width: 100px;
+  padding: 2px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 .admin-header {
@@ -549,3 +597,121 @@ td.action-buttons a.btn {
   height: auto;
   border-radius: 5px;
 }
+
+.settings-container {
+  background-color: white;
+  border-radius: 6px;
+  -webkit-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+.settings-container .row {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
+  margin: 0 -15px;
+}
+.settings-container .row .col-md-6 {
+  padding: 0 15px;
+  width: 100%;
+}
+@media (min-width: 768px) {
+  .settings-container .row .col-md-6 {
+    width: 50%;
+  }
+}
+.settings-container .form-group {
+  margin-bottom: 1.5rem;
+}
+.settings-container .form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+.settings-container .form-group .form-control {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+.settings-container .form-group .form-control:focus {
+  border-color: #3c97d4;
+  outline: none;
+}
+.settings-container .form-group .form-control[type=range] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  height: 10px;
+  background: #e0e0e0;
+  border-radius: 5px;
+  padding: 0;
+  margin: 10px 0;
+}
+.settings-container .form-group .form-control[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3c97d4;
+  cursor: pointer;
+}
+.settings-container .form-group .form-control[type=range]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3c97d4;
+  cursor: pointer;
+  border: none;
+}
+.settings-container .form-group .form-control[type=range]:focus {
+  outline: none;
+}
+.settings-container .form-group .range-labels {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+  margin-top: 5px;
+  font-size: 0.85rem;
+}
+.settings-container .form-group .range-labels .small {
+  color: #666;
+}
+.settings-container .form-group .range-labels .current-value {
+  font-weight: bold;
+  color: #3c97d4;
+}
+.settings-container .form-group .range-labels .large {
+  color: #666;
+}
+.settings-container .preview-container {
+  border-radius: 6px;
+  padding: 1.5rem;
+  height: 100%;
+}
+.settings-container .preview-container h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+}
+.settings-container .preview-container .sample-image {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+.settings-container .preview-container .sample-image img {
+  max-width: 100%;
+  border-radius: 6px;
+  -webkit-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+.settings-container .preview-container ul {
+  padding-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}/*# sourceMappingURL=admin.css.map */

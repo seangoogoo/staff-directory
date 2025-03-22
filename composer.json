@@ -1,0 +1,13 @@
+{
+    "name": "staffdirectory/app",
+    "description": "Staff Directory Application",
+    "type": "project",
+    "require": {
+        "intervention/image": "^2.7"
+    },
+    "config": {
+        "platform": {
+            "php": "7.4.33"
+        }
+    }
+}

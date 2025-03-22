@@ -285,3 +285,34 @@ input[type="file"].dropzone-input {
     margin: 0 auto;
   }
 }
+
+// Pill styles for displaying colors and tags
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.875rem;
+  line-height: 1;
+  border-radius: 2rem; // Fully rounded corners for the pill shape
+  background-color: $bg-light;
+  color: $text-dark;
+  max-width: 100%;
+
+  // Color preview within pill
+  &.color-pill {
+    font-family: monospace;
+    font-size: $font-size-x-small;
+    line-height: 0.9;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+
+  }
+  // Ensure proper text color contrast
+  &.dark-text {
+    color: $text-dark;
+  }
+
+  &.light-text {
+    color: white;
+  }
+}

@@ -2,7 +2,37 @@
 
 ## Version History
 
-### Version 1.2 - March 19, 2025
+### Version 1.2 (March 2025)
+
+#### March 22, 2025
+*Department Color Visualization & Code Improvements*
+
+- Added visual department color indicators throughout the application
+  - Created a reusable `.pill` class in `_common.scss` for consistent styling
+  - Implemented department color pills in staff management table
+  - Added color pills to staff cards in the frontend directory
+  - Enhanced department selection in add/edit forms with color preview
+- Created a centralized `get_text_contrast_class()` function in `functions.php`
+  - Determines if text should be light or dark based on background color
+  - Uses standardized luminance calculation formula
+  - Ensures consistent text contrast across the application
+  - Replaced duplicate code with function calls for better maintainability
+
+#### March 22, 2025
+*Placeholder Image System Enhancements*
+
+- Implemented configurable placeholder image system for staff without profile pictures
+- Added admin settings page for customizing placeholder appearance
+- Created settings for font weight, background color, text color, and font size
+- Added font size factor control with range slider (1-6 scale)
+- Converted placeholder images from PNG to WebP format for better performance
+- Implemented real-time preview with JavaScript for settings adjustments
+- Added automatic image regeneration when settings change
+- Used settings hash to track changes and avoid unnecessary regeneration
+- Migrated placeholder settings from PHP file to database storage
+- Added backward compatibility for file-based settings during migration
+
+#### March 19, 2025
 *Department Management System Implementation*
 
 #### Database Schema Improvements
@@ -329,6 +359,15 @@ graph TD
 - Added additional security headers and best practices through `.htaccess`
 - Standardized code styling and formatting throughout the application
 
+#### Placeholder Image System
+- Implemented a configurable placeholder image system for staff without profile pictures
+- Created an admin settings page to customize placeholder appearance
+- Added settings for font weight, background color, text color, and font size
+- Converted placeholder images from PNG to WebP format for better performance
+- Implemented automatic image regeneration when settings change
+- Used settings hash to track changes and avoid unnecessary regeneration
+- Optimized font sizing algorithm based on image dimensions
+
 
 
 ## Environment Configuration
@@ -351,18 +390,26 @@ graph TD
 - ✅ Centralized authentication configuration (March 18, 2025)
 - ✅ Environment variable support for secure cookies (March 18, 2025)
 - ✅ Authentication flow documentation and visualization (March 18, 2025)
+- ✅ Enhanced placeholder image generation (March 22, 2025)
+  - Added configurable font size factor setting
+  - Converted placeholder images from PNG to WebP format
+  - Improved image quality and reduced file sizes
 
 ### Planned Improvements
 
 #### Version 1.2 (Planned)
 - ~~Create a Git repository for version control~~
-- Add internationalization support (FR/EN translation files)
 - ~~Department management section (Database table and admin interface)~~
-- Create a setting panel in the admin to set a custom logo and manage colors
+- Create a default logo for the App
+- Create a setting panel in the admin to set a custom logo and manage UI colors.
+- Create default user images to match the default application setup and alternate between users that have and don't have profile pictures to display examples of placeholder images
+- Improve Placeholder Image Settings to set a real live preview of the update (Javascript)
+- Improve UX/UI design for admin and Front-end using TailAdmin
+- Replace LineIcons by TailAdmin's icon set
+- Add internationalization support (FR/EN translation files)
 - Advanced search features for Staff Members Management
 
 #### Version 1.3 (Planned)
-- Staff member details modal on frontend
 - CSV import/export functionality
 - Enhanced authentication security:
   - CSRF protection for login form

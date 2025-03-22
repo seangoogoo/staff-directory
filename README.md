@@ -19,6 +19,7 @@ A web-based staff directory application that allows administrators to manage sta
 ## Tech Stack
 - Frontend: HTML, SCSS, Vanilla JavaScript
 - Backend: PHP 7.4, MySQL
+- Image Processing: Intervention Image 2.7 (WebP support)
 - Image Storage: Local upload folder
 
 ## Installation
@@ -44,7 +45,8 @@ The application follows a secure directory structure:
 │   │   ├── `add.php`               # Add new staff member
 │   │   ├── `departments.php`       # Department management interface
 │   │   ├── `edit.php`              # Edit existing staff member
-│   │   └── `index.php`             # Admin dashboard page
+│   │   ├── `index.php`             # Admin dashboard page
+│   │   └── `settings.php`          # Placeholder image settings page
 │   ├── `assets/`                   # CSS, JavaScript, images and other assets
 │   │   ├── `css/`                  # Compiled CSS files
 │   │   ├── `images/`               # Image assets
@@ -64,8 +66,10 @@ The application follows a secure directory structure:
 │   │   ├── `admin_header.php`      # Admin page header
 │   │   ├── `footer.php`            # Frontend page footer
 │   │   ├── `functions.php`         # Utility functions
-│   │   └── `header.php`            # Frontend page header
+│   │   ├── `header.php`            # Frontend page header
+│   │   └── `placeholder_settings.php` # Placeholder image configuration
 │   ├── `uploads/`                  # User uploaded content
+│   │   └── `placeholders/`         # Generated placeholder images (WebP format)
 │   └── `index.php`                 # Main entry point
 ├── `database/`                     # Database schema and migration scripts
 │   ├── `migrate_departments.sql`   # Migration script for department management

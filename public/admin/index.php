@@ -75,7 +75,15 @@ $staff_members = get_all_staff_members($conn);
                         <img src="<?php echo get_staff_image_url($staff, '50x50'); ?>" alt="<?php echo $staff['first_name']; ?>">
                     </td>
                     <td><?php echo $staff['first_name'] . ' ' . $staff['last_name']; ?></td>
-                    <td><?php echo $staff['department']; ?></td>
+                    <td>
+                        <?php
+                        // Get proper text color contrast class
+                        $text_class = get_text_contrast_class($staff['department_color']);
+                        ?>
+                        <div class="pill <?php echo $text_class; ?>" style="background-color: <?php echo $staff['department_color']; ?>">
+                            <?php echo $staff['department']; ?>
+                        </div>
+                    </td>
                     <td><?php echo $staff['job_title']; ?></td>
                     <td><?php echo $staff['email']; ?></td>
                     <td class="action-buttons">

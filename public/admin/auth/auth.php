@@ -7,7 +7,9 @@
  */
 
 // Define constants to prevent direct access to configuration file
-define('AUTH_SYSTEM', true);
+if (!defined('AUTH_SYSTEM')) {
+    define('AUTH_SYSTEM', true);
+}
 
 // Load centralized authentication configuration
 require_once __DIR__ . '/auth_config.php';
@@ -216,12 +218,24 @@ function require_login($ajax = false) {
         exit;
     }
     
-    // For added security, add cache control headers
-    header("Cache-Control: " . CACHE_CONTROL_HEADER);
-    header("Pragma: " . PRAGMA_HEADER);
+    // For added security, add cache control headers if headers haven't been sent yet
+    if (!headers_sent()) {
+        header("Cache-Control: " . CACHE_CONTROL_HEADER);
+        header("Pragma: " . PRAGMA_HEADER);
+    }
     
     // Update the authentication timestamp
     if (isset($_SESSION['login_time'])) {
         $_SESSION['last_activity'] = time();
     }
+}
+
+/**
+ * Check if user is logged in as admin and redirect to login if not
+ * This is a convenience wrapper around require_login
+ * 
+ * @return bool True if the user is logged in as admin
+ */
+function check_admin_login() {
+    return require_login();
 }

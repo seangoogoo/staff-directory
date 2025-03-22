@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS `departments` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
   `description` text,
+  `color` varchar(7) DEFAULT '#6c757d',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -17,16 +18,16 @@ CREATE TABLE IF NOT EXISTS `departments` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Insert the default departments
-INSERT INTO `departments` (`name`, `description`) VALUES
-('IT', 'Information Technology department responsible for technical infrastructure and software development'),
-('Marketing', 'Marketing department handling brand promotion, advertising, and customer outreach'),
-('HR', 'Human Resources department managing staffing, benefits, and employee relations'),
-('Finance', 'Finance department overseeing accounting, budgeting, and financial reporting'),
-('Operations', 'Operations department managing day-to-day business activities and logistics');
+INSERT INTO `departments` (`name`, `description`, `color`) VALUES
+('IT', 'Information Technology department responsible for technical infrastructure and software development', '#007bff'),
+('Marketing', 'Marketing department handling brand promotion, advertising, and customer outreach', '#28a745'),
+('HR', 'Human Resources department managing staffing, benefits, and employee relations', '#dc3545'),
+('Finance', 'Finance department overseeing accounting, budgeting, and financial reporting', '#ffc107'),
+('Operations', 'Operations department managing day-to-day business activities and logistics', '#17a2b8');
 
 -- Collect any additional unique departments from the staff_members table and insert them into the departments table
-INSERT IGNORE INTO `departments` (`name`, `description`)
-SELECT DISTINCT department, CONCAT(department, ' department') 
+INSERT IGNORE INTO `departments` (`name`, `description`, `color`)
+SELECT DISTINCT department, CONCAT(department, ' department'), '#6c757d'
 FROM `staff_members`
 ORDER BY department;
 

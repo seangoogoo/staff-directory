@@ -13,7 +13,9 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Define constant to prevent direct access to configuration
-define('AUTH_SYSTEM', true);
+if (!defined('AUTH_SYSTEM')) {
+    define('AUTH_SYSTEM', true);
+}
 
 try {
     // Include auth functions and configuration

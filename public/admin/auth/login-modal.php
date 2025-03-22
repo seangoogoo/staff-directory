@@ -11,7 +11,9 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Load auth configuration (define AUTH_SYSTEM to prevent direct access)
-define('AUTH_SYSTEM', true);
+if (!defined('AUTH_SYSTEM')) {
+    define('AUTH_SYSTEM', true);
+}
 require_once __DIR__ . '/auth_config.php';
 
 // Check if login is required via URL parameter or session flag

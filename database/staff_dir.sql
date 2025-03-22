@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS `departments` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
   `description` text,
+  `color` varchar(7) DEFAULT '#6c757d',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -15,12 +16,12 @@ CREATE TABLE IF NOT EXISTS `departments` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Insert default departments
-INSERT INTO `departments` (`name`, `description`) VALUES
-('IT', 'Information Technology department responsible for technical infrastructure and software development'),
-('Marketing', 'Marketing department handling brand promotion, advertising, and customer outreach'),
-('HR', 'Human Resources department managing staffing, benefits, and employee relations'),
-('Finance', 'Finance department overseeing accounting, budgeting, and financial reporting'),
-('Operations', 'Operations department managing day-to-day business activities and logistics');
+INSERT INTO `departments` (`name`, `description`, `color`) VALUES
+('IT', 'Information Technology department responsible for technical infrastructure and software development', '#94C2F3'),
+('Marketing', 'Marketing department handling brand promotion, advertising, and customer outreach', '#A8D8AD'),
+('HR', 'Human Resources department managing staffing, benefits, and employee relations', '#F4B8B8'),
+('Finance', 'Finance department overseeing accounting, budgeting, and financial reporting', '#FFEAAA'),
+('Operations', 'Operations department managing day-to-day business activities and logistics', '#9FE0E0');
 
 -- Staff Members Table
 CREATE TABLE IF NOT EXISTS `staff_members` (
@@ -47,3 +48,21 @@ INSERT INTO `staff_members` (`first_name`, `last_name`, `department_id`, `job_ti
 ('Michael', 'Johnson', 3, 'HR Specialist', 'michael.johnson@example.com', ''),
 ('Emily', 'Williams', 4, 'Financial Analyst', 'emily.williams@example.com', ''),
 ('David', 'Brown', 1, 'Network Administrator', 'david.brown@example.com', '');
+
+-- Placeholder Settings Table
+CREATE TABLE IF NOT EXISTS `placeholder_settings` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `setting_key` varchar(50) NOT NULL,
+  `setting_value` varchar(255) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `setting_key` (`setting_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Insert default placeholder settings
+INSERT INTO `placeholder_settings` (`setting_key`, `setting_value`) VALUES
+('font_weight', 'Regular'),
+('bg_color', '#cccccc'),
+('text_color', '#ffffff'),
+('font_size_factor', '3');
