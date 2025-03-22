@@ -232,15 +232,15 @@ $departments = get_all_departments($conn);
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Add confirmation for delete buttons
-    const deleteButtons = document.querySelectorAll('.outline-danger:not(.disabled)');
+    const deleteButtons = document.querySelectorAll('.outline-danger:not(.disabled)')
     if (deleteButtons) {
         deleteButtons.forEach(button => {
             button.addEventListener('click', function(e) {
                 if (!confirm('Are you sure you want to delete this department?')) {
-                    e.preventDefault();
+                    e.preventDefault()
                 }
-            });
-        });
+            })
+        })
     }
 });
 </script>

@@ -44,6 +44,20 @@ select {
   background-color: transparent;
 }
 
+.site-branding {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  gap: 1rem;
+}
+.site-branding .site-logo {
+  height: 40px;
+  width: auto;
+}
+
 .btn {
   display: -webkit-inline-box;
   display: -ms-inline-flexbox;

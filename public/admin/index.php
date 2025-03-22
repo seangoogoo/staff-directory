@@ -72,7 +72,7 @@ $staff_members = get_all_staff_members($conn);
             <?php foreach ($staff_members as $staff): ?>
                 <tr>
                     <td>
-                        <img src="<?php echo get_staff_image_url($staff, '50x50'); ?>" alt="<?php echo $staff['first_name']; ?>">
+                        <img src="<?php echo get_staff_image_url($staff, '50x50', null, $staff['department_color']); ?>" alt="<?php echo $staff['first_name']; ?>">
                     </td>
                     <td><?php echo $staff['first_name'] . ' ' . $staff['last_name']; ?></td>
                     <td>

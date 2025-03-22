@@ -63,6 +63,4 @@ CREATE TABLE IF NOT EXISTS `placeholder_settings` (
 -- Insert default placeholder settings
 INSERT INTO `placeholder_settings` (`setting_key`, `setting_value`) VALUES
 ('font_weight', 'Regular'),
-('bg_color', '#cccccc'),
-('text_color', '#ffffff'),
 ('font_size_factor', '3');

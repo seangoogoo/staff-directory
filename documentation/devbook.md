@@ -394,16 +394,27 @@ graph TD
   - Added configurable font size factor setting
   - Converted placeholder images from PNG to WebP format
   - Improved image quality and reduced file sizes
+- ✅ Fixed image handling for user profiles (March 22, 2025)
+  - Fixed remove button visibility for placeholder images
+  - Added real-time placeholder image updates when selecting departments
+  - Improved name initial detection for placeholder images
+  - Fixed user creation issues with empty profile pictures
+- ✅ Enhanced placeholder image settings UI (March 22, 2025)
+  - Added real-time preview for font weight and font size changes
+  - Improved browser cache handling for placeholder image previews
+  - Fixed font size slider update issues
+  - Streamlined settings interface by removing redundant information
 
 ### Planned Improvements
 
 #### Version 1.2 (Planned)
 - ~~Create a Git repository for version control~~
 - ~~Department management section (Database table and admin interface)~~
-- Create a default logo for the App
-- Create a setting panel in the admin to set a custom logo and manage UI colors.
+- ~~Create a default logo for the App~~
+- Create a setting panel in the admin to set a custom logo and associated titles for front-end and admin.
 - Create default user images to match the default application setup and alternate between users that have and don't have profile pictures to display examples of placeholder images
-- Improve Placeholder Image Settings to set a real live preview of the update (Javascript)
+- Improve unused placeholder images management to remove them when not needed either by programming a folder cleanup once a day and/or by using temporary images when editing settings or creating/editing users
+- ~~Improve Placeholder Image Settings to set a real live preview of the update (Javascript)~~
 - Improve UX/UI design for admin and Front-end using TailAdmin
 - Replace LineIcons by TailAdmin's icon set
 - Add internationalization support (FR/EN translation files)

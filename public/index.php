@@ -46,7 +46,7 @@ $departments = get_all_department_names($conn);
     <?php if (count($staff_members) > 0): ?>
         <?php foreach ($staff_members as $staff): ?>
             <div class="staff-card">
-            <img src="<?php echo get_staff_image_url($staff, '600x400'); ?>" alt="<?php echo $staff['first_name'] . ' ' . $staff['last_name']; ?>" class="staff-image">
+            <img src="<?php echo get_staff_image_url($staff, '600x400', null, $staff['department_color']); ?>" alt="<?php echo $staff['first_name'] . ' ' . $staff['last_name']; ?>" class="staff-image">
             <div class="staff-details">
                     <h3 class="staff-name"><?php echo $staff['first_name'] . ' ' . $staff['last_name']; ?></h3>
                     <p class="staff-job"><?php echo $staff['job_title']; ?></p>

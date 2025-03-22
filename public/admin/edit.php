@@ -78,7 +78,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     WHERE id = ?";
 
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("sisssssi", $first_name, $last_name, $department_id, $job_title, $email, $profile_picture, $id);
+            // Bind parameters to the prepared statement: string, string, integer, string, string, string, integer
+            $stmt->bind_param("ssisssi", $first_name, $last_name, $department_id, $job_title, $email, $profile_picture, $id);
 
             if ($stmt->execute()) {
                 // Redirect to admin dashboard with success message
@@ -118,17 +119,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <option value="">Select a Department</option>
                 <?php foreach ($departments as $dept): ?>
                     <!-- Add data-color attribute to use with JavaScript -->
-                    <option value="<?php echo $dept['id']; ?>" 
-                            data-color="<?php echo $dept['color']; ?>" 
+                    <option value="<?php echo $dept['id']; ?>"
+                            data-color="<?php echo $dept['color']; ?>"
                             <?php echo ($staff['department_id'] == $dept['id']) ? 'selected' : ''; ?>>
                         <?php echo $dept['name']; ?>
                     </option>
                 <?php endforeach; ?>
             </select>
-            
+
             <!-- Department color preview -->
             <div id="department-color-preview" class="mt-2" style="display: <?php echo $staff['department_id'] ? 'block' : 'none'; ?>">
-                <?php if ($staff['department_id']): 
+                <?php if ($staff['department_id']):
                     // Get the selected department's color
                     $selected_dept = null;
                     foreach ($departments as $dept) {
@@ -137,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             break;
                         }
                     }
-                    
+
                     if ($selected_dept):
                         // Get proper text color contrast class
                         $text_class = get_text_contrast_class($selected_dept['color']);
@@ -149,18 +150,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endif; ?>
             </div>
         </div>
-        
+
         <!-- Add JavaScript to update department color preview on selection change -->
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const departmentSelect = document.getElementById('department_id');
                 const colorPreview = document.getElementById('department-color-preview');
-                
+
                 departmentSelect.addEventListener('change', function() {
                     const selectedOption = this.options[this.selectedIndex];
                     const color = selectedOption.getAttribute('data-color');
                     const deptName = selectedOption.textContent.trim();
-                    
+
                     if (color && deptName) {
                         // Calculate if text should be light or dark
                         // Using same logic as get_text_contrast_class() PHP function
@@ -170,7 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         const b = parseInt(hex.substr(4, 2), 16);
                         const luminance = ((r * 299) + (g * 587) + (b * 114)) / 1000;
                         const textClass = (luminance > 150) ? 'dark-text' : 'light-text';
-                        
+
                         // Update preview
                         colorPreview.innerHTML = `
                             <div class="pill ${textClass}" style="background-color: ${color}">
@@ -207,8 +208,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="dropzone-file-info" style="display: none;"></div>
             </div>
             <div class="image-preview-container">
-                <img id="image-preview" src="<?php echo get_staff_image_url($staff, '200x200'); ?>" alt="Current Profile Picture">
-                <div class="remove-image" id="remove-image"><i class="lni lni-xmark"></i></div>
+                <?php
+                // Get department color for placeholder background
+                $dept_color = '#cccccc'; // Default gray
+                foreach ($departments as $dept) {
+                    if ($dept['id'] == $staff['department_id']) {
+                        $dept_color = $dept['color'];
+                        break;
+                    }
+                }
+                
+                // Determine if we're showing a real profile picture or placeholder
+                // Need to check if profile_picture field actually contains a valid uploaded image file
+                $has_profile_picture = !empty($staff['profile_picture']) && file_exists(__DIR__ . '/../uploads/' . $staff['profile_picture']);
+                ?>
+                <img id="image-preview" 
+                     src="<?php echo get_staff_image_url($staff, '200x200', null, $dept_color); ?>" 
+                     alt="Current Profile Picture"
+                     data-is-placeholder="<?php echo $has_profile_picture ? 'false' : 'true'; ?>"
+                     data-dept-color="<?php echo $dept_color; ?>">
+                <!-- Remove button (hidden for placeholders, visible for custom images) -->
+                <div class="remove-image" id="remove-image" style="display: <?php echo $has_profile_picture ? 'flex' : 'none'; ?>">
+                    <i class="lni lni-xmark"></i>
+                </div>
             </div>
         </div>
 
@@ -220,5 +242,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <script src="../assets/js/main.js"></script>
+
+<script>
+// Update placeholder image when department changes
+document.addEventListener('DOMContentLoaded', function() {
+    const departmentSelect = document.getElementById('department_id');
+    const imagePreview = document.getElementById('image-preview');
+    const removeButton = document.getElementById('remove-image');
+    const profilePicture = '<?php echo $staff["profile_picture"]; ?>';
+    const firstName = '<?php echo $staff["first_name"]; ?>';
+    const lastName = '<?php echo $staff["last_name"]; ?>';
+    
+    // Store department colors in a JavaScript object
+    const departmentColors = {};
+    <?php foreach ($departments as $dept): ?>
+    departmentColors['<?php echo $dept["id"]; ?>'] = '<?php echo $dept["color"]; ?>';
+    <?php endforeach; ?>
+    
+    // Enforce correct placeholder status and remove button visibility on page load
+    const hasRealImage = '<?php echo $has_profile_picture ? "true" : "false"; ?>' === 'true';
+    console.log('Page load - Has real image:', hasRealImage);
+    
+    if (imagePreview) {
+        // Set the correct placeholder status
+        imagePreview.dataset.isPlaceholder = hasRealImage ? 'false' : 'true';
+        
+        // Make absolutely sure the remove button visibility is correct
+        if (removeButton) {
+            removeButton.style.display = hasRealImage ? 'flex' : 'none';
+            console.log('Setting initial remove button visibility:', hasRealImage ? 'visible' : 'hidden');
+        }
+    }
+    
+    // Function to update the image preview
+    function updateImagePreview() {
+        // Only update if no profile picture is set
+        if (!profilePicture) {
+            const departmentId = departmentSelect.value;
+            const departmentColor = departmentColors[departmentId] || '#cccccc';
+            
+            // Generate new image URL with updated department color
+            const timestamp = new Date().getTime(); // Add timestamp to prevent caching
+            imagePreview.src = `../includes/generate_placeholder.php?name=${firstName}+${lastName}&size=200x200&bg_color=${encodeURIComponent(departmentColor)}&t=${timestamp}`;
+            
+            // When changing department colors, ensure this is still treated as a placeholder
+            // with no remove button
+            imagePreview.dataset.isPlaceholder = 'true';
+            if (removeButton) {
+                removeButton.style.display = 'none';
+            }
+        }
+    }
+    
+    // Listen for changes to the department select
+    departmentSelect.addEventListener('change', updateImagePreview);
+});
+</script>
 
 <?php require_once '../includes/admin_footer.php'; ?>

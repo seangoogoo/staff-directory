@@ -45,6 +45,18 @@ select {
   background-color: transparent;
 }
 
+// Site branding styles
+.site-branding {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  .site-logo {
+    height: 40px;
+    width: auto;
+  }
+}
+
 // Button styles
 .btn {
   @include button;

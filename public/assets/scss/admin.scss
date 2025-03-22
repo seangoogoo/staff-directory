@@ -64,11 +64,12 @@ td.action-buttons a.btn {
   padding: 1rem 0;
 
   .container {
-
     @include media-md {
       @include flex-between;
     }
   }
+
+  // Admin branding uses site-branding from _common.scss
 
   .admin-title {
     margin: 0;

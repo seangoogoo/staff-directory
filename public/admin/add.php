@@ -17,8 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($first_name) || empty($last_name) || empty($department_id) || empty($job_title) || empty($email)) {
         $error_message = "All fields are required.";
     } else {
-        // Set default profile picture
-        $profile_picture = 'default.jpg';
+        // Set profile_picture to empty string by default (will use placeholder)
+        $profile_picture = '';
 
         // Handle profile picture upload if provided
         if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['size'] > 0) {
@@ -37,7 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     VALUES (?, ?, ?, ?, ?, ?)";
 
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("sissss", $first_name, $last_name, $department_id, $job_title, $email, $profile_picture);
+            // Fix the binding - first_name is string, last_name is string, department_id is integer
+            $stmt->bind_param("ssisss", $first_name, $last_name, $department_id, $job_title, $email, $profile_picture);
 
             if ($stmt->execute()) {
                 // Redirect to admin dashboard with success message
@@ -89,12 +90,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div id="department-color-preview" class="mt-2" style="display: none;"></div>
         </div>
 
-        <!-- Add JavaScript to update department color preview on selection change -->
+        <!-- Add JavaScript to update department color preview and placeholder image on selection change -->
         <script>
             // Wait for DOM to be fully loaded
             document.addEventListener('DOMContentLoaded', function() {
                 const departmentSelect = document.getElementById('department_id');
                 const colorPreview = document.getElementById('department-color-preview');
+                const imagePreview = document.getElementById('image-preview');
+                // Get form values that we need for generating the placeholder
+                const firstName = document.getElementById('first_name');
+                const lastName = document.getElementById('last_name');
                 
                 // Set initial state if a department is already selected
                 if (departmentSelect.value) {
@@ -102,7 +107,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 // Update on change
-                departmentSelect.addEventListener('change', updateColorPreview);
+                departmentSelect.addEventListener('change', function() {
+                    updateColorPreview();
+                    updatePlaceholderImage();
+                });
+                
+                // Also update placeholder when name fields change
+                if (firstName && lastName) {
+                    firstName.addEventListener('input', updatePlaceholderImage);
+                    lastName.addEventListener('input', updatePlaceholderImage);
+                }
                 
                 // Function to update color preview
                 function updateColorPreview() {
@@ -129,6 +143,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         colorPreview.style.display = 'block';
                     } else {
                         colorPreview.style.display = 'none';
+                    }
+                }
+                
+                // Function to update the placeholder image when department changes
+                function updatePlaceholderImage() {
+                    // Only update if no file has been selected
+                    const fileInput = document.querySelector('.dropzone-input');
+                    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                        // Don't update if user has already selected a file
+                        return;
+                    }
+                    
+                    // Get current values
+                    const selectedOption = departmentSelect.options[departmentSelect.selectedIndex];
+                    const color = selectedOption?.getAttribute('data-color') || '#cccccc';
+                    const fName = firstName?.value || '';
+                    const lName = lastName?.value || '';
+                    
+                    // If we have an image preview element
+                    if (imagePreview) {
+                        // Properly format the name for the placeholder image
+                        // The generate_placeholder.php uses explode(' ', $name, 2) to parse the name
+                        // So we need to use space as separator, not plus
+                        let nameParam = 'NEW';
+                        if (fName || lName) {
+                            nameParam = `${fName.trim()} ${lName.trim()}`;
+                        }
+                        
+                        // Generate new image URL with updated department color
+                        const timestamp = new Date().getTime(); // Add timestamp to prevent caching
+                        imagePreview.src = `../includes/generate_placeholder.php?name=${encodeURIComponent(nameParam)}&size=200x200&bg_color=${encodeURIComponent(color)}&t=${timestamp}`;
+                        console.log('Updating placeholder with:', nameParam);
+                        
+                        // Ensure this is properly marked as a placeholder image
+                        imagePreview.dataset.isPlaceholder = 'true';
+                        
+                        // Hide remove button since this is a placeholder
+                        const removeButton = document.getElementById('remove-image');
+                        if (removeButton) {
+                            removeButton.style.display = 'none';
+                        }
                     }
                 }
             });
@@ -187,5 +242,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <script src="../assets/js/main.js"></script>
+
+<!-- Add page-specific initialization for the placeholder image -->
+<script>
+// Initialize the add page properly with placeholder image
+document.addEventListener('DOMContentLoaded', function() {
+    const imagePreview = document.getElementById('image-preview');
+    const removeButton = document.getElementById('remove-image');
+    
+    // Always hide remove button on page load for add.php
+    // since we always start with a placeholder
+    if (imagePreview && removeButton) {
+        // Mark this as a placeholder image
+        imagePreview.dataset.isPlaceholder = 'true';
+        // Hide the remove button
+        removeButton.style.display = 'none';
+    }
+});
+</script>
 
 <?php require_once '../includes/admin_footer.php'; ?>

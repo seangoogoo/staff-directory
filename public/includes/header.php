@@ -30,7 +30,10 @@ require_once __DIR__ . '/functions.php';
 <body>
     <header class="main-header">
         <div class="container">
-            <span class="site-title">Staff Directory</span>
+            <div class="site-branding">
+                <img src="/assets/images/staff-directory-logo.svg" alt="Staff Directory Logo" class="site-logo">
+                <span class="site-title">Staff Directory</span>
+            </div>
             <nav class="main-nav">
                 <ul>
                     <li><a href="#" id="adminLink" class="icon-link" title="Admin Area"><i class="lni lni-user-4"></i></a></li>

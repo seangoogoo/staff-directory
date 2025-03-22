@@ -11,8 +11,6 @@ require_once '../includes/admin_header.php';
 // Default settings
 $placeholder_settings = [
     'font_weight' => 'Regular',
-    'bg_color' => '#cccccc',
-    'text_color' => '#ffffff',
     'font_size_factor' => 3 // Default font size factor (higher = larger font)
 ];
 
@@ -27,15 +25,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
         ? $_POST['font_weight']
         : 'Regular';
 
-    // Validate colors (simple validation for hex format)
-    $bg_color = isset($_POST['bg_color']) && preg_match('/^#[a-f0-9]{6}$/i', $_POST['bg_color'])
-        ? $_POST['bg_color']
-        : '#cccccc';
-
-    $text_color = isset($_POST['text_color']) && preg_match('/^#[a-f0-9]{6}$/i', $_POST['text_color'])
-        ? $_POST['text_color']
-        : '#ffffff';
-
     // Validate font size factor (between 1 and 6)
     $font_size_factor = isset($_POST['font_size_factor']) && is_numeric($_POST['font_size_factor'])
         && $_POST['font_size_factor'] >= 1 && $_POST['font_size_factor'] <= 6
@@ -47,18 +36,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
         // Update each setting in the database
         $settings = [
             'font_weight' => $font_weight,
-            'bg_color' => $bg_color,
-            'text_color' => $text_color,
             'font_size_factor' => $font_size_factor
         ];
-        
+
         foreach ($settings as $key => $value) {
             // Check if setting exists
             $check = $conn->prepare("SELECT id FROM placeholder_settings WHERE setting_key = ?");
             $check->bind_param("s", $key);
             $check->execute();
             $result = $check->get_result();
-            
+
             if ($result->num_rows > 0) {
                 // Update existing setting
                 $stmt = $conn->prepare("UPDATE placeholder_settings SET setting_value = ?, updated_at = NOW() WHERE setting_key = ?");
@@ -70,20 +57,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
                 $stmt->bind_param("ss", $value, $key);
                 $stmt->execute();
             }
-            
+
             // Close statements
             $check->close();
             $stmt->close();
         }
-        
+
         $success_message = "Settings saved successfully!";
-        
+
         // Update our current settings for this page
         $placeholder_settings['font_weight'] = $font_weight;
         $placeholder_settings['bg_color'] = $bg_color;
         $placeholder_settings['text_color'] = $text_color;
         $placeholder_settings['font_size_factor'] = $font_size_factor;
-        
+
         // Clear placeholder images to force regeneration
         $placeholder_dir = __DIR__ . '/../uploads/placeholders';
         if (is_dir($placeholder_dir)) {
@@ -155,15 +142,7 @@ $sample_image_url = get_staff_image_url([
                     </div>
 
                     <div class="form-group">
-                        <label for="bg_color">Background Color:</label>
-                        <input type="color" name="bg_color" id="bg_color" class="form-control"
-                               value="<?php echo $placeholder_settings['bg_color']; ?>">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="text_color">Text Color:</label>
-                        <input type="color" name="text_color" id="text_color" class="form-control"
-                               value="<?php echo $placeholder_settings['text_color']; ?>">
+                        <p class="text-info"><i class="fa fa-info-circle"></i> Placeholder backgrounds now use department colors automatically.</p>
                     </div>
 
                     <div class="form-group">
@@ -188,17 +167,10 @@ $sample_image_url = get_staff_image_url([
                 <div class="preview-container">
                     <h3>Preview</h3>
                     <div class="sample-image">
-                        <img src="<?php echo $sample_image_url; ?>" alt="Sample Placeholder" class="img-fluid">
+                        <img id="preview-image" src="<?php echo $sample_image_url; ?>" alt="Sample Placeholder" class="img-fluid">
                     </div>
-                    <p class="mt-3">Current Settings:</p>
-                    <ul>
-                        <li><strong>Font Weight:</strong> <?php echo $placeholder_settings['font_weight']; ?></li>
-                        <li><strong>Background Color:</strong> <?php echo $placeholder_settings['bg_color']; ?></li>
-                        <li><strong>Text Color:</strong> <?php echo $placeholder_settings['text_color']; ?></li>
-                        <li><strong>Font Size Factor:</strong> <span id="font-size-display"><?php echo isset($placeholder_settings['font_size_factor']) ? $placeholder_settings['font_size_factor'] : 3; ?></span></li>
-                    </ul>
-                    <p class="text-muted">
-                       <small><i>Note: Saving settings will clear all existing placeholder images to force regeneration with new settings.</i></small>
+                    <p class="text-muted mt-3">
+                       <small><i>Note: Changes are shown in the preview but only applied to all placeholder images when you click Save.</i></small>
                     </p>
                 </div>
             </div>
@@ -207,20 +179,60 @@ $sample_image_url = get_staff_image_url([
 </div>
 
 <script>
-    // Update font size display when slider changes
+    // Update preview when settings change
     document.addEventListener('DOMContentLoaded', function() {
+        // Get form elements
         const fontSizeSlider = document.getElementById('font_size_factor')
+        const fontWeightSelect = document.getElementById('font_weight')
         const fontSizeDisplay = document.querySelector('.range-labels .current-value')
-        const fontSizePreview = document.getElementById('font-size-display')
-
-        if (fontSizeSlider && fontSizeDisplay && fontSizePreview) {
-            fontSizeSlider.addEventListener('input', function() {
-                const value = parseFloat(this.value).toFixed(1)
+        const previewImage = document.getElementById('preview-image')
+        
+        // Generate placeholder URL with specific parameters
+        function generatePlaceholderUrl(fontWeight, fontSizeFactor) {
+            // Use Admin Buddy as our demo initials
+            const timestamp = new Date().getTime() // Prevent caching
+            console.log(`Generating preview with font size factor: ${fontSizeFactor}`)
+            // Force clearing out the browser's cache by adding timestamp and random value
+            return `../includes/generate_placeholder.php?name=${encodeURIComponent('Admin Buddy')}&size=200x200&font_weight=${encodeURIComponent(fontWeight)}&font_size_factor=${fontSizeFactor}&nocache=${timestamp}-${Math.random()}`
+        }
+        
+        // Update preview image with current settings
+        function updatePreview() {
+            if (!fontWeightSelect || !fontSizeSlider || !previewImage) return
+            
+            const fontWeight = fontWeightSelect.value
+            const fontSizeFactor = fontSizeSlider.value
+            
+            // Update font size display
+            if (fontSizeDisplay) {
+                const value = parseFloat(fontSizeFactor).toFixed(1)
                 // Remove trailing zero if value is whole number
                 const displayValue = value.endsWith('.0') ? value.slice(0, -2) : value
                 fontSizeDisplay.textContent = displayValue
-                fontSizePreview.textContent = displayValue
-            })
+            }
+            
+            // Force image update by creating a new Image object
+            const newImage = new Image()
+            newImage.onload = function() {
+                previewImage.src = this.src
+            }
+            newImage.src = generatePlaceholderUrl(fontWeight, fontSizeFactor)
+            
+            // For debugging
+            console.log('Preview update requested for font size factor:', fontSizeFactor)
+        }
+        
+        // Add event listeners
+        if (fontSizeSlider) {
+            // Listen to both input and change events to ensure it works across all browsers
+            fontSizeSlider.addEventListener('input', updatePreview)
+            fontSizeSlider.addEventListener('change', updatePreview)
+            // Manually trigger the update once to ensure initial state is correct
+            updatePreview()
+        }
+        
+        if (fontWeightSelect) {
+            fontWeightSelect.addEventListener('change', updatePreview)
         }
     })
 </script>

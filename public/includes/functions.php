@@ -3,21 +3,21 @@
 
 /**
  * Get placeholder settings from database
- * 
+ *
  * @return array Associative array of placeholder settings
  */
 function get_placeholder_settings_from_db() {
     global $conn;
     $placeholder_settings = [];
-    
+
     if (isset($conn) && !$conn->connect_error) {
         // Using mysqli instead of PDO
         $stmt = $conn->prepare("SELECT setting_key, setting_value FROM placeholder_settings");
-        
+
         if ($stmt) {
             $stmt->execute();
             $result = $stmt->get_result();
-            
+
             // Fetch all rows
             while ($row = $result->fetch_assoc()) {
                 // Convert font_size_factor to float for calculations
@@ -27,11 +27,11 @@ function get_placeholder_settings_from_db() {
                     $placeholder_settings[$row['setting_key']] = $row['setting_value'];
                 }
             }
-            
+
             $stmt->close();
         }
     }
-    
+
     return $placeholder_settings;
 }
 
@@ -60,7 +60,7 @@ function get_staff_image_url($staff, $size = '600x600', $font_weight = null, $bg
     if (!empty($placeholder_settings)) {
         $default_settings = array_merge($default_settings, $placeholder_settings);
     }
-    
+
     // Fallback to file-based settings if database settings couldn't be loaded
     // This provides backward compatibility during migration
     if (empty($placeholder_settings)) {
@@ -412,7 +412,7 @@ function get_staff_member_by_id($conn, $id) {
 
 /**
  * Get all departments
- * 
+ *
  * @param mysqli $conn Database connection
  * @return array Array of departments with id, name, description, and color
  */
@@ -521,22 +521,22 @@ function get_department_by_name($conn, $name) {
 }
 /**
  * Determine if text should be light or dark based on background color
- * 
+ *
  * @param string $hex_color The hex color code (with or without #)
  * @return string The CSS class name ('dark-text' or 'light-text')
  */
 function get_text_contrast_class($hex_color) {
     // Remove # if present
     $hex = ltrim($hex_color, '#');
-    
+
     // Convert hex to RGB
     $r = hexdec(substr($hex, 0, 2));
     $g = hexdec(substr($hex, 2, 2));
     $b = hexdec(substr($hex, 4, 2));
-    
+
     // Calculate luminance - standard formula for brightness perception
     $luminance = (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
-    
+
     // Return appropriate class name based on luminance
     return ($luminance > 150) ? 'dark-text' : 'light-text';
 }

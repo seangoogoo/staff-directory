@@ -36,7 +36,10 @@ if (!is_logged_in()) {
 <body class="admin-area">
     <header class="admin-header">
         <div class="container">
-            <span class="admin-title">Staff directory Admin</span>
+            <div class="site-branding">
+                <img src="/assets/images/staff-directory-logo.svg" alt="Staff Directory Logo" class="site-logo">
+                <span class="admin-title">Staff Directory Admin</span>
+            </div>
             <nav class="admin-nav">
                 <ul>
                     <li><a href="/admin/index.php">Manage staff members</a></li>
