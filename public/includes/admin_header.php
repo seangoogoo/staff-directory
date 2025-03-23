@@ -22,7 +22,13 @@ if (!is_logged_in()) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Staff Directory</title>
+    <?php
+    // Get application settings with defaults - make them globally accessible
+    global $app_settings;
+    $app_settings = load_app_settings();
+    $admin_title = $app_settings['admin_title']; // Default is already provided by load_app_settings
+    ?>
+    <title><?php echo htmlspecialchars($admin_title); ?></title>
     <link rel="stylesheet" href="/assets/vendor/lineicons/lineicons.css">
     <?php
     // Add timestamp to CSS URL in dev mode to force cache refresh
@@ -37,8 +43,18 @@ if (!is_logged_in()) {
     <header class="admin-header">
         <div class="container">
             <div class="site-branding">
-                <img src="/assets/images/staff-directory-logo.svg" alt="Staff Directory Logo" class="site-logo">
-                <span class="admin-title">Staff Directory Admin</span>
+                <?php
+                // Use the app settings we already loaded above
+                $logo_path = !empty($app_settings['custom_logo_path']) ? $app_settings['custom_logo_path'] : '/assets/images/staff-directory-logo.svg';
+                // admin_title is already set above
+                $show_logo = isset($app_settings['show_logo']) ? $app_settings['show_logo'] : '1';
+
+                // Only show the logo if the setting is enabled
+                if ($show_logo === '1') :
+                ?>
+                <img src="<?php echo htmlspecialchars($logo_path); ?>" alt="<?php echo htmlspecialchars($admin_title); ?> Logo" class="site-logo">
+                <?php endif; ?>
+                <span class="site-title dark-text"><?php echo htmlspecialchars($admin_title); ?></span>
             </div>
             <nav class="admin-nav">
                 <ul>

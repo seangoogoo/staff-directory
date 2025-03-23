@@ -204,7 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <i class="lni lni-cloud-upload"></i>
                 </div>
                 <div class="dropzone-text">Drag & drop your image here</div>
-                <div class="dropzone-subtext">or click to browse files (JPG, PNG only)</div>
+                <div class="dropzone-subtext">or click to browse files (JPG, PNG, WebP)</div>
                 <div class="dropzone-file-info" style="display: none;"></div>
             </div>
             <div class="image-preview-container">

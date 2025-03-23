@@ -15,7 +15,7 @@ body {
   font-optical-sizing: auto;
   line-height: 1.6;
   color: #333;
-  background-color: #f4f6f9;
+  background-color: #fdfdf8;
   display: grid;
   grid-template-rows: auto 1fr auto;
 }
@@ -27,8 +27,14 @@ body {
   padding: 0 15px;
 }
 
+.page-title {
+  margin-bottom: 1.5rem;
+  color: #2c3e50;
+  font-weight: 100;
+}
+
 a {
-  color: #3c97d4;
+  color: #79b3db;
   text-decoration: none;
 }
 a:hover {
@@ -41,7 +47,6 @@ select {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 1rem;
-  background-color: transparent;
 }
 
 .site-branding {
@@ -66,10 +71,12 @@ select {
       -ms-flex-align: center;
           align-items: center;
   cursor: pointer;
-  background-color: #3c97d4;
+  background-color: #79b3db;
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 4px;
+  -webkit-transition: background-color 300ms;
+  transition: background-color 300ms;
   text-decoration: none;
   gap: 0.5rem;
   font-family: inherit;
@@ -81,7 +88,7 @@ select {
           appearance: none;
 }
 .btn:hover {
-  background-color: #2980b9;
+  background-color: #6799bb;
 }
 .btn:hover {
   text-decoration: none;
@@ -141,10 +148,10 @@ input[type=email]:focus,
 input[type=password]:focus,
 select:focus,
 textarea:focus {
-  border-color: #3c97d4;
+  border-color: #79b3db;
   outline: none;
-  -webkit-box-shadow: 0 0 0 0.2rem rgba(60, 151, 212, 0.25);
-          box-shadow: 0 0 0 0.2rem rgba(60, 151, 212, 0.25);
+  -webkit-box-shadow: 0 0 0 0.2rem rgba(121, 179, 219, 0.25);
+          box-shadow: 0 0 0 0.2rem rgba(121, 179, 219, 0.25);
 }
 
 .form-actions {
@@ -175,9 +182,9 @@ textarea:focus {
   border-color: #f8c9c4;
 }
 .alert-info {
-  color: #164362;
-  background-color: #e3f0f9;
-  border-color: #b9daf0;
+  color: #286793;
+  background-color: white;
+  border-color: #f2f7fb;
 }
 
 .main-footer,
@@ -212,12 +219,12 @@ textarea:focus {
           align-items: center;
 }
 .dropzone:hover {
-  border-color: #3c97d4;
-  background-color: rgba(60, 151, 212, 0.05);
+  border-color: #79b3db;
+  background-color: rgba(121, 179, 219, 0.05);
 }
 .dropzone.dragover {
-  border-color: #3c97d4;
-  background-color: rgba(60, 151, 212, 0.1);
+  border-color: #79b3db;
+  background-color: rgba(121, 179, 219, 0.1);
 }
 .dropzone .dropzone-icon {
   font-size: 4rem;
@@ -237,7 +244,7 @@ textarea:focus {
   color: #666;
 }
 .dropzone .dropzone-file-info {
-  background-color: rgba(60, 151, 212, 0.1);
+  background-color: rgba(121, 179, 219, 0.1);
   padding: 0.5rem;
   border-radius: 4px;
   margin-top: 0.75rem;
@@ -321,7 +328,7 @@ input[type=file].dropzone-input {
   font-size: 0.875rem;
   line-height: 1;
   border-radius: 2rem;
-  background-color: #f9f9f9;
+  background-color: var(--dept-color, #f9f9f9);
   color: #333;
   max-width: 100%;
 }
@@ -332,11 +339,13 @@ input[type=file].dropzone-input {
   letter-spacing: 0.5px;
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
-.pill.dark-text {
-  color: #333;
+
+.dark-text {
+  color: color-mix(in srgb, var(--dept-color, #333), black 50%);
 }
-.pill.light-text {
-  color: white;
+
+.light-text {
+  color: color-mix(in srgb, var(--dept-color, white), white 90%);
 }
 
 .modal {
@@ -435,9 +444,9 @@ input[type=file].dropzone-input {
 }
 .form-group input[type=text]:focus,
 .form-group input[type=password]:focus {
-  border-color: #3c97d4;
-  -webkit-box-shadow: 0 0 0 0.2rem rgba(60, 151, 212, 0.25);
-          box-shadow: 0 0 0 0.2rem rgba(60, 151, 212, 0.25);
+  border-color: #79b3db;
+  -webkit-box-shadow: 0 0 0 0.2rem rgba(121, 179, 219, 0.25);
+          box-shadow: 0 0 0 0.2rem rgba(121, 179, 219, 0.25);
   outline: none;
 }
 
@@ -466,12 +475,12 @@ input[type=file].dropzone-input {
   transition: background-color 0.2s;
 }
 .form-actions .submit-btn {
-  background-color: #3c97d4;
+  background-color: #79b3db;
   color: white;
   border: none;
 }
 .form-actions .submit-btn:hover {
-  background-color: #287cb5;
+  background-color: #519cd0;
 }
 
 body.modal-open {
@@ -479,8 +488,7 @@ body.modal-open {
 }
 
 .main-header {
-  background-color: #b9c9d4;
-  color: white;
+  background-color: #eaeae5;
   padding: 1rem 0;
 }
 @media (min-width: 768px) {
@@ -499,6 +507,7 @@ body.modal-open {
 .main-header .site-title {
   margin: 0;
   font-size: 1.8rem;
+  font-weight: 100;
 }
 
 .main-nav ul {
@@ -530,18 +539,18 @@ body.modal-open {
   background: #fbfcfc;
   -webkit-transform: scale(1);
           transform: scale(1);
-  -webkit-transition: all 0.3s ease;
-  transition: all 0.3s ease;
+  -webkit-transition: all 300ms ease;
+  transition: all 300ms ease;
 }
 .main-nav .icon-link:hover {
-  background: #f9f9f9;
+  background: #fdfdf8;
   text-decoration: none;
   -webkit-transform: scale(1.05);
           transform: scale(1.05);
 }
 .main-nav .icon-link i {
-  -webkit-transition: all 0.3s ease;
-  transition: all 0.3s ease;
+  -webkit-transition: all 300ms ease;
+  transition: all 300ms ease;
   font-size: 1.5rem;
   color: #233140;
 }
@@ -555,12 +564,6 @@ main {
 }
 main a {
   font-weight: 200;
-}
-
-.page-title {
-  margin-bottom: 1.5rem;
-  color: #2c3e50;
-  font-weight: 600;
 }
 
 .controls {
@@ -623,19 +626,24 @@ main a {
 }
 
 .staff-card {
+  display: grid;
+  grid-template-rows: auto 1fr;
   background-color: white;
-  border-radius: 5px;
-  -webkit-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  border-radius: 20px;
+  -webkit-box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  overflow: clip;
 }
 .staff-card .staff-image {
   width: 100%;
   aspect-ratio: 1;
   -o-object-fit: cover;
      object-fit: cover;
+  -o-object-position: center top;
+     object-position: center top;
 }
 .staff-card .staff-details {
+  position: relative;
   padding: 1rem;
   display: -webkit-box;
   display: -ms-flexbox;
@@ -646,20 +654,25 @@ main a {
           flex-direction: column;
   height: 100%;
 }
-.staff-card .staff-name {
+.staff-card .staff-details > * {
+  margin-block: initial;
+}
+.staff-card .staff-details .staff-name {
   font-size: 1.2rem;
-  margin-bottom: 0.5rem;
   color: #2c3e50;
   font-weight: 600;
+  line-height: 1;
 }
-.staff-card .staff-job {
-  font-weight: bold;
+.staff-card .staff-details .staff-job {
+  font-weight: 200;
   margin-bottom: 0.3rem;
+  line-height: 1;
 }
-.staff-card .staff-department {
+.staff-card .staff-details .staff-department {
   color: #666;
   margin-bottom: 0.5rem;
 }
-.staff-card .staff-email {
+.staff-card .staff-details .staff-email {
   word-break: break-all;
+  font-size: 0.85rem;
 }/*# sourceMappingURL=frontend.css.map */

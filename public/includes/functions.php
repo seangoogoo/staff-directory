@@ -1,38 +1,15 @@
 <?php
 // Common functions for the application
 
+
 /**
- * Get placeholder settings from database
+ * Get placeholder settings from database (legacy function for backward compatibility)
  *
- * @return array Associative array of placeholder settings
+ * @return array Associative array of placeholder settings with defaults
  */
 function get_placeholder_settings_from_db() {
-    global $conn;
-    $placeholder_settings = [];
-
-    if (isset($conn) && !$conn->connect_error) {
-        // Using mysqli instead of PDO
-        $stmt = $conn->prepare("SELECT setting_key, setting_value FROM placeholder_settings");
-
-        if ($stmt) {
-            $stmt->execute();
-            $result = $stmt->get_result();
-
-            // Fetch all rows
-            while ($row = $result->fetch_assoc()) {
-                // Convert font_size_factor to float for calculations
-                if ($row['setting_key'] === 'font_size_factor') {
-                    $placeholder_settings[$row['setting_key']] = (float)$row['setting_value'];
-                } else {
-                    $placeholder_settings[$row['setting_key']] = $row['setting_value'];
-                }
-            }
-
-            $stmt->close();
-        }
-    }
-
-    return $placeholder_settings;
+    // Call load_app_settings to ensure we get defaults as well
+    return load_app_settings();
 }
 
 /**
@@ -55,24 +32,10 @@ function get_staff_image_url($staff, $size = '600x600', $font_weight = null, $bg
         'font_size_factor' => 3 // Default font size factor (higher = larger font)
     ];
 
-    // Load custom settings from database if available
+    // Load settings with defaults from the database
+    // get_placeholder_settings_from_db() now calls load_app_settings() which provides all defaults
     $placeholder_settings = get_placeholder_settings_from_db();
-    if (!empty($placeholder_settings)) {
-        $default_settings = array_merge($default_settings, $placeholder_settings);
-    }
-
-    // Fallback to file-based settings if database settings couldn't be loaded
-    // This provides backward compatibility during migration
-    if (empty($placeholder_settings)) {
-        $settings_file = __DIR__ . '/placeholder_settings.php';
-        if (file_exists($settings_file)) {
-            include $settings_file;
-            // $placeholder_settings will be loaded from the file
-            if (isset($placeholder_settings) && is_array($placeholder_settings)) {
-                $default_settings = array_merge($default_settings, $placeholder_settings);
-            }
-        }
-    }
+    $default_settings = array_merge($default_settings, $placeholder_settings);
 
     // Use provided parameters if set, otherwise use defaults
     $font_weight = $font_weight ?: $default_settings['font_weight'];
@@ -303,8 +266,8 @@ function upload_profile_picture($file) {
     }
 
     // Allow certain file formats
-    if($file_extension != "jpg" && $file_extension != "png" && $file_extension != "jpeg") {
-        return ["success" => false, "message" => "Sorry, only JPG, JPEG & PNG files are allowed."];
+    if($file_extension != "jpg" && $file_extension != "png" && $file_extension != "jpeg" && $file_extension != "webp") {
+        return ["success" => false, "message" => "Sorry, only JPG, JPEG, PNG & WebP files are allowed."];
     }
 
     // Upload file
@@ -536,8 +499,251 @@ function get_text_contrast_class($hex_color) {
 
     // Calculate luminance - standard formula for brightness perception
     $luminance = (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
+    // debug_log("Luminance: " . $luminance);
 
     // Return appropriate class name based on luminance
-    return ($luminance > 150) ? 'dark-text' : 'light-text';
+    return ($luminance > 190) ? 'dark-text' : 'light-text';
 }
+
+/**
+ * Get session message and clear it from the session
+ *
+ * Used in: admin/settings.php, admin/staff_edit.php, admin/departments.php
+ * This function retrieves a message stored in the session and clears it
+ *
+ * @param string $key The session key to retrieve
+ * @return string The message or empty string if not set
+ */
+function get_session_message($key) {
+    $message = '';
+    if (isset($_SESSION[$key])) {
+        $message = $_SESSION[$key];
+        unset($_SESSION[$key]);
+    }
+    return $message;
+}
+
+/**
+ * Set a session message if not empty
+ *
+ * Used in: admin/settings.php, admin/staff_edit.php, admin/departments.php
+ * This function stores a non-empty message in the session
+ *
+ * @param string $key The session key to set
+ * @param string $message The message to store
+ * @return bool True if message was set, false if empty
+ */
+function set_session_message($key, $message) {
+    if (!empty($message)) {
+        $_SESSION[$key] = $message;
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Handle redirect after form processing
+ *
+ * Used in: admin/settings.php, admin/staff_edit.php, admin/departments.php
+ * This function sets session messages and performs a redirect
+ *
+ * @param string $success_key Session key for success message
+ * @param string $success_message Success message to store
+ * @param string $error_key Session key for error message
+ * @param string $error_message Error message to store
+ * @param string $redirect_url URL to redirect to (defaults to current page)
+ */
+function handle_redirect($success_key, $success_message, $error_key, $error_message, $redirect_url = '') {
+    // Set messages if they exist
+    set_session_message($success_key, $success_message);
+    set_session_message($error_key, $error_message);
+
+    // If no redirect URL provided, use current page
+    if (empty($redirect_url)) {
+        $redirect_url = $_SERVER['PHP_SELF'];
+    }
+
+    // Redirect to prevent form resubmission
+    header("Location: " . $redirect_url);
+    exit;
+}
+
+/**
+ * Get default application settings
+ *
+ * Used in: admin/settings.php, includes/header.php, includes/admin_header.php
+ * Provides default values for application settings when none are stored
+ *
+ * @return array Default application settings
+ */
+function get_default_app_settings()
+{
+    return [
+        'font_weight' => 'Regular',
+        'font_size_factor' => 3, // Default font size factor (higher = larger font)
+        'custom_logo_path' => '',
+        'frontend_title' => 'Staff Directory',
+        'admin_title' => 'Staff Directory Admin'
+    ];
+}
+
+/**
+ * Clear placeholder images to force regeneration
+ *
+ * Used in: admin/settings.php (when settings are changed), admin/staff_edit.php (when staff info is updated)
+ * Removes all placeholder images to ensure they're regenerated with current settings
+ */
+function clear_placeholder_images()
+{
+    $placeholder_dir = dirname(__DIR__) . '/uploads/placeholders';
+    if (is_dir($placeholder_dir)) {
+        // Clear both PNG and WebP placeholder images
+        $png_files = glob($placeholder_dir . '/*.png');
+        $webp_files = glob($placeholder_dir . '/*.webp');
+        $all_files = array_merge($png_files, $webp_files);
+
+        foreach ($all_files as $file) {
+            @unlink($file);
+        }
+    }
+}
+
+/**
+ * Update settings in the database
+ *
+ * Used in: admin/settings.php, admin/setup.php
+ * Updates or inserts settings into the app_settings table
+ *
+ * @param array $settings Associative array of settings to update
+ */
+function update_settings_in_db($settings)
+{
+    global $conn;
+
+    foreach ($settings as $key => $value) {
+        // Check if setting exists
+        $check = $conn->prepare("SELECT id FROM app_settings WHERE setting_key = ?");
+        $check->bind_param("s", $key);
+        $check->execute();
+        $result = $check->get_result();
+
+        if ($result->num_rows > 0) {
+            // Update existing setting
+            $stmt = $conn->prepare("UPDATE app_settings SET setting_value = ?, updated_at = NOW() WHERE setting_key = ?");
+            $stmt->bind_param("ss", $value, $key);
+            $stmt->execute();
+        } else {
+            // Insert new setting
+            $stmt = $conn->prepare("INSERT INTO app_settings (setting_key, setting_value) VALUES (?, ?)");
+            $stmt->bind_param("ss", $key, $value);
+            $stmt->execute();
+        }
+
+        // Close statements
+        $check->close();
+        $stmt->close();
+    }
+}
+
+
+
+/**
+ * Load application settings from database and merge with defaults
+ *
+ * Used in: admin/settings.php, includes/header.php, includes/admin_header.php, and throughout the application
+ * Loads settings from database and merges with defaults
+ *
+ * @return array Complete application settings
+ */
+function load_app_settings()
+{
+    // Start with default settings
+    $app_settings = get_default_app_settings();
+
+    // Load settings from database
+    global $conn;
+
+    if (isset($conn) && !$conn->connect_error) {
+        // Using mysqli instead of PDO
+        $stmt = $conn->prepare("SELECT setting_key, setting_value FROM app_settings");
+
+        if ($stmt) {
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            // Fetch all rows
+            while ($row = $result->fetch_assoc()) {
+                // Convert font_size_factor to float for calculations
+                if ($row['setting_key'] === 'font_size_factor') {
+                    $app_settings[$row['setting_key']] = (float)$row['setting_value'];
+                } else {
+                    $app_settings[$row['setting_key']] = $row['setting_value'];
+                }
+            }
+
+            $stmt->close();
+        }
+    }
+    // If database query fails, we'll just use the defaults from get_default_app_settings()
+
+    return $app_settings;
+}
+
+/**
+ * Generate a sample placeholder image with current settings
+ *
+ * Used in: admin/settings.php (for settings preview)
+ * Generates a sample placeholder image to preview current settings
+ *
+ * @param array $app_settings Current application settings
+ * @return string URL to the sample placeholder image
+ */
+function generate_sample_placeholder_image($app_settings)
+{
+    $sample_initials = 'AB';
+    $sample_size = '200x200';
+    return get_staff_image_url([
+        'first_name' => 'Admin',
+        'last_name' => 'Buddy',
+        'profile_picture' => ''
+    ], $sample_size);
+}
+
+/**
+ * Log debug information to a file
+ *
+ * @param mixed $data The data to log
+ * @param string $label Optional label for the log entry
+ * @param bool $print_r Whether to use print_r (true) or var_export (false)
+ * @return void
+ */
+function debug_log($data, $label = '', $print_r = true) {
+    $log_file = __DIR__ . '/../../logs/debug.log';
+
+    // Create logs directory if it doesn't exist
+    $log_dir = dirname($log_file);
+    if (!file_exists($log_dir)) {
+        mkdir($log_dir, 0755, true);
+    }
+
+    // Format the log entry
+    $log_entry = "[" . date('Y-m-d H:i:s') . "]";
+    if (!empty($label)) {
+        $log_entry .= " [{$label}]";
+    }
+
+    // Format the data
+    if (is_array($data) || is_object($data)) {
+        $log_entry .= "\n" . ($print_r ? print_r($data, true) : var_export($data, true));
+    } else {
+        $log_entry .= " {$data}";
+    }
+
+    // Add a line break at the end
+    $log_entry .= "\n\n";
+
+    // Write to log file
+    file_put_contents($log_file, $log_entry, FILE_APPEND);
+}
+
 ?>

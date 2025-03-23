@@ -2,9 +2,6 @@
 // Start with auth checks before any output
 require_once 'auth/auth.php';
 
-// Include common functions
-require_once '../includes/functions.php';
-
 // Check if user is logged in (will redirect if not logged in)
 require_login();
 
@@ -22,167 +19,202 @@ require_once '../includes/admin_header.php';
 //* New functions start
 
 /**
- * Process form submissions based on form type
+ * Update settings in the database
  *
- * @param string $form_type Type of form being processed (e.g., 'font', 'logo', 'title')
- * @param array $post_data POST data from form submission
- * @param array $files_data FILES data from form submission
- * @return array Result with consistent structure containing success status, messages, and settings
+ * @param array $settings Associative array of settings to update
  */
-function process_form_submission($form_type, $post_data, $files_data = []) {
-    $result = [
-        'success' => false,
-        'message' => '',
-        'settings' => [],
-        'success_key' => 'success_message',
-        'error_key' => 'error_message'
-    ];
+function update_settings_in_db($settings) {
+    global $conn;
 
-    // Process based on form type
-    switch ($form_type) {
-        case 'font':
-            // Process font settings
-            $font_result = process_font_settings($post_data);
+    foreach ($settings as $key => $value) {
+        // Check if setting exists
+        $check = $conn->prepare("SELECT id FROM app_settings WHERE setting_key = ?");
+        $check->bind_param("s", $key);
+        $check->execute();
+        $result = $check->get_result();
 
-            // Normalize result format
-            $result['success'] = !empty($font_result['messages']['success']);
-            $result['message'] = $result['success'] ? $font_result['messages']['success'] : $font_result['messages']['error'];
-            $result['settings'] = $font_result['settings'];
-            break;
+        if ($result->num_rows > 0) {
+            // Update existing setting
+            $stmt = $conn->prepare("UPDATE app_settings SET setting_value = ?, updated_at = NOW() WHERE setting_key = ?");
+            $stmt->bind_param("ss", $value, $key);
+            $stmt->execute();
+        } else {
+            // Insert new setting
+            $stmt = $conn->prepare("INSERT INTO app_settings (setting_key, setting_value) VALUES (?, ?)");
+            $stmt->bind_param("ss", $key, $value);
+            $stmt->execute();
+        }
 
-        case 'logo':
-            // Set session keys for logo operations
-            $result['success_key'] = 'logo_success_message';
-            $result['error_key'] = 'logo_error_message';
-
-            // Process logo visibility first (always happens)
-            $visibility_result = process_logo_visibility($post_data);
-            $result['settings']['show_logo'] = $visibility_result['show_logo'];
-
-            // Process logo removal
-            if (isset($post_data['remove_logo']) && ($post_data['remove_logo'] === '1' || $post_data['remove_logo'] === 1)) {
-                $removal_result = process_logo_removal();
-                $result['success'] = $removal_result['success'];
-                $result['message'] = $removal_result['message'];
-
-                if ($removal_result['success']) {
-                    $result['settings']['custom_logo_path'] = '';
-                }
-            }
-            // Process logo upload
-            else if (isset($files_data['custom_logo']) && $files_data['custom_logo']['error'] === UPLOAD_ERR_OK) {
-                $upload_result = process_logo_upload($files_data);
-                $result['success'] = $upload_result['success'];
-                $result['message'] = $upload_result['message'];
-
-                if ($upload_result['success']) {
-                    $result['settings']['custom_logo_path'] = $upload_result['logo_path'];
-                }
-            }
-            // Handle logo upload errors
-            else if (!isset($post_data['remove_logo'])) {
-                $error_message = handle_logo_upload_error($files_data);
-                $result['success'] = false;
-                $result['message'] = $error_message;
-            }
-            break;
-
-        case 'title':
-            // Set session keys for title operations
-            $result['success_key'] = 'logo_success_message';
-            $result['error_key'] = 'logo_error_message';
-
-            // Process title settings
-            $title_result = process_title_settings($post_data);
-            $result['success'] = $title_result['success'];
-            $result['message'] = $title_result['message'];
-
-            if ($title_result['success']) {
-                $result['settings']['frontend_title'] = $title_result['titles']['frontend_title'];
-                $result['settings']['admin_title'] = $title_result['titles']['admin_title'];
-            }
-            break;
-
-        case 'title_reset':
-            // Set session keys for title operations
-            $result['success_key'] = 'logo_success_message';
-            $result['error_key'] = 'logo_error_message';
-
-            // Reset title settings
-            $reset_result = reset_title_settings();
-            $result['success'] = $reset_result['success'];
-            $result['message'] = $reset_result['message'];
-
-            if ($reset_result['success']) {
-                $result['settings']['frontend_title'] = $reset_result['titles']['frontend_title'];
-                $result['settings']['admin_title'] = $reset_result['titles']['admin_title'];
-            }
-            break;
-
-        default:
-            $result['message'] = 'Unknown form type: ' . $form_type;
-            break;
+        // Close statements
+        $check->close();
+        $stmt->close();
     }
-
-    return $result;
 }
 
-// Update settings in database function has been moved to functions.php
-
-// Settings are already loaded in admin_header.php
-// No need to load settings again
+// Load settings
+$app_settings = load_app_settings();
 
 // Process form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $form_result = null;
-
-    // Determine which form was submitted and process it
     if (isset($_POST['save_settings'])) {
-        // Process font settings form
-        $form_result = process_form_submission('font', $_POST);
+        // Process font settings
+        $result = process_font_settings($_POST);
+        set_session_message('success_message', $result['messages']['success']);
+        set_session_message('error_message', $result['messages']['error']);
+
+        // Update our current settings
+        $app_settings = array_merge($app_settings, $result['settings']);
+
+        // Redirect to prevent form resubmission
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit;
     }
     else if (isset($_POST['save_logo_only'])) {
-        // Process logo form
-        $form_result = process_form_submission('logo', $_POST, $_FILES);
+        // Process logo settings
+        $visibility_result = process_logo_visibility($_POST);
+        $app_settings['show_logo'] = $visibility_result['show_logo'];
+
+        // Process logo removal or upload
+        if (isset($_POST['remove_logo']) && ($_POST['remove_logo'] === '1' || $_POST['remove_logo'] === 1)) {
+            $removal_result = process_logo_removal();
+            set_session_message('logo_success_message', $removal_result['message']);
+
+            if ($removal_result['success']) {
+                $app_settings['custom_logo_path'] = '';
+            }
+        }
+        else if (isset($_FILES['custom_logo']) && $_FILES['custom_logo']['error'] === UPLOAD_ERR_OK) {
+            $upload_result = process_logo_upload($_FILES);
+
+            if ($upload_result['success']) {
+                set_session_message('logo_success_message', $upload_result['message']);
+                $app_settings['custom_logo_path'] = $upload_result['logo_path'];
+            } else {
+                set_session_message('logo_error_message', $upload_result['message']);
+            }
+        }
+        else if (!isset($_POST['remove_logo'])) {
+            // Only show this error if we're not trying to remove the logo
+            $error_message = handle_logo_upload_error($_FILES);
+            set_session_message('logo_error_message', $error_message);
+        }
+
+        // Redirect to prevent form resubmission
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit;
     }
     else if (isset($_POST['save_title_settings'])) {
-        // Process title settings form
-        $form_result = process_form_submission('title', $_POST);
+        // Process title settings
+        $result = process_title_settings($_POST);
+
+        if ($result['success']) {
+            set_session_message('logo_success_message', $result['message']);
+            $app_settings['frontend_title'] = $result['titles']['frontend_title'];
+            $app_settings['admin_title'] = $result['titles']['admin_title'];
+        } else {
+            set_session_message('logo_error_message', $result['message']);
+        }
+
+        // Redirect to prevent form resubmission
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit;
     }
     else if (isset($_POST['reset_title_settings'])) {
-        // Process title reset form
-        $form_result = process_form_submission('title_reset', $_POST);
-    }
+        // Reset title settings
+        $result = reset_title_settings();
 
-    // Update app settings with form results if processing was successful
-    if ($form_result && !empty($form_result['settings'])) {
-        $app_settings = array_merge($app_settings, $form_result['settings']);
-    }
+        if ($result['success']) {
+            set_session_message('logo_success_message', $result['message']);
+            $app_settings['frontend_title'] = $result['titles']['frontend_title'];
+            $app_settings['admin_title'] = $result['titles']['admin_title'];
+        } else {
+            set_session_message('logo_error_message', $result['message']);
+        }
 
-    // Handle redirect with appropriate messages if form was processed
-    if ($form_result) {
-        handle_redirect(
-            $form_result['success_key'],
-            $form_result['success'] ? $form_result['message'] : '',
-            $form_result['error_key'],
-            !$form_result['success'] ? $form_result['message'] : ''
-        );
+        // Redirect to prevent form resubmission
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit;
     }
 }
 
 // Generate a sample placeholder image with current settings
 $sample_image_url = generate_sample_placeholder_image($app_settings);
 
-// Sample placeholder image generation function has been moved to functions.php
+/**
+ * Generate a sample placeholder image with current settings
+ *
+ * @param array $app_settings Current application settings
+ * @return string URL to the sample placeholder image
+ */
+function generate_sample_placeholder_image($app_settings) {
+    $sample_initials = 'AB';
+    $sample_size = '200x200';
+    return get_staff_image_url([
+        'first_name' => 'Admin',
+        'last_name' => 'Buddy',
+        'profile_picture' => ''
+    ], $sample_size);
+}
 
 //* New functions end
 
-// Session message and redirect functions have been moved to functions.php
+/**
+ * Get session message and clear it from the session
+ *
+ * @param string $key The session key to retrieve
+ * @return string The message or empty string if not set
+ */
+function get_session_message($key) {
+    $message = '';
+    if (isset($_SESSION[$key])) {
+        $message = $_SESSION[$key];
+        unset($_SESSION[$key]);
+    }
+    return $message;
+}
 
-// Default settings function has been moved to functions.php
+/**
+ * Set a session message
+ *
+ * @param string $key The session key to set
+ * @param string $message The message to store
+ */
+function set_session_message($key, $message) {
+    $_SESSION[$key] = $message;
+}
+
+/**
+ * Get default application settings
+ *
+ * @return array Default application settings
+ */
+function get_default_app_settings() {
+    return [
+        'font_weight' => 'Regular',
+        'font_size_factor' => 3, // Default font size factor (higher = larger font)
+        'custom_logo_path' => '',
+        'frontend_title' => 'Staff Directory',
+        'admin_title' => 'Staff Directory Admin'
+    ];
+}
 
 
-// Clear placeholder images function has been moved to functions.php
+/**
+ * Clear placeholder images to force regeneration
+ */
+function clear_placeholder_images() {
+    $placeholder_dir = __DIR__ . '/../uploads/placeholders';
+    if (is_dir($placeholder_dir)) {
+        // Clear both PNG and WebP placeholder images
+        $png_files = glob($placeholder_dir . '/*.png');
+        $webp_files = glob($placeholder_dir . '/*.webp');
+        $all_files = array_merge($png_files, $webp_files);
+
+        foreach ($all_files as $file) {
+            @unlink($file);
+        }
+    }
+}
 
 /**
  * Process and save font settings
@@ -481,13 +513,13 @@ function process_title_settings($post_data) {
  * @return array Result with status and messages
  */
 function reset_title_settings() {
-    $original_app_settings= get_default_app_settings();
+    global $conn;
     $result = ['success' => false, 'message' => ''];
 
     try {
-        // Get default values from .env file or fallback to default app settings stored in functions.php
-        $default_frontend_title = isset($_ENV['DEFAULT_FRONTEND_TITLE']) && $_ENV['DEFAULT_FRONTEND_TITLE'] !== '' ? $_ENV['DEFAULT_FRONTEND_TITLE'] : $original_app_settings['frontend_title'];
-        $default_admin_title = isset($_ENV['DEFAULT_ADMIN_TITLE']) && $_ENV['DEFAULT_ADMIN_TITLE'] !== '' ? $_ENV['DEFAULT_ADMIN_TITLE'] : $original_app_settings['admin_title'];
+        // Get default values from .env file
+        $default_frontend_title = isset($_ENV['DEFAULT_FRONTEND_TITLE']) ? $_ENV['DEFAULT_FRONTEND_TITLE'] : 'Staff Directory';
+        $default_admin_title = isset($_ENV['DEFAULT_ADMIN_TITLE']) ? $_ENV['DEFAULT_ADMIN_TITLE'] : 'Staff Directory Admin';
 
         // Set default titles in database
         $titles = [
@@ -507,10 +539,38 @@ function reset_title_settings() {
     return $result;
 }
 
-// Load application settings function has been moved to functions.php
+/**
+ * Load application settings from database and merge with defaults
+ *
+ * @return array Complete application settings
+ */
+function load_app_settings() {
+    // Get default settings
+    $app_settings = get_default_app_settings();
 
-// Settings are already loaded in admin_header.php
-// Just get session messages
+    // Load existing settings from database
+    $db_app_settings = get_app_settings_from_db();
+
+    // Merge with defaults if we have database settings
+    if (!empty($db_app_settings)) {
+        $app_settings = array_merge($app_settings, $db_app_settings);
+    } else {
+        // Fallback to file if database fails
+        $settings_file = __DIR__ . '/../includes/app_settings.php';
+        if (file_exists($settings_file)) {
+            include $settings_file;
+            // $app_settings from file will be merged with defaults
+            if (isset($app_settings) && is_array($app_settings)) {
+                $app_settings = array_merge(get_default_app_settings(), $app_settings);
+            }
+        }
+    }
+
+    return $app_settings;
+}
+
+// Initialize app settings and message variables
+$app_settings = load_app_settings();
 
 // Get session messages
 $success_message = get_session_message('success_message');
@@ -866,28 +926,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_title_settings']
 
 // Handle reset title settings to defaults from .env file
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_title_settings'])) {
-    // Use the reset_title_settings() function for consistency
-    $reset_result = reset_title_settings();
+    try {
+        // Get default values from .env file
+        $default_frontend_title = isset($_ENV['DEFAULT_FRONTEND_TITLE']) ? $_ENV['DEFAULT_FRONTEND_TITLE'] : 'Staff Directory';
+        $default_admin_title = isset($_ENV['DEFAULT_ADMIN_TITLE']) ? $_ENV['DEFAULT_ADMIN_TITLE'] : 'Staff Directory Admin';
 
-    if ($reset_result['success']) {
+        // Set default titles in database
+        $titles = [
+            'frontend_title' => $default_frontend_title,
+            'admin_title' => $default_admin_title
+        ];
+
+        // Update database with default values
+        foreach ($titles as $key => $value) {
+            $stmt = $conn->prepare("UPDATE app_settings SET setting_value = ?, updated_at = NOW() WHERE setting_key = ?");
+            $stmt->bind_param("ss", $value, $key);
+            $stmt->execute();
+            $stmt->close();
+        }
+
         // Update current settings
-        $app_settings['frontend_title'] = $reset_result['titles']['frontend_title'];
-        $app_settings['admin_title'] = $reset_result['titles']['admin_title'];
+        $app_settings['frontend_title'] = $default_frontend_title;
+        $app_settings['admin_title'] = $default_admin_title;
 
         // Store success message in session
-        $_SESSION['logo_success_message'] = $reset_result['message'];
-    } else {
-        // Store error message in session
-        $_SESSION['logo_error_message'] = $reset_result['message'];
-    }
+        $_SESSION['logo_success_message'] = "Title settings reset to defaults successfully!";
 
-    // Redirect to prevent form resubmission
-    header("Location: " . $_SERVER['PHP_SELF']);
-    exit;
+        // Redirect to prevent form resubmission
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit;
+    } catch (Exception $e) {
+        // Store error message in session
+        $_SESSION['logo_error_message'] = "Database error: " . $e->getMessage();
+
+        // Redirect to prevent form resubmission
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit;
+    }
 }
 
-// App settings are already loaded as a global variable in admin_header.php
-// No need to reload them here
+// Load existing settings from database
+$db_app_settings = get_app_settings_from_db();
+
+// Merge with defaults if we have database settings
+if (!empty($db_app_settings)) {
+    $app_settings = array_merge($app_settings, $db_app_settings);
+} else {
+    // Fallback to file if database fails
+    $settings_file = __DIR__ . '/../includes/app_settings.php';
+    if (file_exists($settings_file)) {
+        include $settings_file;
+    }
+}
 
 // Generate a sample placeholder image with current settings
 $sample_initials = 'AB';
@@ -900,6 +990,7 @@ $sample_image_url = get_staff_image_url([
 
 ?>
 
+<div class="admin-container">
     <h1>Application Settings</h1>
 
     <!-- Logo Settings Section -->
@@ -1283,3 +1374,7 @@ $sample_image_url = get_staff_image_url([
 </script>
 
 <?php require_once '../includes/footer.php'; ?>
+</div>
+<?php
+// End of file
+?>

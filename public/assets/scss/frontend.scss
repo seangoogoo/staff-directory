@@ -6,7 +6,6 @@
 // Header Styles
 .main-header {
   background-color: $bg-color;
-  color: white;
   padding: 1rem 0;
 
   .container {
@@ -18,6 +17,7 @@
   .site-title {
     margin: 0;
     font-size: 1.8rem;
+    font-weight: 100;
   }
 }
 
@@ -45,7 +45,7 @@
     transition: all $transition-time ease;
 
     &:hover {
-      background: $bg-light;
+      background: $bg-lighter;
       text-decoration: none;
       transform: scale(1.05);
     }
@@ -69,12 +69,6 @@ main {
   a {
     font-weight: 200;
   }
-}
-
-.page-title {
-  margin-bottom: 1.5rem;
-  color: $dark-color;
-  font-weight: 600;
 }
 
 // Search and Filter Controls
@@ -122,42 +116,53 @@ main {
 }
 
 .staff-card {
+  display: grid;
+  grid-template-rows: auto 1fr;
   background-color: white;
-  border-radius: 5px;
+  border-radius: 20px;
   box-shadow: $box-shadow;
-  overflow: hidden;
+  overflow: clip;
+
 
   .staff-image {
     width: 100%;
     aspect-ratio: 1;
     object-fit: cover;
+    object-position: center top;
   }
 
   .staff-details {
+    position: relative;
     padding: 1rem;
     display: flex;
     flex-direction: column;
     height: 100%;
+
+    > * {
+      margin-block: initial;
+    }
+    .staff-name {
+      font-size: $font-size-large;
+      color: $dark-color;
+      font-weight: 600;
+      line-height: 1;
+    }
+
+    .staff-job {
+      font-weight: 200;
+      margin-bottom: 0.3rem;
+      line-height: 1;
+    }
+
+    .staff-department {
+      color: $text-muted;
+      margin-bottom: 0.5rem;
+    }
+    .staff-email {
+      word-break: break-all;
+      font-size: $font-size-small;
+    }
+
   }
 
-  .staff-name {
-    font-size: $font-size-large;
-    margin-bottom: 0.5rem;
-    color: $dark-color;
-    font-weight: 600;
-  }
-
-  .staff-job {
-    font-weight: bold;
-    margin-bottom: 0.3rem;
-  }
-
-  .staff-department {
-    color: $text-muted;
-    margin-bottom: 0.5rem;
-  }
-
-  .staff-email {
-    word-break: break-all;
-  }
 }

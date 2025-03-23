@@ -78,8 +78,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <option value="">Select a Department</option>
                 <?php foreach ($departments as $dept): ?>
                     <!-- Add data-color attribute to use with JavaScript -->
-                    <option value="<?php echo $dept['id']; ?>" 
-                           data-color="<?php echo $dept['color']; ?>" 
+                    <option value="<?php echo $dept['id']; ?>"
+                           data-color="<?php echo $dept['color']; ?>"
                            <?php echo (isset($department_id) && $department_id == $dept['id']) ? 'selected' : ''; ?>>
                         <?php echo $dept['name']; ?>
                     </option>
@@ -100,30 +100,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Get form values that we need for generating the placeholder
                 const firstName = document.getElementById('first_name');
                 const lastName = document.getElementById('last_name');
-                
+
                 // Set initial state if a department is already selected
                 if (departmentSelect.value) {
                     updateColorPreview();
                 }
-                
+
                 // Update on change
                 departmentSelect.addEventListener('change', function() {
                     updateColorPreview();
                     updatePlaceholderImage();
                 });
-                
+
                 // Also update placeholder when name fields change
                 if (firstName && lastName) {
                     firstName.addEventListener('input', updatePlaceholderImage);
                     lastName.addEventListener('input', updatePlaceholderImage);
                 }
-                
+
                 // Function to update color preview
                 function updateColorPreview() {
                     const selectedOption = departmentSelect.options[departmentSelect.selectedIndex];
                     const color = selectedOption.getAttribute('data-color');
                     const deptName = selectedOption.textContent.trim();
-                    
+
                     if (color && deptName) {
                         // Calculate if text should be light or dark based on background color
                         // Using same logic as get_text_contrast_class() PHP function
@@ -133,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         const b = parseInt(hex.substr(4, 2), 16);
                         const luminance = ((r * 299) + (g * 587) + (b * 114)) / 1000;
                         const textClass = (luminance > 150) ? 'dark-text' : 'light-text';
-                        
+
                         // Update preview
                         colorPreview.innerHTML = `
                             <div class="pill ${textClass}" style="background-color: ${color}">
@@ -145,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         colorPreview.style.display = 'none';
                     }
                 }
-                
+
                 // Function to update the placeholder image when department changes
                 function updatePlaceholderImage() {
                     // Only update if no file has been selected
@@ -154,13 +154,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         // Don't update if user has already selected a file
                         return;
                     }
-                    
+
                     // Get current values
                     const selectedOption = departmentSelect.options[departmentSelect.selectedIndex];
                     const color = selectedOption?.getAttribute('data-color') || '#cccccc';
                     const fName = firstName?.value || '';
                     const lName = lastName?.value || '';
-                    
+
                     // If we have an image preview element
                     if (imagePreview) {
                         // Properly format the name for the placeholder image
@@ -170,15 +170,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         if (fName || lName) {
                             nameParam = `${fName.trim()} ${lName.trim()}`;
                         }
-                        
+
                         // Generate new image URL with updated department color
                         const timestamp = new Date().getTime(); // Add timestamp to prevent caching
                         imagePreview.src = `../includes/generate_placeholder.php?name=${encodeURIComponent(nameParam)}&size=200x200&bg_color=${encodeURIComponent(color)}&t=${timestamp}`;
                         console.log('Updating placeholder with:', nameParam);
-                        
+
                         // Ensure this is properly marked as a placeholder image
                         imagePreview.dataset.isPlaceholder = 'true';
-                        
+
                         // Hide remove button since this is a placeholder
                         const removeButton = document.getElementById('remove-image');
                         if (removeButton) {
@@ -207,7 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <i class="lni lni-cloud-upload"></i>
                 </div>
                 <div class="dropzone-text">Drag & drop your image here</div>
-                <div class="dropzone-subtext">or click to browse files (JPG, PNG only)</div>
+                <div class="dropzone-subtext">or click to browse files (JPG, PNG, WebP)</div>
                 <div class="dropzone-file-info" style="display: none;"></div>
             </div>
             <div class="image-preview-container">
@@ -249,7 +249,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 document.addEventListener('DOMContentLoaded', function() {
     const imagePreview = document.getElementById('image-preview');
     const removeButton = document.getElementById('remove-image');
-    
+
     // Always hide remove button on page load for add.php
     // since we always start with a placeholder
     if (imagePreview && removeButton) {

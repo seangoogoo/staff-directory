@@ -70,7 +70,7 @@ $staff_members = get_all_staff_members($conn);
     <tbody>
         <?php if (count($staff_members) > 0): ?>
             <?php foreach ($staff_members as $staff): ?>
-                <tr>
+                <tr style="--dept-color: <?php echo $staff['department_color']; ?>">
                     <td>
                         <img src="<?php echo get_staff_image_url($staff, '50x50', null, $staff['department_color']); ?>" alt="<?php echo $staff['first_name']; ?>">
                     </td>

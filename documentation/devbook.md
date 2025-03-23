@@ -4,6 +4,32 @@
 
 ### Version 1.2 (March 2025)
 
+#### March 23, 2025
+*Application Branding, Database Updates, and Code Improvements*
+
+- Implemented comprehensive application branding system
+  - Added customizable application titles for both frontend and admin areas
+  - Created settings to manage default and custom logos
+  - Added logo upload functionality with proper validation
+  - Implemented option to revert to default logo
+  - Added visual preview for logo changes
+- Enhanced database with software development team structure
+  - Updated departments list with 12 software development-focused departments
+  - Added color-coding for each department for better visual organization
+  - Created comprehensive sample data with 23 staff members across all departments
+  - Included international names to represent a diverse global team
+  - Standardized email format with staffdirectory.com domain
+  - Aligned job titles with contemporary software industry roles
+- Enhanced error handling for file uploads
+  - Improved user feedback for file upload errors
+  - Implemented specific error messages based on PHP error codes
+  - Fixed logical structure of conditional statements for error handling
+- Cleaned up debug logging and code structure
+  - Removed all debug logging from logo upload and removal processes
+  - Corrected duplicate conditional statements
+  - Enhanced maintainability by removing unnecessary code
+  - Improved code organization and readability
+
 #### March 22, 2025
 *Department Color Visualization & Code Improvements*
 
@@ -404,6 +430,19 @@ graph TD
   - Improved browser cache handling for placeholder image previews
   - Fixed font size slider update issues
   - Streamlined settings interface by removing redundant information
+- ✅ Application branding system implementation (March 23, 2025)
+  - Added customizable application titles for frontend and admin areas
+  - Implemented custom logo upload and management
+  - Added logo preview functionality with real-time updates
+  - Created option to revert to default logo when needed
+  - Improved error handling for file uploads
+- ✅ Database enhancement for software development teams (March 23, 2025)
+  - Updated departments list with 12 software development-focused departments
+  - Added color-coding for each department for better visual categorization
+  - Created comprehensive sample data with 23 staff members across all departments
+  - Included international names to represent a diverse global team
+  - Standardized email format with staffdirectory.com domain
+  - Aligned job titles with contemporary software industry roles
 
 ### Planned Improvements
 
@@ -411,16 +450,18 @@ graph TD
 - ~~Create a Git repository for version control~~
 - ~~Department management section (Database table and admin interface)~~
 - ~~Create a default logo for the App~~
-- Create a setting panel in the admin to set a custom logo and associated titles for front-end and admin.
-- Create default user images to match the default application setup and alternate between users that have and don't have profile pictures to display examples of placeholder images
-- Improve unused placeholder images management to remove them when not needed either by programming a folder cleanup once a day and/or by using temporary images when editing settings or creating/editing users
+- ~~Create a setting panel in the admin to set a custom logo instead of the default logo and modify associated titles for front-end and admin~~
 - ~~Improve Placeholder Image Settings to set a real live preview of the update (Javascript)~~
+- ~~Updated database with comprehensive software development departments and staff members~~
+- ~~Create default user images to match the default application setup and alternate between users that have and don't have profile pictures to display examples of placeholder images~~
+- Improve unused placeholder images management to remove them when not needed either by programming a folder cleanup once a day and/or by using temporary images when editing settings or creating/editing users
 - Improve UX/UI design for admin and Front-end using TailAdmin
 - Replace LineIcons by TailAdmin's icon set
 - Add internationalization support (FR/EN translation files)
-- Advanced search features for Staff Members Management
 
 #### Version 1.3 (Planned)
+- Enable login possibility to access the front-end
+- Add advanced search features for Staff Members Management
 - CSV import/export functionality
 - Enhanced authentication security:
   - CSRF protection for login form

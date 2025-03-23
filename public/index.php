@@ -45,11 +45,11 @@ $departments = get_all_department_names($conn);
 <div class="staff-grid" id="staff-grid">
     <?php if (count($staff_members) > 0): ?>
         <?php foreach ($staff_members as $staff): ?>
-            <div class="staff-card">
+            <div class="staff-card" style="--dept-color: <?php echo $staff['department_color']; ?>">
             <img src="<?php echo get_staff_image_url($staff, '600x400', null, $staff['department_color']); ?>" alt="<?php echo $staff['first_name'] . ' ' . $staff['last_name']; ?>" class="staff-image">
             <div class="staff-details">
                     <h3 class="staff-name"><?php echo $staff['first_name'] . ' ' . $staff['last_name']; ?></h3>
-                    <p class="staff-job"><?php echo $staff['job_title']; ?></p>
+                    <p class="staff-job dark-text"><?php echo $staff['job_title']; ?></p>
                     <p class="staff-department">
                         <?php
                         // Get proper text color contrast class
@@ -59,7 +59,7 @@ $departments = get_all_department_names($conn);
                             <?php echo $staff['department']; ?>
                         </span>
                     </p>
-                    <p class="staff-email"><a href="mailto:<?php echo $staff['email']; ?>"><?php echo $staff['email']; ?></a></p>
+                    <p class="staff-email"><a href="mailto:<?php echo $staff['email']; ?>" class="dark-text"><?php echo $staff['email']; ?></a></p>
                 </div>
             </div>
         <?php endforeach; ?>

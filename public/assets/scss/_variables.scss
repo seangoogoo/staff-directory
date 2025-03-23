@@ -1,6 +1,6 @@
 // Color Variables
-$primary-color: #3c97d4;
-$secondary-color: #2980b9;
+$primary-color: #79b3db;
+$secondary-color: #6799bb;
 $light-color: #ecf0f1;
 $dark-color: #2c3e50;
 $danger-color: #e74c3c;
@@ -19,9 +19,9 @@ $border-dark: #bbb;
 $border-radius: 6px;
 
 // Background Colors
-$bg-color: #b9c9d4;
+$bg-color: #eaeae5; //* Displays in header
 $bg-light: #f9f9f9;
-$bg-lighter: #f4f6f9;
+$bg-lighter: #fdfdf8; //* Global background
 $bg-white: #fff;
 
 // Typography
@@ -37,8 +37,8 @@ $font-size-large: 1.2rem;
 }
 
 // Effects
-$box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-$transition-time: 0.3s;
+$box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+$transition-time: 300ms;
 
 // Breakpoints
 $breakpoint-medium: 768px;
@@ -66,7 +66,7 @@ $breakpoint-small: 767px;
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 4px;
-
+  transition: background-color $transition-time;
   &:hover {
     background-color: $secondary-color;
   }

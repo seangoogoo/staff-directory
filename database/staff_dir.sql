@@ -17,11 +17,18 @@ CREATE TABLE IF NOT EXISTS `departments` (
 
 -- Insert default departments
 INSERT INTO `departments` (`name`, `description`, `color`) VALUES
-('IT', 'Information Technology department responsible for technical infrastructure and software development', '#94C2F3'),
-('Marketing', 'Marketing department handling brand promotion, advertising, and customer outreach', '#A8D8AD'),
-('HR', 'Human Resources department managing staffing, benefits, and employee relations', '#F4B8B8'),
-('Finance', 'Finance department overseeing accounting, budgeting, and financial reporting', '#FFEAAA'),
-('Operations', 'Operations department managing day-to-day business activities and logistics', '#9FE0E0');
+('Product Management', 'Defines product vision, roadmaps, and requirements', '#94C2F3'),
+('Frontend Development', 'Develops user interfaces and client-side logic', '#A8D8AD'),
+('Backend Development', 'Builds server-side logic, APIs, and databases', '#F4B8B8'),
+('Mobile Development', 'Creates applications for mobile platforms (iOS, Android)', '#FFEAAA'),
+('Quality Assurance (QA)', 'Tests software to ensure quality and functionality', '#9FE0E0'),
+('DevOps', 'Manages infrastructure, deployment, and automation', '#B19CD9'),
+('UI/UX Design', 'Designs user interfaces and user experiences', '#F8C471'),
+('Cybersecurity', 'Protects systems and data from security threats', '#EC7063'),
+('Data Analysis', 'Analyzes data to provide insights and improve products', '#5DADE2'),
+('Technical Support', 'Provides technical assistance to users', '#45B39D'),
+('Project Management', 'Plans, executes, and monitors software development projects', '#D7BDE2'),
+('General IT/Systems', 'Manages internal company computer systems, and network', '#7DCEA0');
 
 -- Staff Members Table
 CREATE TABLE IF NOT EXISTS `staff_members` (
@@ -43,14 +50,32 @@ CREATE TABLE IF NOT EXISTS `staff_members` (
 -- Insert some sample data
 -- Note: We're using department IDs now instead of department names
 INSERT INTO `staff_members` (`first_name`, `last_name`, `department_id`, `job_title`, `email`, `profile_picture`) VALUES
-('John', 'Doe', 1, 'Software Developer', 'john.doe@example.com', ''),
-('Jane', 'Smith', 2, 'Marketing Manager', 'jane.smith@example.com', ''),
-('Michael', 'Johnson', 3, 'HR Specialist', 'michael.johnson@example.com', ''),
-('Emily', 'Williams', 4, 'Financial Analyst', 'emily.williams@example.com', ''),
-('David', 'Brown', 1, 'Network Administrator', 'david.brown@example.com', '');
+('Antoine', 'Dupont', 2, 'Frontend Developer', 'antoine.dupont@staffdirectory.com', ''),
+('Sophia', 'Müller', 3, 'Backend Developer', 'sophia.muller@staffdirectory.com', ''),
+('Marco', 'Rossi', 4, 'Mobile Developer (iOS)', 'marco.rossi@staffdirectory.com', ''),
+('Amélie', 'Laurent', 5, 'QA Tester', 'amelie.laurent@staffdirectory.com', ''),
+('Lukas', 'Schmidt', 6, 'DevOps Engineer', 'lukas.schmidt@staffdirectory.com', ''),
+('Isabella', 'Bianchi', 7, 'UX Designer', 'isabella.bianchi@staffdirectory.com', ''),
+('Henrik', 'Andersson', 8, 'Security Analyst', 'henrik.andersson@staffdirectory.com', ''),
+('Elena', 'Petrov', 9, 'Data Analyst', 'elena.petrov@staffdirectory.com', ''),
+('Pierre', 'Moreau', 10, 'Technical Support Specialist', 'pierre.moreau@staffdirectory.com', ''),
+('Ingrid', 'Nielsen', 11, 'Project Manager', 'ingrid.nielsen@staffdirectory.com', ''),
+('Sven', 'Eriksson', 12, 'IT Support', 'sven.eriksson@staffdirectory.com', ''),
+('Clara', 'Fischer', 1, 'Business Analyst', 'clara.fischer@staffdirectory.com', ''),
+('Matteo', 'Conti', 2, 'UI Developer', 'matteo.conti@staffdirectory.com', ''),
+('Camille', 'Bernard', 3, 'API Developer', 'camille.bernard@staffdirectory.com', ''),
+('Andreas', 'Weber', 4, 'Mobile Developer (Android)', 'andreas.weber@staffdirectory.com', ''),
+('Sophie', 'Dubois', 5, 'QA Analyst', 'sophie.dubois@staffdirectory.com', ''),
+('Viktor', 'Kowalski', 6, 'Systems Administrator', 'viktor.kowalski@staffdirectory.com', ''),
+('Alessandra', 'Ferrari', 7, 'UI Designer', 'alessandra.ferrari@staffdirectory.com', ''),
+('Nikolai', 'Ivanov', 8, 'Security Engineer', 'nikolai.ivanov@staffdirectory.com', ''),
+('Elisa', 'Santos', 9, 'Data Engineer', 'elisa.santos@staffdirectory.com', ''),
+('François', 'Martin', 10, 'Customer Support Engineer', 'francois.martin@staffdirectory.com', ''),
+('Linnea', 'Lindholm', 11, 'Scrum Master', 'linnea.lindholm@staffdirectory.com', ''),
+('Jens', 'Hoffmann', 12, 'Network Administrator', 'jens.hoffmann@staffdirectory.com', '');
 
--- Placeholder Settings Table
-CREATE TABLE IF NOT EXISTS `placeholder_settings` (
+-- Application Settings Table
+CREATE TABLE IF NOT EXISTS `app_settings` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `setting_key` varchar(50) NOT NULL,
   `setting_value` varchar(255) NOT NULL,
@@ -60,7 +85,11 @@ CREATE TABLE IF NOT EXISTS `placeholder_settings` (
   UNIQUE KEY `setting_key` (`setting_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Insert default placeholder settings
-INSERT INTO `placeholder_settings` (`setting_key`, `setting_value`) VALUES
+-- Insert default application settings
+INSERT INTO `app_settings` (`setting_key`, `setting_value`) VALUES
 ('font_weight', 'Regular'),
-('font_size_factor', '3');
+('font_size_factor', '3'),
+('custom_logo_path', ''),
+('frontend_title', 'My company'),
+('admin_title', 'Staff Directory Admin'),
+('show_logo', '1'); -- 1 = show logo, 0 = hide logo

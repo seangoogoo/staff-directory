@@ -26,6 +26,12 @@ body {
   @include container;
 }
 
+.page-title {
+    margin-bottom: 1.5rem;
+    color: $dark-color;
+    font-weight: 100;
+}
+
 a {
   color: $primary-color;
   text-decoration: none;
@@ -42,7 +48,7 @@ select {
   border: 1px solid $border-light;
   border-radius: 4px;
   font-size: $font-size-base;
-  background-color: transparent;
+  // background-color: transparent;
 }
 
 // Site branding styles
@@ -306,11 +312,11 @@ input[type="file"].dropzone-input {
   font-size: 0.875rem;
   line-height: 1;
   border-radius: 2rem; // Fully rounded corners for the pill shape
-  background-color: $bg-light;
+  background-color: var(--dept-color, $bg-light);
   color: $text-dark;
   max-width: 100%;
 
-  // Color preview within pill
+  // Color preview within pill (display in Admin side)
   &.color-pill {
     font-family: monospace;
     font-size: $font-size-x-small;
@@ -319,12 +325,15 @@ input[type="file"].dropzone-input {
     border: 1px solid rgba(0, 0, 0, 0.1);
 
   }
-  // Ensure proper text color contrast
-  &.dark-text {
-    color: $text-dark;
-  }
+}
 
-  &.light-text {
-    color: white;
-  }
+//* Display in Frontend
+// Ensure proper text color contrast
+.dark-text {
+  // color: $text-dark;
+  color: color-mix(in srgb, var(--dept-color, $text-dark), black 50%);
+}
+
+.light-text {
+  color: color-mix(in srgb, var(--dept-color, white), white 90%);
 }

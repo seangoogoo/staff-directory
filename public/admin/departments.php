@@ -122,7 +122,7 @@ $departments = get_all_departments($conn);
 
 <div class="admin-layout">
     <div class="admin-sidebar">
-        <h2 class="page-title"><?php echo $form_title; ?></h2>
+        <h1 class="page-title"><?php echo $form_title; ?></h1>
 
         <?php if (isset($error_message)): ?>
             <div class="alert alert-danger"><?php echo $error_message; ?></div>
@@ -191,7 +191,7 @@ $departments = get_all_departments($conn);
                         $staff_count = $row['count'];
                         $stmt->close();
                         ?>
-                        <tr>
+                        <tr style="--dept-color: <?php echo $dept['color']; ?>">
                             <td><?php echo $dept['name']; ?></td>
                             <td><?php echo $dept['description'] ? substr($dept['description'], 0, 100) . (strlen($dept['description']) > 100 ? '...' : '') : ''; ?></td>
                             <td>
