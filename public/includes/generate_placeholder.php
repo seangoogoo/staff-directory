@@ -21,7 +21,7 @@ define('APP_PATH', dirname(__DIR__));
 // Get parameters
 $name = isset($_GET['name']) ? $_GET['name'] : 'Unknown User';
 $size = isset($_GET['size']) ? $_GET['size'] : '200x200';
-$bg_color = isset($_GET['bg_color']) ? $_GET['bg_color'] : '#cccccc';
+$bg_color = isset($_GET['bg_color']) ? $_GET['bg_color'] : '#6d6d6b';
 $text_color = isset($_GET['text_color']) ? '#ffffff' : '#ffffff'; // Default to white text
 $font_weight = isset($_GET['font_weight']) ? $_GET['font_weight'] : 'Regular';
 $font_size_factor = isset($_GET['font_size_factor']) ? floatval($_GET['font_size_factor']) : 3; // Default to 3

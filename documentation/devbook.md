@@ -454,9 +454,11 @@ graph TD
 - ~~Improve Placeholder Image Settings to set a real live preview of the update (Javascript)~~
 - ~~Updated database with comprehensive software development departments and staff members~~
 - ~~Create default user images to match the default application setup and alternate between users that have and don't have profile pictures to display examples of placeholder images~~
+- Enable company groups management if a company includes holdings
 - Improve unused placeholder images management to remove them when not needed either by programming a folder cleanup once a day and/or by using temporary images when editing settings or creating/editing users
 - Improve UX/UI design for admin and Front-end using TailAdmin
 - Replace LineIcons by TailAdmin's icon set
+- Convert all SCSS variables to CSS custom properties
 - Add internationalization support (FR/EN translation files)
 
 #### Version 1.3 (Planned)

@@ -29,7 +29,7 @@ body {
 
 .page-title {
   margin-bottom: 1.5rem;
-  color: #2c3e50;
+  color: #2c2c2b;
   font-weight: 100;
 }
 
@@ -104,18 +104,18 @@ select {
   border-color: #bbb;
 }
 .btn-danger {
-  background-color: #e74c3c;
+  background-color: #e55849;
   color: #fff;
 }
 .btn-danger:hover {
-  background-color: #d62c1a;
+  background-color: #dc311f;
 }
 .btn-success {
-  background-color: #2ecc71;
+  background-color: #4dd485;
   color: #fff;
 }
 .btn-success:hover {
-  background-color: #25a25a;
+  background-color: #2ec06b;
 }
 .btn-sm {
   padding: 0.35rem 0.75rem;
@@ -172,14 +172,14 @@ textarea:focus {
   border-radius: 0.25rem;
 }
 .alert-success {
-  color: #124f2c;
-  background-color: #d1f5e0;
-  border-color: #a8ebc4;
+  color: #1a6e3d;
+  background-color: #f1fcf6;
+  border-color: #c8f2d9;
 }
 .alert-danger {
-  color: #7b190f;
-  background-color: #fdf3f2;
-  border-color: #f8c9c4;
+  color: #821d13;
+  background-color: #fffcfc;
+  border-color: #f8d3cf;
 }
 .alert-info {
   color: #286793;
@@ -552,7 +552,7 @@ body.modal-open {
   -webkit-transition: all 300ms ease;
   transition: all 300ms ease;
   font-size: 1.5rem;
-  color: #233140;
+  color: #1f1f1e;
 }
 .main-nav a {
   color: white;
@@ -659,7 +659,7 @@ main a {
 }
 .staff-card .staff-details .staff-name {
   font-size: 1.2rem;
-  color: #2c3e50;
+  color: #2c2c2b;
   font-weight: 600;
   line-height: 1;
 }

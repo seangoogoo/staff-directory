@@ -128,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </select>
 
             <!-- Department color preview -->
-            <div id="department-color-preview" class="mt-2" style="display: <?php echo $staff['department_id'] ? 'block' : 'none'; ?>">
+            <div id="department-color-preview" style="display: <?php echo $staff['department_id'] ? 'block' : 'none'; ?>;">
                 <?php if ($staff['department_id']):
                     // Get the selected department's color
                     $selected_dept = null;
@@ -217,13 +217,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         break;
                     }
                 }
-                
+
                 // Determine if we're showing a real profile picture or placeholder
                 // Need to check if profile_picture field actually contains a valid uploaded image file
                 $has_profile_picture = !empty($staff['profile_picture']) && file_exists(__DIR__ . '/../uploads/' . $staff['profile_picture']);
                 ?>
-                <img id="image-preview" 
-                     src="<?php echo get_staff_image_url($staff, '200x200', null, $dept_color); ?>" 
+                <img id="image-preview"
+                     src="<?php echo get_staff_image_url($staff, '200x200', null, $dept_color); ?>"
                      alt="Current Profile Picture"
                      data-is-placeholder="<?php echo $has_profile_picture ? 'false' : 'true'; ?>"
                      data-dept-color="<?php echo $dept_color; ?>">
@@ -252,39 +252,39 @@ document.addEventListener('DOMContentLoaded', function() {
     const profilePicture = '<?php echo $staff["profile_picture"]; ?>';
     const firstName = '<?php echo $staff["first_name"]; ?>';
     const lastName = '<?php echo $staff["last_name"]; ?>';
-    
+
     // Store department colors in a JavaScript object
     const departmentColors = {};
     <?php foreach ($departments as $dept): ?>
     departmentColors['<?php echo $dept["id"]; ?>'] = '<?php echo $dept["color"]; ?>';
     <?php endforeach; ?>
-    
+
     // Enforce correct placeholder status and remove button visibility on page load
     const hasRealImage = '<?php echo $has_profile_picture ? "true" : "false"; ?>' === 'true';
     console.log('Page load - Has real image:', hasRealImage);
-    
+
     if (imagePreview) {
         // Set the correct placeholder status
         imagePreview.dataset.isPlaceholder = hasRealImage ? 'false' : 'true';
-        
+
         // Make absolutely sure the remove button visibility is correct
         if (removeButton) {
             removeButton.style.display = hasRealImage ? 'flex' : 'none';
             console.log('Setting initial remove button visibility:', hasRealImage ? 'visible' : 'hidden');
         }
     }
-    
+
     // Function to update the image preview
     function updateImagePreview() {
         // Only update if no profile picture is set
         if (!profilePicture) {
             const departmentId = departmentSelect.value;
             const departmentColor = departmentColors[departmentId] || '#cccccc';
-            
+
             // Generate new image URL with updated department color
             const timestamp = new Date().getTime(); // Add timestamp to prevent caching
             imagePreview.src = `../includes/generate_placeholder.php?name=${firstName}+${lastName}&size=200x200&bg_color=${encodeURIComponent(departmentColor)}&t=${timestamp}`;
-            
+
             // When changing department colors, ensure this is still treated as a placeholder
             // with no remove button
             imagePreview.dataset.isPlaceholder = 'true';
@@ -293,7 +293,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-    
+
     // Listen for changes to the department select
     departmentSelect.addEventListener('change', updateImagePreview);
 });

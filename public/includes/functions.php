@@ -13,6 +13,61 @@ function get_placeholder_settings_from_db() {
 }
 
 /**
+ * Mix a color with black or white, similar to CSS color-mix function
+ *
+ * This function simulates the CSS color-mix functionality by mixing a color
+ * with either black or white at a specified percentage.
+ *
+ * Examples:
+ * - For dark variant (like color-mix(in srgb, color, black 50%)):
+ *   color_mix($hex_color, 'dark', 50)
+ * - For light variant (like color-mix(in srgb, color, white 90%)):
+ *   color_mix($hex_color, 'light', 90)
+ *
+ * @param string $hex_color The base color in hex format (with or without #)
+ * @param string $variant Either 'dark' (mix with black) or 'light' (mix with white)
+ * @param int $percentage Percentage of black or white to mix (0-100)
+ * @return string The resulting hex color code (with #)
+ */
+function color_mix($hex_color, $variant = 'dark', $percentage = 50) {
+    // Remove # if present
+    $hex = ltrim($hex_color, '#');
+
+    // Handle shorthand hex (e.g., #abc)
+    if (strlen($hex) === 3) {
+        $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+    }
+
+    // Convert hex to RGB
+    $r = hexdec(substr($hex, 0, 2));
+    $g = hexdec(substr($hex, 2, 2));
+    $b = hexdec(substr($hex, 4, 2));
+
+    // Ensure percentage is between 0 and 100
+    $percentage = max(0, min(100, $percentage));
+
+    // Calculate the mix factor (0.0 - 1.0)
+    $factor = $percentage / 100;
+
+    if ($variant === 'dark') {
+        // Mix with black (decrease RGB values)
+        $r = round($r * (1 - $factor));
+        $g = round($g * (1 - $factor));
+        $b = round($b * (1 - $factor));
+    } else {
+        // Mix with white (increase RGB values)
+        $r = round($r + (255 - $r) * $factor);
+        $g = round($g + (255 - $g) * $factor);
+        $b = round($b + (255 - $b) * $factor);
+    }
+
+    // Convert back to hex
+    $hex_result = sprintf('#%02x%02x%02x', $r, $g, $b);
+
+    return $hex_result;
+}
+
+/**
  * Get the URL for a staff member's profile picture or generate a placeholder with initials
  *
  * @param array $staff Staff member data
@@ -40,7 +95,11 @@ function get_staff_image_url($staff, $size = '600x600', $font_weight = null, $bg
     // Use provided parameters if set, otherwise use defaults
     $font_weight = $font_weight ?: $default_settings['font_weight'];
     $bg_color = $bg_color ?: $default_settings['bg_color'];
-    $text_color = $text_color ?: $default_settings['text_color'];
+    $contrast = get_text_contrast_class($bg_color, false);
+    // Returns: 'dark' or 'light'
+    // $text_color = $text_color ?: $default_settings['text_color'];
+    // $text_color = color_mix($bg_color, 'dark', 20);
+    $text_color = $contrast == 'dark' ? color_mix($bg_color, 'dark', 20) : color_mix($bg_color, 'light', 35);
     $font_size_factor = $font_size_factor ?: $default_settings['font_size_factor'];
 
     // Make sure we have the hex2rgb function
@@ -486,11 +545,17 @@ function get_department_by_name($conn, $name) {
  * Determine if text should be light or dark based on background color
  *
  * @param string $hex_color The hex color code (with or without #)
- * @return string The CSS class name ('dark-text' or 'light-text')
+ * @param bool $return_class Whether to return the CSS class name or just 'dark'/'light'
+ * @return string Either the CSS class name ('dark-text'/'light-text') or just 'dark'/'light'
  */
-function get_text_contrast_class($hex_color) {
+function get_text_contrast_class($hex_color, $return_class = true) {
     // Remove # if present
     $hex = ltrim($hex_color, '#');
+
+    // Handle shorthand hex (e.g., #abc)
+    if (strlen($hex) === 3) {
+        $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+    }
 
     // Convert hex to RGB
     $r = hexdec(substr($hex, 0, 2));
@@ -501,8 +566,16 @@ function get_text_contrast_class($hex_color) {
     $luminance = (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
     // debug_log("Luminance: " . $luminance);
 
-    // Return appropriate class name based on luminance
-    return ($luminance > 190) ? 'dark-text' : 'light-text';
+    // Determine if dark or light based on luminance
+    $is_dark = $luminance > 190;
+
+    if ($return_class) {
+        // Return appropriate class name based on luminance (original behavior)
+        return $is_dark ? 'dark-text' : 'light-text';
+    } else {
+        // Return just 'dark' or 'light' value
+        return $is_dark ? 'dark' : 'light';
+    }
 }
 
 /**

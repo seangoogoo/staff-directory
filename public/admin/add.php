@@ -87,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </select>
 
             <!-- Department color preview -->
-            <div id="department-color-preview" class="mt-2" style="display: none;"></div>
+            <div id="department-color-preview" style="display: none;"></div>
         </div>
 
         <!-- Add JavaScript to update department color preview and placeholder image on selection change -->
