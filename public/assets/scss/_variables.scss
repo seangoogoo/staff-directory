@@ -1,49 +1,12 @@
-// Color Variables
-$primary-color: #79b3db;
-$secondary-color: #6799bb;
-$light-color: #ecf0f1;
-// $dark-color: #2c3e50;
-$dark-color: #2c2c2b;
-$danger-color: #e55849;
-$success-color: #4dd485;
-
-// Text Colors
-$text-dark: #333;
-$text-muted: #666;
-$text-light: #fff;
-
-// Border Colors
-$border-light: #ddd;
-$border-medium: #ccc;
-$border-dark: #bbb;
-
-$border-radius: 6px;
-
-// Background Colors
-$bg-color: #eaeae5; //* Displays in header
-$bg-light: #f9f9f9;
-$bg-lighter: #fdfdf8; //* Global background
-$bg-white: #fff;
-
-// Typography
-$font-size-base: 1rem;
-$font-size-x-small: 0.60rem;
-$font-size-small: 0.85rem;
-$font-size-large: 1.2rem;
+// Breakpoints
+$breakpoint-medium: 768px;
+$breakpoint-small: 767px;
 
 // Font mixin
 @mixin font-outfit {
   font-family: "Outfit", sans-serif;
   font-optical-sizing: auto;
 }
-
-// Effects
-$box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-$transition-time: 300ms;
-
-// Breakpoints
-$breakpoint-medium: 768px;
-$breakpoint-small: 767px;
 
 // Mixins - only keeping the ones that are used
 @mixin flex-between {
@@ -57,20 +20,6 @@ $breakpoint-small: 767px;
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 15px;
-}
-
-@mixin button {
-  display: inline-flex;
-  align-items: center;
-  cursor: pointer;
-  background-color: $primary-color;
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  transition: background-color $transition-time;
-  &:hover {
-    background-color: $secondary-color;
-  }
 }
 
 @mixin media-md {

@@ -4,6 +4,24 @@
 
 ### Version 1.2 (March 2025)
 
+#### March 24, 2025
+*SCSS Variables to CSS Custom Properties Migration*
+
+- Converted all SCSS variables to CSS custom properties for improved maintainability
+  - Moved variable definitions to `:root` in `_common.scss`
+  - Replaced all SCSS variable references with CSS custom property syntax
+  - Maintained consistent styling while enabling dynamic style changes
+  - Added CSS custom properties for colors, spacing, fonts, and effects
+- Improved code organization and reduced redundancy
+  - Removed redundant variable definitions from `_variables.scss`
+  - Updated box-shadow and transition properties across all files
+  - Ensured consistent variable naming conventions
+  - Enhanced footer styling with custom font size and weight
+- Enhanced theming capabilities
+  - Enabled dynamic style changes via JavaScript
+  - Improved maintainability by centralizing style definitions
+  - Provided better separation of concerns between structure and presentation
+
 #### March 23, 2025
 *Application Branding, Database Updates, and Code Improvements*
 
@@ -454,7 +472,7 @@ graph TD
 - ~~Improve Placeholder Image Settings to set a real live preview of the update (Javascript)~~
 - ~~Updated database with comprehensive software development departments and staff members~~
 - ~~Create default user images to match the default application setup and alternate between users that have and don't have profile pictures to display examples of placeholder images~~
-- Enable company groups management if a company includes holdings
+- Enable company groups management in case a company includes holdings
 - Improve unused placeholder images management to remove them when not needed either by programming a folder cleanup once a day and/or by using temporary images when editing settings or creating/editing users
 - Improve UX/UI design for admin and Front-end using TailAdmin
 - Replace LineIcons by TailAdmin's icon set

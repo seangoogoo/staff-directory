@@ -36,7 +36,7 @@
 
 // Modal content styling
 .modal-content {
-  background-color: $bg-white;
+  background-color: var(--bg-white);
   border-radius: 8px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   overflow: hidden;
@@ -48,13 +48,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 15px 20px;
-  border-bottom: 1px solid $border-light;
-  background-color: $bg-light;
+  border-bottom: 1px solid var(--border-light);
+  background-color: var(--bg-light);
 
   .modal-title {
-    font-size: $font-size-large;
+    font-size: var(--font-size-large);
     font-weight: 600;
-    color: $text-dark;
+    color: var(--text-dark);
     margin: 0;
   }
 
@@ -62,13 +62,13 @@
     background: none;
     border: none;
     font-size: 1.5rem;
-    color: lighten($text-muted, 5%);
+    color: lighten(#666, 5%);
     cursor: pointer;
     padding: 0;
     line-height: 1;
 
     &:hover {
-      color: $text-dark;
+      color: var(--text-dark);
     }
   }
 }
@@ -93,14 +93,14 @@
   input[type="password"] {
     width: 100%;
     padding: 10px 12px;
-    font-size: $font-size-base;
-    border: 1px solid $border-medium;
+    font-size: var(--font-size-base);
+    border: 1px solid var(--border-medium);
     border-radius: 4px;
     transition: border-color 0.2s, box-shadow 0.2s;
 
     &:focus {
-      border-color: $primary-color;
-      box-shadow: 0 0 0 0.2rem rgba($primary-color, 0.25);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 0.2rem rgba(121, 179, 219, 0.25);
       outline: none;
     }
   }
@@ -124,12 +124,12 @@
   }
 
   .submit-btn {
-    background-color: $primary-color;
+    background-color: var(--primary-color);
     color: white;
     border: none;
 
     &:hover {
-      background-color: darken($primary-color, 10%);
+      background-color: darken(#79b3db, 10%);
     }
   }
 }

@@ -7,22 +7,22 @@
 .btn,
 a.btn {
   &.outline-secondary {
-    color: $secondary-color;
-    border: 1px solid $secondary-color;
+    color: var(--secondary-color);
+    border: 1px solid var(--secondary-color);
     background-color: transparent;
 
     &:hover {
-      background-color: rgba($secondary-color, 0.1);
+      background-color: rgba(103, 153, 187, 0.1);
     }
   }
 
   &.outline-danger {
-    color: $danger-color;
-    border: 1px solid $danger-color;
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
     background-color: transparent;
 
     &:hover {
-      background-color: rgba($danger-color, 0.1);
+      background-color: rgba(229, 88, 73, 0.1);
     }
   }
 }
@@ -51,7 +51,7 @@ td.action-buttons a.btn {
   height: 40px;
   width: 100px;
   padding: 2px;
-  border: 1px solid $border-light;
+  border: 1px solid var(--border-light);
   border-radius: 4px;
   cursor: pointer;
 }
@@ -59,7 +59,7 @@ td.action-buttons a.btn {
 
 // Header -- Admin Header Styles
 .admin-header {
-  background-color: $bg-color;
+  background-color: var(--bg-color);
   padding: 1rem 0;
 
   .site-title {
@@ -95,7 +95,7 @@ td.action-buttons a.btn {
     }
   }
   a {
-    color: $text-dark;
+    color: var(--text-dark);
     font-weight: 200;
   }
 }
@@ -106,7 +106,7 @@ td.action-buttons a.btn {
   border-collapse: collapse;
   margin-block: 1.5rem;
   background-color: white;
-  box-shadow: $box-shadow;
+  box-shadow: var(--box-shadow);
 
   th,
   td {
@@ -116,7 +116,7 @@ td.action-buttons a.btn {
   }
 
   th {
-    background-color: $bg-color;
+    background-color: var(--bg-color);
     font-weight: 300;
   }
 
@@ -125,7 +125,7 @@ td.action-buttons a.btn {
     height: 50px;
     object-fit: cover;
     border-radius: 50%;
-    box-shadow: $box-shadow;
+    box-shadow: var(--box-shadow);
   }
 }
 
@@ -137,7 +137,7 @@ td.action-buttons a.btn {
   padding: 1.5rem;
   margin-block: 1.5rem;
   border-radius: 5px;
-  box-shadow: $box-shadow;
+  box-shadow: var(--box-shadow);
 
   .profile-preview {
     margin-bottom: 1rem;
@@ -154,8 +154,8 @@ td.action-buttons a.btn {
 // Settings Page Styles
 .settings-container {
   background-color: white;
-  border-radius: $border-radius;
-  box-shadow: $box-shadow;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
   padding: 1.5rem;
   margin-bottom: 2rem;
 
@@ -186,11 +186,11 @@ td.action-buttons a.btn {
     .form-control {
       width: 100%;
       padding: 0.5rem;
-      border: 1px solid $border-light;
-      border-radius: $border-radius;
+      border: 1px solid var(--border-light);
+      border-radius: var(--border-radius);
 
       &:focus {
-        border-color: $primary-color;
+        border-color: var(--primary-color);
         outline: none;
       }
 
@@ -211,7 +211,7 @@ td.action-buttons a.btn {
           width: 20px;
           height: 20px;
           border-radius: 50%;
-          background: $primary-color;
+          background: var(--primary-color);
           cursor: pointer;
         }
 
@@ -219,7 +219,7 @@ td.action-buttons a.btn {
           width: 20px;
           height: 20px;
           border-radius: 50%;
-          background: $primary-color;
+          background: var(--primary-color);
           cursor: pointer;
           border: none;
         }
@@ -238,22 +238,22 @@ td.action-buttons a.btn {
       font-size: 0.85rem;
 
       .small {
-        color: $text-muted;
+        color: var(--text-muted);
       }
 
       .current-value {
         font-weight: bold;
-        color: $primary-color;
+        color: var(--primary-color);
       }
 
       .large {
-        color: $text-muted;
+        color: var(--text-muted);
       }
     }
   }
 
   .preview-container {
-    border-radius: $border-radius;
+    border-radius: var(--border-radius);
     padding: 1.5rem;
     height: 100%;
 
@@ -269,8 +269,8 @@ td.action-buttons a.btn {
 
       img {
         max-width: 100%;
-        border-radius: $border-radius;
-        box-shadow: $box-shadow;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
       }
     }
 
@@ -282,7 +282,7 @@ td.action-buttons a.btn {
       align-items: center;
       padding: 1rem;
       background-color: #f8f9fa;
-      border-radius: $border-radius;
+      border-radius: var(--border-radius);
       min-height: 100px;
 
       img {
@@ -368,21 +368,21 @@ td.action-buttons a.btn {
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  border: 2px dashed $border-light;
-  border-radius: $border-radius;
+  border: 2px dashed var(--border-light);
+  border-radius: var(--border-radius);
   background-color: #f8f9fa;
   cursor: pointer;
   transition: all 0.3s ease;
   margin-bottom: 1rem;
 
   &:hover, &.dragover {
-    border-color: $primary-color;
-    background-color: rgba($primary-color, 0.05);
+    border-color: var(--primary-color);
+    background-color: rgba(121, 179, 219, 0.05);
   }
 
   .dropzone-icon {
     font-size: 2rem;
-    color: $text-muted;
+    color: var(--text-muted);
     margin-bottom: 0.75rem;
   }
 
@@ -393,16 +393,16 @@ td.action-buttons a.btn {
 
   .dropzone-subtext {
     font-size: 0.875rem;
-    color: $text-muted;
+    color: var(--text-muted);
     margin-bottom: 1rem;
   }
 
   .dropzone-file-info {
     font-size: 0.875rem;
     padding: 0.5rem 1rem;
-    background-color: rgba($primary-color, 0.1);
-    border-radius: $border-radius;
-    color: $primary-color;
+    background-color: rgba(121, 179, 219, 0.1);
+    border-radius: var(--border-radius);
+    color: var(--primary-color);
     font-weight: 500;
     max-width: 100%;
     overflow: hidden;
