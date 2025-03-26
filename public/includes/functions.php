@@ -340,9 +340,9 @@ function upload_profile_picture($file) {
 /**
  * Get all staff members
  */
-function get_all_staff_members($conn, $sort_by = 'last_name', $sort_order = 'ASC', $search = '', $department = '') {
+function get_all_staff_members($conn, $sort_by = 'last_name', $sort_order = 'ASC', $search = '', $department = '', $company = '') {
     // Validate sort_by and sort_order parameters
-    $allowed_sort_fields = ['first_name', 'last_name', 'department', 'job_title', 'email', 'id'];
+    $allowed_sort_fields = ['first_name', 'last_name', 'department', 'job_title', 'email', 'id', 'company'];
     if (!in_array($sort_by, $allowed_sort_fields)) {
         $sort_by = 'last_name';
     }
@@ -356,16 +356,20 @@ function get_all_staff_members($conn, $sort_by = 'last_name', $sort_order = 'ASC
     $params = [];
     $types = '';
 
-    // Start building the prepared statement - JOIN with departments table
-    $sql = "SELECT s.*, d.name as department, d.color as department_color FROM staff_members s "
+    // Start building the prepared statement - JOIN with departments and companies tables
+    $sql = "SELECT s.*, d.name as department, d.color as department_color, "
+         . "c.name as company, c.id as company_id, c.logo as company_logo "
+         . "FROM staff_members s "
          . "JOIN departments d ON s.department_id = d.id "
+         . "JOIN companies c ON s.company_id = c.id "
          . "WHERE 1=1";
 
     // Add search condition if provided
     if (!empty($search)) {
         $search_param = "%{$search}%";
-        $sql .= " AND (s.first_name LIKE ? OR s.last_name LIKE ? OR s.job_title LIKE ?)";
-        $types .= 'sss';
+        $sql .= " AND (s.first_name LIKE ? OR s.last_name LIKE ? OR s.job_title LIKE ? OR c.name LIKE ?)";
+        $types .= 'ssss';
+        $params[] = $search_param;
         $params[] = $search_param;
         $params[] = $search_param;
         $params[] = $search_param;
@@ -378,9 +382,18 @@ function get_all_staff_members($conn, $sort_by = 'last_name', $sort_order = 'ASC
         $params[] = $department;
     }
 
-    // Adjust sort field if it's department
+    // Add company filter if provided
+    if (!empty($company)) {
+        $sql .= " AND c.name = ?";
+        $types .= 's';
+        $params[] = $company;
+    }
+
+    // Adjust sort field if it's department or company
     if ($sort_by === 'department') {
         $sort_by = 'd.name';
+    } elseif ($sort_by === 'company') {
+        $sort_by = 'c.name';
     } else {
         $sort_by = 's.' . $sort_by;
     }
@@ -413,9 +426,10 @@ function get_all_staff_members($conn, $sort_by = 'last_name', $sort_order = 'ASC
  * Get a staff member by ID
  */
 function get_staff_member_by_id($conn, $id) {
-    $sql = "SELECT s.*, d.name as department, d.id as department_id "
+    $sql = "SELECT s.*, d.name as department, d.id as department_id, c.id as company_id, c.name as company "
          . "FROM staff_members s "
          . "JOIN departments d ON s.department_id = d.id "
+         . "JOIN companies c ON s.company_id = c.id "
          . "WHERE s.id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param('i', $id);
@@ -426,6 +440,99 @@ function get_staff_member_by_id($conn, $id) {
         $staff = $result->fetch_assoc();
         $stmt->close();
         return $staff;
+    }
+
+    $stmt->close();
+    return null;
+}
+
+/**
+ * Delete a staff member
+ */
+function delete_staff_member($conn, $id) {
+    // Get the profile picture filename
+    $staff = get_staff_member_by_id($conn, $id);
+
+    $sql = "DELETE FROM staff_members WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('i', $id);
+    $result = $stmt->execute();
+    $stmt->close();
+
+    if ($result === TRUE) {
+        // Delete the profile picture if it exists
+        if ($staff && !empty($staff['profile_picture'])) {
+            $file_path = __DIR__ . "/../uploads/" . $staff['profile_picture'];
+            if (file_exists($file_path)) {
+                unlink($file_path);
+            }
+        }
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Get all companies
+ *
+ * @param mysqli $conn Database connection
+ * @return array Array of companies with id, name, description, and logo
+ */
+function get_all_companies($conn) {
+    $sql = "SELECT id, name, description, logo FROM companies ORDER BY name";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $companies = [];
+
+    if ($result->num_rows > 0) {
+        while($row = $result->fetch_assoc()) {
+            $companies[] = $row;
+        }
+    }
+
+    $stmt->close();
+    return $companies;
+}
+
+/**
+ * Get all company names
+ *
+ * @param mysqli $conn Database connection
+ * @return array Array of company names
+ */
+function get_all_company_names($conn) {
+    $sql = "SELECT name FROM companies ORDER BY name";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $companies = [];
+
+    if ($result->num_rows > 0) {
+        while($row = $result->fetch_assoc()) {
+            $companies[] = $row['name'];
+        }
+    }
+
+    $stmt->close();
+    return $companies;
+}
+
+/**
+ * Get department by ID
+ */
+function get_department_by_id($conn, $id) {
+    $sql = "SELECT * FROM departments WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $department = $result->fetch_assoc();
+        $stmt->close();
+        return $department;
     }
 
     $stmt->close();
@@ -457,6 +564,9 @@ function get_all_departments($conn) {
 
 /**
  * Get all department names
+ *
+ * @param mysqli $conn Database connection
+ * @return array Array of department names
  */
 function get_all_department_names($conn) {
     $sql = "SELECT name FROM departments ORDER BY name";
@@ -476,50 +586,79 @@ function get_all_department_names($conn) {
 }
 
 /**
- * Delete a staff member
+ * Get departments by company name
+ * 
+ * @param mysqli $conn Database connection
+ * @param string $company_name Company name to filter departments by
+ * @return array Array of department names that belong to the specified company
  */
-function delete_staff_member($conn, $id) {
-    // Get the profile picture filename
-    $staff = get_staff_member_by_id($conn, $id);
-
-    $sql = "DELETE FROM staff_members WHERE id = ?";
+function get_departments_by_company($conn, $company_name) {
+    // If no company specified, return all departments
+    if (empty($company_name)) {
+        return get_all_department_names($conn);
+    }
+    
+    // Query to find departments that have staff members in the specified company
+    $sql = "SELECT DISTINCT d.name 
+            FROM departments d
+            JOIN staff_members s ON d.id = s.department_id
+            JOIN companies c ON s.company_id = c.id
+            WHERE c.name = ?
+            ORDER BY d.name";
+            
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('i', $id);
-    $result = $stmt->execute();
-    $stmt->close();
+    $stmt->bind_param('s', $company_name);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $departments = [];
 
-    if ($result === TRUE) {
-        // Delete the profile picture if it exists
-        if ($staff && !empty($staff['profile_picture'])) {
-            $file_path = __DIR__ . "/../uploads/" . $staff['profile_picture'];
-            if (file_exists($file_path)) {
-                unlink($file_path);
-            }
+    if ($result->num_rows > 0) {
+        while($row = $result->fetch_assoc()) {
+            $departments[] = $row['name'];
         }
-        return true;
     }
 
-    return false;
+    $stmt->close();
+    
+    return $departments;
 }
 
 /**
- * Get department by ID
+ * Get companies that have staff members in a specific department
+ * 
+ * @param mysqli $conn Database connection
+ * @param string $department_name Department name to filter by
+ * @return array Array of company names
  */
-function get_department_by_id($conn, $id) {
-    $sql = "SELECT * FROM departments WHERE id = ?";
+function get_companies_by_department($conn, $department_name) {
+    // If no department specified, return all companies
+    if (empty($department_name)) {
+        return get_all_company_names($conn);
+    }
+    
+    // Query to find companies that have staff members in the specified department
+    $sql = "SELECT DISTINCT c.name 
+            FROM companies c
+            JOIN staff_members s ON c.id = s.company_id
+            JOIN departments d ON s.department_id = d.id
+            WHERE d.name = ?
+            ORDER BY c.name";
+            
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('i', $id);
+    $stmt->bind_param('s', $department_name);
     $stmt->execute();
     $result = $stmt->get_result();
+    $companies = [];
 
     if ($result->num_rows > 0) {
-        $department = $result->fetch_assoc();
-        $stmt->close();
-        return $department;
+        while($row = $result->fetch_assoc()) {
+            $companies[] = $row['name'];
+        }
     }
 
     $stmt->close();
-    return null;
+    
+    return $companies;
 }
 
 /**

@@ -4,17 +4,21 @@ require_once '../includes/admin_header.php';
 // Get all departments for dropdown
 $departments = get_all_departments($conn);
 
+// Get all companies for dropdown
+$companies = get_all_companies($conn);
+
 // Process form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Sanitize and validate input
     $first_name = sanitize_input($_POST['first_name']);
     $last_name = sanitize_input($_POST['last_name']);
+    $company_id = sanitize_input($_POST['company_id']);
     $department_id = sanitize_input($_POST['department_id']);
     $job_title = sanitize_input($_POST['job_title']);
     $email = sanitize_input($_POST['email']);
 
     // Validate required fields
-    if (empty($first_name) || empty($last_name) || empty($department_id) || empty($job_title) || empty($email)) {
+    if (empty($first_name) || empty($last_name) || empty($company_id) || empty($department_id) || empty($job_title) || empty($email)) {
         $error_message = "All fields are required.";
     } else {
         // Set profile_picture to empty string by default (will use placeholder)
@@ -33,12 +37,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // If no errors, insert new staff member
         if (!isset($error_message)) {
-            $sql = "INSERT INTO staff_members (first_name, last_name, department_id, job_title, email, profile_picture)
-                    VALUES (?, ?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO staff_members (first_name, last_name, company_id, department_id, job_title, email, profile_picture)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)";
 
             $stmt = $conn->prepare($sql);
             // Fix the binding - first_name is string, last_name is string, department_id is integer
-            $stmt->bind_param("ssisss", $first_name, $last_name, $department_id, $job_title, $email, $profile_picture);
+            $stmt->bind_param("ssiisss", $first_name, $last_name, $company_id, $department_id, $job_title, $email, $profile_picture);
 
             if ($stmt->execute()) {
                 // Redirect to admin dashboard with success message
@@ -70,6 +74,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="form-group">
             <label for="last_name">Last Name</label>
             <input type="text" id="last_name" name="last_name" value="<?php echo isset($last_name) ? $last_name : ''; ?>" required>
+        </div>
+
+        <div class="form-group">
+            <label for="company_id">Company</label>
+            <select id="company_id" name="company_id" required>
+                <option value="">Select a Company</option>
+                <?php foreach ($companies as $company): ?>
+                    <option value="<?php echo $company['id']; ?>"
+                           <?php echo (isset($company_id) && $company_id == $company['id']) ? 'selected' : ''; ?>>
+                        <?php echo $company['name']; ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
         </div>
 
         <div class="form-group">
@@ -223,7 +240,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // If form was submitted but had errors, use the entered initials
                 // Otherwise use 'NEW' as the placeholder text
                 if (empty($dummy_staff['first_name']) && empty($dummy_staff['last_name'])) {
-                    $placeholder_url = "https://placehold.co/200x200?text=NEW";
+                    $placeholder_url = "https://placehold.co/200x200?text=NEWBY";
                     $img_src = $placeholder_url;
                 } else {
                     $img_src = get_staff_image_url($dummy_staff, '200x200');

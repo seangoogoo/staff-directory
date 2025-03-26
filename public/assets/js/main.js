@@ -4,8 +4,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
     const searchInput = document.getElementById('search')
     const departmentFilter = document.getElementById('department-filter')
+    const companyFilter = document.getElementById('company-filter')
     const sortSelect = document.getElementById('sort')
     const staffGrid = document.getElementById('staff-grid')
+    
+    // State tracking to prevent circular updates
+    let isUpdatingDepartments = false // Flag to track if we're updating departments programmatically
+    let isUpdatingCompanies = false // Flag to track if we're updating companies programmatically
 
     // Event Listeners
     if (searchInput) {
@@ -16,6 +21,95 @@ document.addEventListener('DOMContentLoaded', function() {
         departmentFilter.addEventListener('change', filterStaff)
     }
 
+    if (companyFilter) {
+        companyFilter.addEventListener('change', filterStaff)
+    }
+
+    // Setup cascading filters if both company and department filters exist
+    if (companyFilter && departmentFilter) {
+        // Store original department options for reset purposes
+        const originalDepartmentOptions = Array.from(departmentFilter.options).map(option => {
+            return {
+                value: option.value,
+                text: option.text,
+                selected: option.selected
+            }
+        })
+        
+        // Store original company options for reset purposes
+        const originalCompanyOptions = Array.from(companyFilter.options).map(option => {
+            return {
+                value: option.value,
+                text: option.text,
+                selected: option.selected
+            }
+        })
+
+        // Add change event to company filter to update departments
+        companyFilter.addEventListener('change', function(event) {
+            // Skip if this is a programmatic update (not user-initiated)
+            if (isUpdatingCompanies) {
+                return
+            }
+            
+            // Remember current department selection when updating departments
+            const currentDepartmentSelection = departmentFilter.value
+            
+            // Set flag to indicate we're updating departments programmatically
+            isUpdatingDepartments = true
+            
+            // Update department options based on selected company
+            updateDepartmentOptions(this.value, departmentFilter, originalDepartmentOptions, currentDepartmentSelection)
+                .then(() => {
+                    // After departments are updated, apply filters
+                    filterStaff()
+                    // Reset flag
+                    isUpdatingDepartments = false
+                })
+                .catch(error => {
+                    console.error('Error updating departments:', error)
+                    isUpdatingDepartments = false
+                })
+        })
+        
+        // Add change event to department filter to update companies
+        departmentFilter.addEventListener('change', function(event) {
+            // Skip if this is a programmatic update (not user-initiated)
+            if (isUpdatingDepartments) {
+                return
+            }
+            
+            // Only update companies if a specific department is selected (not 'All Departments')
+            if (this.value) {
+                // Remember current company selection
+                const currentCompanySelection = companyFilter.value
+                
+                // Set flag to indicate we're updating companies programmatically
+                isUpdatingCompanies = true
+                
+                // Update company options based on selected department
+                updateCompanyOptions(this.value, companyFilter, originalCompanyOptions, currentCompanySelection)
+                    .then(() => {
+                        // After companies are updated, apply filters
+                        filterStaff()
+                        // Reset flag
+                        isUpdatingCompanies = false
+                    })
+                    .catch(error => {
+                        console.error('Error updating companies:', error)
+                        isUpdatingCompanies = false
+                    })
+            } else {
+                // If 'All Departments' is selected, restore original company options
+                // but maintain the current selection if possible
+                isUpdatingCompanies = true
+                resetCompanyOptions(companyFilter, originalCompanyOptions, companyFilter.value)
+                filterStaff()
+                isUpdatingCompanies = false
+            }
+        })
+    }
+
     if (sortSelect) {
         sortSelect.addEventListener('change', sortStaff)
     }
@@ -24,6 +118,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function filterStaff() {
         const searchTerm = searchInput ? searchInput.value.toLowerCase() : ''
         const selectedDepartment = departmentFilter ? departmentFilter.value : ''
+        const selectedCompany = companyFilter ? companyFilter.value : ''
 
         // Get all staff cards
         const staffCards = document.querySelectorAll('.staff-card')
@@ -32,13 +127,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const name = card.querySelector('.staff-name').textContent.toLowerCase()
             const job = card.querySelector('.staff-job').textContent.toLowerCase()
             const department = card.querySelector('.staff-department').textContent.toLowerCase()
+            const company = card.querySelector('.company-name')?.textContent.toLowerCase() || ''
 
-            // Check if card matches search term and department filter
+            // Check if card matches all filters
             const matchesSearch = name.includes(searchTerm) || job.includes(searchTerm)
             const matchesDepartment = selectedDepartment === '' || department.includes(selectedDepartment.toLowerCase())
+            const matchesCompany = selectedCompany === '' || company.includes(selectedCompany.toLowerCase())
 
             // Show or hide the card
-            if (matchesSearch && matchesDepartment) {
+            if (matchesSearch && matchesDepartment && matchesCompany) {
                 card.style.display = 'block'
             } else {
                 card.style.display = 'none'
@@ -59,6 +156,9 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (sortBy === 'department-asc' || sortBy === 'department-desc') {
                 valueA = a.querySelector('.staff-department').textContent
                 valueB = b.querySelector('.staff-department').textContent
+            } else if (sortBy === 'company-asc' || sortBy === 'company-desc') {
+                valueA = a.querySelector('.company-name')?.textContent || ''
+                valueB = b.querySelector('.company-name')?.textContent || ''
             }
 
             // Determine sort direction
@@ -108,6 +208,90 @@ document.addEventListener('DOMContentLoaded', function() {
  * Initialize dropzone and remove button functionality
  * Sets up all event handlers for image uploads and removals
  */
+/**
+ * Updates company filter options based on selected department while preserving selection when possible
+ * Returns a Promise that resolves when the update is complete
+ *
+ * @param {string} departmentName - The selected department name
+ * @param {HTMLSelectElement} companySelect - The company select dropdown element
+ * @param {Array} originalOptions - Original company options to restore when no department is selected
+ * @param {string} maintainSelection - Current company selection to maintain if possible
+ * @returns {Promise} Promise that resolves when the update is complete
+ */
+function updateCompanyOptions(departmentName, companySelect, originalOptions, maintainSelection = '') {
+    // If no department is selected, use the reset helper function
+    if (!departmentName) {
+        resetCompanyOptions(companySelect, originalOptions, maintainSelection)
+        return Promise.resolve()
+    }
+
+    // Store current selection (we'll try to maintain it if possible)
+    const currentSelection = maintainSelection || companySelect.value
+
+    // Build correct path to AJAX handler relative to the current page
+    const currentPath = window.location.pathname
+    const basePath = currentPath.includes('/admin/') ? '../../' : '../'
+
+    // Return a promise that resolves when the company options are updated
+    return new Promise((resolve, reject) => {
+        // Fetch companies for this department via AJAX
+        fetch(`${basePath}includes/ajax_handlers.php?action=get_companies_by_department&department=${encodeURIComponent(departmentName)}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`)
+                }
+                return response.json()
+            })
+            .then(result => {
+                // Check for success
+                if (!result.success) {
+                    throw new Error(result.error || 'Unknown error')
+                }
+
+                // Extract companies from the response
+                const companies = result.companies || []
+
+                // Clear current options
+                companySelect.innerHTML = ''
+
+                // Add "All Companies" option
+                const allOption = document.createElement('option')
+                allOption.value = ''
+                allOption.text = 'All Companies'
+                companySelect.appendChild(allOption)
+
+                // Add companies from the response
+                companies.forEach(company => {
+                    const option = document.createElement('option')
+                    option.value = company
+                    option.text = company
+                    // Restore previous selection if it exists in new options
+                    if (company === currentSelection) {
+                        option.selected = true
+                    }
+                    companySelect.appendChild(option)
+                })
+
+                // If previous selection is no longer available, select "All Companies"
+                if (companies.indexOf(currentSelection) === -1) {
+                    companySelect.value = ''
+                }
+                
+                // Resolve the promise with the updated companies
+                resolve(companies)
+            })
+            .catch(error => {
+                console.error('Error fetching companies:', error)
+
+                // Restore original options on error
+                resetCompanyOptions(companySelect, originalOptions)
+                
+                // Reject the promise with the error
+                reject(error)
+            })
+    })
+}
+
 function initializeDropzoneAndRemoveButton() {
     // Set up dropzone if it exists on the page
     const dropzone = document.querySelector('.dropzone')
@@ -115,11 +299,11 @@ function initializeDropzoneAndRemoveButton() {
     const imagePreview = document.getElementById('image-preview')
     const removeButton = document.getElementById('remove-image')
     const defaultImage = imagePreview ? imagePreview.src : ''
-    
+
     // Set the initial state for the remove button based on whether this is a placeholder image
     if (removeButton && imagePreview) {
         const isPlaceholder = isPlaceholderImage(imagePreview)
-        
+
         // Set data attribute and button visibility
         imagePreview.dataset.isPlaceholder = isPlaceholder ? 'true' : 'false'
         removeButton.style.display = isPlaceholder ? 'none' : 'flex'
@@ -199,9 +383,9 @@ function initializeDropzoneAndRemoveButton() {
         // Show remove button when an image is displayed
         function showRemoveButton() {
             if (!removeButton || !imagePreview) return
-            
+
             const isPlaceholder = isPlaceholderImage(imagePreview)
-            
+
             // Only show button for real images, not placeholders
             if (!isPlaceholder) {
                 imagePreview.dataset.isPlaceholder = 'false'
@@ -237,10 +421,10 @@ function setupRemoveButton(removeButton, imagePreview, fileInput, defaultImage) 
 
     // Get the fresh button reference
     const freshButton = document.getElementById('remove-image')
-    
+
     // Check if this is a placeholder image and set visibility appropriately
     const isPlaceholder = isPlaceholderImage(imagePreview)
-    
+
     // Update data attributes and visibility based on placeholder status
     imagePreview.dataset.isPlaceholder = isPlaceholder ? 'true' : 'false'
     freshButton.style.display = isPlaceholder ? 'none' : 'flex'
@@ -293,9 +477,9 @@ function handleAddPageImageRemoval(imagePreview, fileInput, removeButton, defaul
  */
 function isPlaceholderImage(imageElement) {
     if (!imageElement) return true
-    
+
     const imageSrc = imageElement.src || ''
-    return imageSrc.includes('generate_placeholder.php') || 
+    return imageSrc.includes('generate_placeholder.php') ||
            imageSrc.includes('placeholder') ||
            imageElement.dataset.isPlaceholder === 'true'
 }
@@ -309,7 +493,7 @@ function isPlaceholderImage(imageElement) {
 function handleEditPageImageRemoval(imagePreview, fileInput, removeButton) {
     // Check if this is a new file upload or an existing image
     const isNewUpload = fileInput && fileInput.value
-    
+
     // Don't allow removing placeholder images
     if (isPlaceholderImage(imagePreview)) {
         return
@@ -361,10 +545,10 @@ function handleEditPageImageRemoval(imagePreview, fileInput, removeButton) {
             // Get department color - first try department select, then fallback to data attribute
             const departmentSelect = document.getElementById('department_id')
             const departmentId = departmentSelect?.value
-            
+
             // Start with any saved department color on the image element itself
             let departmentColor = imagePreview.dataset.deptColor || '#cccccc'
-            
+
             // Then try to get from selected department, which might have changed
             if (departmentId) {
                 const selectedOption = departmentSelect.querySelector(`option[value="${departmentId}"]`)
@@ -374,15 +558,15 @@ function handleEditPageImageRemoval(imagePreview, fileInput, removeButton) {
                     imagePreview.dataset.deptColor = departmentColor
                 }
             }
-            
+
             // Create initials from staff name
             const firstName = document.getElementById('first_name')?.value || ''
             const lastName = document.getElementById('last_name')?.value || ''
-            
+
             // Use our custom placeholder generator with department color
             const timestamp = new Date().getTime() // Prevent caching
             imagePreview.src = `../includes/generate_placeholder.php?name=${firstName}+${lastName}&size=200x200&bg_color=${encodeURIComponent(departmentColor)}&t=${timestamp}`
-            
+
             // Mark as placeholder
             imagePreview.dataset.isPlaceholder = 'true'
         }
@@ -412,6 +596,163 @@ function formatFileSize(bytes) {
 }
 
 /**
+ * Updates department filter options based on selected company
+ *
+ * @param {string} companyName - The selected company name
+ * @param {HTMLSelectElement} departmentSelect - The department select dropdown element
+ * @param {Array} originalOptions - Original department options to restore when no company is selected
+ */
+/**
+ * Helper function to reset company options while maintaining selected value
+ * 
+ * @param {HTMLSelectElement} companySelect - The company select dropdown
+ * @param {Array} originalOptions - Original company options
+ * @param {string} maintainSelection - Current selection to maintain if possible
+ */
+function resetCompanyOptions(companySelect, originalOptions, maintainSelection = '') {
+    // Store the current selection we want to maintain
+    const selectionToMaintain = maintainSelection || companySelect.value
+    
+    // Clear current options
+    companySelect.innerHTML = ''
+
+    // Restore original options
+    originalOptions.forEach(option => {
+        const optionEl = document.createElement('option')
+        optionEl.value = option.value
+        optionEl.text = option.text
+        // If this option matches the selection to maintain, mark it as selected
+        if (selectionToMaintain && option.value === selectionToMaintain) {
+            optionEl.selected = true
+        } else {
+            optionEl.selected = option.selected
+        }
+        companySelect.appendChild(optionEl)
+    })
+    
+    // Explicitly set the value to maintain the selection
+    if (selectionToMaintain) {
+        companySelect.value = selectionToMaintain
+    }
+}
+
+/**
+ * Updates department filter options based on selected company while preserving selection when possible
+ * Returns a Promise that resolves when the update is complete
+ *
+ * @param {string} companyName - The selected company name
+ * @param {HTMLSelectElement} departmentSelect - The department select dropdown element
+ * @param {Array} originalOptions - Original department options to restore when no company is selected
+ * @param {string} maintainSelection - Current department selection to maintain if possible
+ * @returns {Promise} Promise that resolves when the update is complete
+ */
+function updateDepartmentOptions(companyName, departmentSelect, originalOptions, maintainSelection = '') {
+    // If no company is selected, restore all original options but maintain current selection if specified
+    if (!companyName) {
+        // Store the current selection we want to maintain
+        const selectionToMaintain = maintainSelection || departmentSelect.value
+        
+        // Clear current options
+        departmentSelect.innerHTML = ''
+
+        // Restore original options
+        originalOptions.forEach(option => {
+            const optionEl = document.createElement('option')
+            optionEl.value = option.value
+            optionEl.text = option.text
+            // If this option matches the selection to maintain, mark it as selected
+            if (selectionToMaintain && option.value === selectionToMaintain) {
+                optionEl.selected = true
+            } else {
+                optionEl.selected = option.selected
+            }
+            departmentSelect.appendChild(optionEl)
+        })
+        
+        // Explicitly set the value to maintain the selection
+        if (selectionToMaintain) {
+            departmentSelect.value = selectionToMaintain
+        }
+        
+        // Return a resolved promise since this is synchronous
+        return Promise.resolve()
+    }
+
+    // Store current selection (we'll try to maintain it if possible)
+    const currentSelection = maintainSelection || departmentSelect.value
+
+    // Build correct path to AJAX handler relative to the current page
+    const currentPath = window.location.pathname
+    const basePath = currentPath.includes('/admin/') ? '../../' : '../'
+
+    // Return a promise that resolves when the department options are updated
+    return new Promise((resolve, reject) => {
+        // Fetch departments for this company via AJAX
+        fetch(`${basePath}includes/ajax_handlers.php?action=get_departments_by_company&company=${encodeURIComponent(companyName)}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`)
+                }
+                return response.json()
+            })
+            .then(result => {
+                // Check for success
+                if (!result.success) {
+                    throw new Error(result.error || 'Unknown error')
+                }
+
+                // Extract departments from the response
+                const departments = result.departments || []
+
+                // Clear current options
+                departmentSelect.innerHTML = ''
+
+                // Add "All Departments" option
+                const allOption = document.createElement('option')
+                allOption.value = ''
+                allOption.text = 'All Departments'
+                departmentSelect.appendChild(allOption)
+
+                // Add departments from the response
+                departments.forEach(dept => {
+                    const option = document.createElement('option')
+                    option.value = dept
+                    option.text = dept
+                    // Restore previous selection if it exists in new options
+                    if (dept === currentSelection) {
+                        option.selected = true
+                    }
+                    departmentSelect.appendChild(option)
+                })
+
+                // If previous selection is no longer available, select "All Departments"
+                if (departments.indexOf(currentSelection) === -1) {
+                    departmentSelect.value = ''
+                }
+                
+                // Resolve the promise with the updated departments
+                resolve(departments)
+            })
+            .catch(error => {
+                console.error('Error fetching departments:', error)
+
+                // Restore original options on error
+                departmentSelect.innerHTML = ''
+                originalOptions.forEach(option => {
+                    const optionEl = document.createElement('option')
+                    optionEl.value = option.value
+                    optionEl.text = option.text
+                    optionEl.selected = option.selected
+                    departmentSelect.appendChild(optionEl)
+                })
+                
+                // Reject the promise with the error
+                reject(error)
+            })
+    })
+}
+
+/**
  * Preview profile picture (works with both dropzone and regular file input)
  * @param {File|HTMLInputElement} input - Either a File object or an input element with files
  */
@@ -437,20 +778,20 @@ function previewImage(input) {
             if (!preview.dataset.originalSrc) {
                 preview.dataset.originalSrc = preview.src
             }
-            
+
             // Update the image with the new file
             preview.src = e.target.result
-            
+
             // Mark this as not a placeholder image since user uploaded it
             preview.dataset.isPlaceholder = 'false'
         }
-        
+
         // Show remove button since this is a user upload
         if (removeButton) {
             // Make remove button visible for uploaded images
             removeButton.style.display = 'flex'
         }
-        
+
         // Show file info if present
         const fileInfoEl = document.querySelector('.dropzone-file-info')
         if (fileInfoEl && file) {

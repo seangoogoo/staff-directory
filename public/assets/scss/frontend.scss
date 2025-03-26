@@ -141,6 +141,27 @@ main {
     > * {
       margin-block: initial;
     }
+
+    // Company information styling
+    .staff-company {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.25rem;
+
+      .company-logo {
+        max-height: 24px;
+        max-width: 48px;
+        margin-right: 0.5rem;
+        object-fit: contain;
+      }
+
+      .company-name {
+        font-size: var(--font-size-small);
+        color: var(--text-muted);
+        font-weight: 300;
+      }
+    }
+
     .staff-name {
       font-size: var(--font-size-large);
       color: var(--dark-color);

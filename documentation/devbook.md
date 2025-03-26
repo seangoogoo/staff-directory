@@ -4,6 +4,46 @@
 
 ### Version 1.2 (March 2025)
 
+#### March 26, 2025
+*Advanced Bidirectional Cascading Filters for Company-Department Selection*
+
+- Implemented comprehensive bidirectional cascading filters system
+  - Added dynamic department filtering based on selected company
+  - Added dynamic company filtering based on selected department
+  - Preserved filter selections when switching between filters
+  - Fixed issues with filter state consistency and synchronization
+- Created new backend functionality
+  - Developed `get_departments_by_company()` function in functions.php
+  - Added new `get_companies_by_department()` function for reverse filtering
+  - Restructured AJAX handler in ajax_handlers.php to handle multiple filter requests
+  - Implemented proper JSON responses with success/error messaging
+- Updated frontend components with advanced state management
+  - Added state tracking to prevent circular update issues between filters
+  - Converted filter update functions to Promise-based architecture
+  - Created helper functions for code reusability and maintainability
+  - Improved error handling for failed AJAX requests
+- Technical enhancements
+  - Added optimized event handling to prevent infinite update loops
+  - Fixed timing issues with asynchronous AJAX calls
+  - Implemented proper selection maintenance across filter changes
+  - Ensured compatible integration with existing filter/sort functionality
+
+#### March 25, 2025
+*Database Restructuring for Improved Company-Department Hierarchy*
+
+- Restructured database to establish logical company-department hierarchy
+  - Modified the order of columns in the `staff_members` table to place `company_id` before `department_id`
+  - Updated all SQL INSERT statements in both main SQL file and migration file
+  - Created comprehensive documentation of required code changes in `database_company_changes.md`
+  - Generated prioritized TODO list in `database_todo.md` to ensure smooth transition
+- Identified critical code updates needed:
+  - Staff creation and editing forms need company selection capability
+  - Database query functions require updates to handle the new structure
+  - Frontend display must be enhanced to show company information
+- Provided interim solutions to maintain functionality during transition
+  - Temporary fixes for immediate application stability
+  - Detailed testing plan for verifying changes
+
 #### March 24, 2025
 *SCSS Variables to CSS Custom Properties Migration*
 
