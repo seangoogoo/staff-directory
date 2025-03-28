@@ -240,7 +240,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // If form was submitted but had errors, use the entered initials
                 // Otherwise use 'NEW' as the placeholder text
                 if (empty($dummy_staff['first_name']) && empty($dummy_staff['last_name'])) {
-                    $placeholder_url = "https://placehold.co/200x200?text=NEWBY";
+                    $placeholder_url = "/assets/images/add-picture.svg";
                     $img_src = $placeholder_url;
                 } else {
                     $img_src = get_staff_image_url($dummy_staff, '200x200');

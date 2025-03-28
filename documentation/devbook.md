@@ -4,6 +4,51 @@
 
 ### Version 1.2 (March 2025)
 
+#### March 28, 2025
+*Company Statistics Dashboard Implementation*
+
+- Added comprehensive company statistics to the admin dashboard
+  - Implemented staff count per company metrics
+  - Created visual representation of company size distribution
+  - Added percentage calculations to show relative company sizes
+  - Displayed total staff count for quick organization overview
+- Enhanced admin user interface with modern statistics cards
+  - Designed responsive grid layout for company statistics
+  - Added progress bars to visually represent staff distribution
+  - Ensured consistent styling with the rest of the admin interface
+- Backend implementation details
+  - Created new `get_all_company_statistics()` function in functions.php
+  - Optimized SQL queries to calculate staff counts efficiently
+  - Added percentage calculations for visual representation
+  - Ensured proper handling of edge cases (empty companies, etc.)
+- Improved admin index page organization
+  - Added Companies column to staff listing table
+  - Displayed company logos alongside company names
+  - Updated styling for better visibility and recognition
+  - Ensured consistent information hierarchy in admin views
+
+#### March 27, 2025
+*Company Management Implementation*
+
+- Added comprehensive company management functionality to the admin interface
+  - Created CRUD operations (Create, Read, Update, Delete) for companies
+  - Implemented logo upload and management with dropzone interface
+  - Added descriptive text fields for company information
+  - Created proper validation for all company operations
+- Enhanced user experience with consistent UI patterns
+  - Used the same image preview and upload pattern as staff management
+  - Ensured proper fallback to placeholder images
+  - Added visual cues for non-deletable companies (companies with staff members)
+- Backend implementation details
+  - Added necessary company management functions in functions.php
+  - Created secure file upload handling for company logos
+  - Implemented clean-up of old logos when replaced or deleted
+  - Added proper error checking for all database operations
+- Visual enhancements
+  - Added styling for company logos in tables and forms
+  - Created a specialized image preview for company logos
+  - Ensured consistent button styles across the admin interface
+
 #### March 26, 2025
 *Advanced Bidirectional Cascading Filters for Company-Department Selection*
 
@@ -501,6 +546,18 @@ graph TD
   - Included international names to represent a diverse global team
   - Standardized email format with staffdirectory.com domain
   - Aligned job titles with contemporary software industry roles
+- ✅ Company management system implementation (March 27, 2025)
+  - Added CRUD interface for managing companies in the admin area
+  - Implemented drag-and-drop logo upload with preview functionality
+  - Created responsive company listings with proper styling for logos
+- ✅ Company statistics dashboard implementation (March 28, 2025)
+  - Added staff count metrics per company with visual progress bars
+  - Implemented percentage calculations to show relative company sizes
+  - Added total staff count card for quick organization overview
+  - Enhanced admin index page with company column in staff listing
+  - Added validation to prevent deleting companies with assigned staff
+  - Implemented secure file handling for company logo uploads
+  - Ensured consistent UI patterns matching staff management screens
 
 ### Planned Improvements
 
@@ -512,15 +569,20 @@ graph TD
 - ~~Improve Placeholder Image Settings to set a real live preview of the update (Javascript)~~
 - ~~Updated database with comprehensive software development departments and staff members~~
 - ~~Create default user images to match the default application setup and alternate between users that have and don't have profile pictures to display examples of placeholder images~~
-- Enable company groups management in case a company includes holdings
+- ~~Convert all SCSS variables to CSS custom properties~~
+- ~~Enable company groups management in case a company includes holdings~~
+- Improve and centralize javascript functions for image preview
 - Improve unused placeholder images management to remove them when not needed either by programming a folder cleanup once a day and/or by using temporary images when editing settings or creating/editing users
-- Improve UX/UI design for admin and Front-end using TailAdmin
-- Replace LineIcons by TailAdmin's icon set
-- Convert all SCSS variables to CSS custom properties
+- Improve UX/UI design for admin and Front-end maybe using TailAdmin
+- Replace LineIcons by TailAdmin's icon set or Remix Icons
 - Add internationalization support (FR/EN translation files)
+- Create a favicon
 
 #### Version 1.3 (Planned)
 - Enable login possibility to access the front-end
+- Add a date of entry into the company for staff members as optional
+- Add a birthday field for staff members as optional
+- Include company logo in the staff member image
 - Add advanced search features for Staff Members Management
 - CSV import/export functionality
 - Enhanced authentication security:

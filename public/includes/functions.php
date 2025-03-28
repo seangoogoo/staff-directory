@@ -958,4 +958,130 @@ function debug_log($data, $label = '', $print_r = true) {
     file_put_contents($log_file, $log_entry, FILE_APPEND);
 }
 
+/**
+ * Get company by ID
+ *
+ * @param mysqli $conn Database connection
+ * @param int $id Company ID
+ * @return array|null Company data or null if not found
+ */
+function get_company_by_id($conn, $id) {
+    $sql = "SELECT * FROM companies WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        return $result->fetch_assoc();
+    }
+    
+    return null;
+}
+
+/**
+ * Upload company logo
+ *
+ * @param array $file The uploaded file from $_FILES
+ * @return string|false The path to the uploaded logo or false on failure
+ */
+function upload_company_logo($file) {
+    // Define allowed file types and maximum size
+    $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp'];
+    $max_size = 5 * 1024 * 1024; // 5MB
+    
+    // Check for errors
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        return false;
+    }
+    
+    // Validate file type
+    if (!in_array($file['type'], $allowed_types)) {
+        return false;
+    }
+    
+    // Validate file size
+    if ($file['size'] > $max_size) {
+        return false;
+    }
+    
+    // Create the upload directory if it doesn't exist
+    $upload_dir = __DIR__ . '/../uploads/companies/';
+    if (!is_dir($upload_dir)) {
+        mkdir($upload_dir, 0755, true);
+    }
+    
+    // Generate a unique filename
+    $file_ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+    $filename = uniqid('company_') . '.' . $file_ext;
+    $upload_path = $upload_dir . $filename;
+    
+    // Move the uploaded file
+    if (move_uploaded_file($file['tmp_name'], $upload_path)) {
+        // Return the relative path
+        return '/uploads/companies/' . $filename;
+    }
+    
+    return false;
+}
+
+/**
+ * Check if company has staff members
+ *
+ * @param mysqli $conn Database connection
+ * @param int $company_id Company ID
+ * @return int Number of staff members associated with the company
+ */
+function get_company_staff_count($conn, $company_id) {
+    $sql = "SELECT COUNT(*) as count FROM staff_members WHERE company_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('i', $company_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $stmt->close();
+    
+    return $row['count'];
+}
+
+/**
+ * Get statistics for all companies
+ *
+ * @param mysqli $conn Database connection
+ * @return array Array of company statistics including company name, logo, staff count, and percentage
+ */
+function get_all_company_statistics($conn) {
+    // Get all companies with their staff counts
+    $sql = "SELECT c.id, c.name, c.logo, COUNT(s.id) as staff_count 
+            FROM companies c 
+            LEFT JOIN staff_members s ON c.id = s.company_id 
+            GROUP BY c.id 
+            ORDER BY staff_count DESC";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $companies = [];
+    $total_staff = 0;
+    
+    // First pass to get all companies and the total staff count
+    while ($row = $result->fetch_assoc()) {
+        $companies[] = $row;
+        $total_staff += $row['staff_count'];
+    }
+    
+    $stmt->close();
+    
+    // Second pass to calculate percentages
+    foreach ($companies as &$company) {
+        $company['percentage'] = $total_staff > 0 ? round(($company['staff_count'] / $total_staff) * 100, 1) : 0;
+    }
+    
+    return [
+        'companies' => $companies,
+        'total_staff' => $total_staff
+    ];
+}
+
 ?>

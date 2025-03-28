@@ -58,12 +58,12 @@ This document outlines the specific tasks needed to update the application to ma
 
 ## Lower Priority (Nice to Have)
 
-- [ ] **Add company management pages**
+- [X] **Add company management pages**
   - Create CRUD interface for companies
   - Add company logo upload functionality
   - Add company description editor
 
-- [ ] **Add company statistics**
+- [X] **Add company statistics**
   - Show staff count per company
   - Add company metrics to admin dashboard
 

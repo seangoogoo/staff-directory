@@ -60,6 +60,7 @@ if (!is_logged_in()) {
                 <ul>
                     <li><a href="/admin/index.php">Manage staff members</a></li>
                     <li><a href="/admin/departments.php">Manage departments</a></li>
+                    <li><a href="/admin/companies.php">Manage companies</a></li>
                     <li><a href="/admin/settings.php">Settings</a></li>
                     <li><a href="/" target="_blank">View Front-end</a></li>
                     <li><a href="/admin/auth/logout.php">Logout</a></li>

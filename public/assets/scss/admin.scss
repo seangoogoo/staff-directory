@@ -124,12 +124,53 @@ td.action-buttons a.btn {
     width: 50px;
     height: 50px;
     object-fit: cover;
+    object-position: center top;
     border-radius: 50%;
     box-shadow: var(--box-shadow);
+
+    &.company-logo {
+      object-fit: contain;
+      object-position: center;
+      border-radius: 0;
+      box-shadow: none;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+  }
+
+  // Company display styles
+  .company-display {
+    display: flex;
+    align-items: center;
+
+    .company-name {
+      font-size: 0.9rem;
+      color: var(--text-dark);
+      vertical-align: middle;
+    }
+  }
+
+  .company-name-only {
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    display: inline-block;
+  }
+  &.staff-members-table {
+    img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      object-position: center top;
+      border-radius: 50%;
+      box-shadow: var(--box-shadow);
+
+      &.company-logo {
+        width: 26px;
+        height: 26px;
+      }
+    }
   }
 }
-
-
 
 // Admin Page Specific Styles
 .staff-form {
@@ -147,6 +188,160 @@ td.action-buttons a.btn {
       max-width: 200px;
       height: auto;
       border-radius: 5px;
+    }
+  }
+}
+
+// Company Statistics Dashboard Styles
+.stats-dashboard {
+  margin-bottom: 2rem;
+
+  .section-title {
+    font-size: 1.4rem;
+    font-weight: 300;
+    margin-bottom: 1rem;
+    color: var(--text-dark);
+  }
+
+  .stats-overview {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+
+    .stat-card {
+      background-color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: 1.2rem;
+      flex: 1;
+      min-width: 200px;
+      display: flex;
+      align-items: center;
+
+      .stat-icon {
+        background-color: var(--primary-color-light);
+        color: var(--primary-color);
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+
+        i {
+          font-size: 1.5rem;
+        }
+      }
+
+      .stat-info {
+        h3 {
+          font-size: 0.9rem;
+          font-weight: 400;
+          margin: 0 0 0.3rem 0;
+          color: var(--text-muted);
+        }
+
+        .stat-number {
+          font-size: 1.8rem;
+          font-weight: 700;
+          color: var(--text-dark);
+        }
+      }
+
+      &.total-staff {
+        .stat-icon {
+          background-color: rgba(86, 171, 228, 0.2);
+          color: var(--primary-color);
+        }
+      }
+    }
+  }
+
+  .company-stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+
+    .company-stat-card {
+      background-color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: 1.2rem;
+
+      .company-info {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+
+        img.company-stat-logo {
+          width: 40px;
+          height: 40px;
+          object-fit: contain;
+          margin-right: 0.8rem;
+        }
+
+        .company-icon {
+          width: 40px;
+          height: 40px;
+          background-color: var(--bg-color);
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-right: 0.8rem;
+
+          i {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+          }
+        }
+
+        h3 {
+          font-size: 1.1rem;
+          font-weight: 500;
+          margin: 0;
+          color: var(--text-dark);
+        }
+      }
+
+      .company-metrics {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.8rem;
+
+        .metric {
+          display: flex;
+          flex-direction: column;
+
+          .metric-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.2rem;
+          }
+
+          .metric-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+          }
+        }
+      }
+
+      .company-progress {
+        height: 6px;
+        background-color: var(--bg-color);
+        border-radius: 3px;
+        overflow: hidden;
+
+        .progress-bar {
+          height: 100%;
+          background-color: var(--primary-color);
+          border-radius: 3px;
+          transition: width 0.5s ease-in-out;
+        }
+      }
     }
   }
 }
@@ -315,11 +510,6 @@ td.action-buttons a.btn {
   position: relative;
   display: inline-block;
 
-  img {
-    max-width: 100%;
-    max-height: 80px;
-  }
-
   .remove-image {
     position: absolute;
     top: -10px;
@@ -350,7 +540,7 @@ td.action-buttons a.btn {
   }
 }
 
-// Dropzone styles
+// Dropzone styles for file uploads
 .dropzone-input {
   position: absolute;
   width: 1px;
@@ -413,4 +603,64 @@ td.action-buttons a.btn {
 
 #department-color-preview {
   margin-block-start: 1rem;
+}
+
+.logo-cell {
+  vertical-align: middle;
+  text-align: center;
+  width: 80px;
+}
+
+.no-logo {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.dropzone-container {
+  border: 2px dashed var(--border-light);
+  border-radius: var(--border-radius);
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+
+  &:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(121, 179, 219, 0.05);
+  }
+
+  .dz-message {
+    color: var(--text-muted);
+  }
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.logo-preview-container {
+  margin-top: 1rem;
+
+  h4 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .current-logo {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    display: inline-block;
+    max-width: 100%;
+
+    img {
+      max-width: 200px;
+      max-height: 100px;
+      object-fit: contain;
+      display: block;
+    }
+  }
 }

@@ -900,11 +900,11 @@ $sample_image_url = get_staff_image_url([
 
 ?>
 
-    <h1>Application Settings</h1>
+    <h1 class="page-title">Application Settings</h1>
 
     <!-- Logo Settings Section -->
     <div class="settings-section">
-        <h2>Logo Settings</h2>
+        <h2 class="page-title">Logo Settings</h2>
 
         <?php if (!empty($logo_success_message) && isset($_POST['save_logo_only'])): ?>
             <div class="alert alert-success"><?php echo $logo_success_message; ?></div>
@@ -916,7 +916,7 @@ $sample_image_url = get_staff_image_url([
 
 
 
-        <div class="settings-container mb-5">
+        <div class="settings-container">
             <div class="row">
                 <div class="col-md-6">
                     <form method="post" action="" enctype="multipart/form-data" id="logo-form">
@@ -972,7 +972,7 @@ $sample_image_url = get_staff_image_url([
 
     <!-- Title Settings Section -->
     <div class="settings-section">
-        <h2>Title Settings</h2>
+        <h2 class="page-title">Title Settings</h2>
 
         <?php if (!empty($logo_success_message) && isset($_POST['save_title_settings'])): ?>
             <div class="alert alert-success"><?php echo $logo_success_message; ?></div>
@@ -982,7 +982,7 @@ $sample_image_url = get_staff_image_url([
             <div class="alert alert-danger"><?php echo $logo_error_message; ?></div>
         <?php endif; ?>
 
-        <div class="settings-container mb-5">
+        <div class="settings-container">
             <form method="post" action="">
                 <div class="form-group">
                     <label for="frontend_title">Frontend Title:</label>
@@ -1006,7 +1006,7 @@ $sample_image_url = get_staff_image_url([
 
     <!-- Placeholder Image Settings Section -->
     <div class="settings-section">
-        <h2>Placeholder Image Settings</h2>
+        <h2 class="page-title">Placeholder Image Settings</h2>
 
         <?php if (!empty($success_message)): ?>
             <div class="alert alert-success"><?php echo $success_message; ?></div>

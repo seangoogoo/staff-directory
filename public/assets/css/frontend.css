@@ -48,7 +48,7 @@ body {
 
 .container {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 0 15px;
 }
@@ -287,12 +287,23 @@ textarea:focus {
 }
 .image-preview-container img {
   display: block;
-  max-width: 100%;
-  max-height: 200px;
-  border-radius: 4px;
-  -webkit-box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  width: 200px;
+  height: 200px;
+  -o-object-fit: cover;
+     object-fit: cover;
+  -o-object-position: center top;
+     object-position: center top;
+  border-radius: 8px;
   margin-inline: auto;
+  -webkit-box-shadow: var(--box-shadow);
+          box-shadow: var(--box-shadow);
+  overflow: clip;
+}
+.image-preview-container.logo-preview img {
+  -o-object-fit: contain;
+     object-fit: contain;
+  -o-object-position: center;
+     object-position: center;
 }
 .image-preview-container .remove-image {
   position: absolute;
@@ -359,6 +370,7 @@ input[type=file].dropzone-input {
   background-color: var(--dept-color, var(--bg-light));
   color: var(--text-dark);
   max-width: 100%;
+  text-wrap: nowrap;
 }
 .pill.color-pill {
   font-family: monospace;

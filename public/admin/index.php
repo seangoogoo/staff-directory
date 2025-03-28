@@ -40,6 +40,9 @@ if (isset($_GET['delete']) && !empty($_GET['delete'])) {
 
 // Get all staff members
 $staff_members = get_all_staff_members($conn);
+
+// Get company statistics
+$company_stats = get_all_company_statistics($conn);
 ?>
 
 <h1 class="page-title">Staff Members Management</h1>
@@ -56,11 +59,60 @@ $staff_members = get_all_staff_members($conn);
     <a href="add.php" class="btn"><i class="lni lni-plus"></i> Add New Staff Member</a>
 </div>
 
-<table class="admin-table">
+<!-- Company Statistics Dashboard -->
+<div class="stats-dashboard">
+    <h2 class="section-title">Company Statistics</h2>
+    <div class="stats-overview">
+        <div class="stat-card total-staff">
+            <div class="stat-icon">
+                <i class="lni lni-user-multiple-4"></i>
+            </div>
+            <div class="stat-info">
+                <h3>Total Staff</h3>
+                <div class="stat-number"><?php echo $company_stats['total_staff']; ?></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="company-stats-container">
+        <?php if (!empty($company_stats['companies'])): ?>
+            <?php foreach ($company_stats['companies'] as $company): ?>
+                <div class="company-stat-card">
+                    <div class="company-info">
+                        <?php if (!empty($company['logo'])): ?>
+                            <img src="<?php echo $company['logo']; ?>" alt="<?php echo $company['name']; ?> logo" class="company-stat-logo">
+                        <?php else: ?>
+                            <div class="company-icon"><i class="lni lni-apartment"></i></div>
+                        <?php endif; ?>
+                        <h3><?php echo $company['name']; ?></h3>
+                    </div>
+                    <div class="company-metrics">
+                        <div class="metric">
+                            <span class="metric-label">Staff Count</span>
+                            <span class="metric-value"><?php echo $company['staff_count']; ?></span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Percentage</span>
+                            <span class="metric-value"><?php echo $company['percentage']; ?>%</span>
+                        </div>
+                    </div>
+                    <div class="company-progress">
+                        <div class="progress-bar" style="width: <?php echo $company['percentage']; ?>%"></div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <p>No company data available.</p>
+        <?php endif; ?>
+    </div>
+</div>
+
+<table class="admin-table staff-members-table">
     <thead>
         <tr>
             <th>Photo</th>
             <th>Name</th>
+            <th>Company</th>
             <th>Department</th>
             <th>Job Title</th>
             <th>Email</th>
@@ -75,6 +127,16 @@ $staff_members = get_all_staff_members($conn);
                         <img src="<?php echo get_staff_image_url($staff, '50x50', null, $staff['department_color']); ?>" alt="<?php echo $staff['first_name']; ?>">
                     </td>
                     <td><?php echo $staff['first_name'] . ' ' . $staff['last_name']; ?></td>
+                    <td>
+                        <?php if (!empty($staff['company_logo'])): ?>
+                            <div class="company-display">
+                                <img src="<?php echo $staff['company_logo']; ?>" alt="<?php echo $staff['company']; ?> logo" class="company-logo">
+                                <span class="company-name"><?php echo $staff['company']; ?></span>
+                            </div>
+                        <?php else: ?>
+                            <span class="company-name-only"><?php echo $staff['company']; ?></span>
+                        <?php endif; ?>
+                    </td>
                     <td>
                         <?php
                         // Get proper text color contrast class
@@ -94,7 +156,7 @@ $staff_members = get_all_staff_members($conn);
             <?php endforeach; ?>
         <?php else: ?>
             <tr>
-                <td colspan="6">No staff members found.</td>
+                <td colspan="7">No staff members found.</td>
             </tr>
         <?php endif; ?>
     </tbody>

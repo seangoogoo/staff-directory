@@ -299,11 +299,19 @@ textarea {
 
   img {
     display: block;
-    max-width: 100%;
-    max-height: 200px;
-    border-radius: 4px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    object-position: center top;
+    border-radius: 8px;
     margin-inline: auto;
+    box-shadow: var(--box-shadow);
+    overflow: clip;
+    // filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.1));
+  }
+  &.logo-preview img {
+    object-fit: contain;
+    object-position: center;
   }
 
   .remove-image {
@@ -365,6 +373,7 @@ input[type="file"].dropzone-input {
   background-color: var(--dept-color, var(--bg-light));
   color: var(--text-dark);
   max-width: 100%;
+  text-wrap: nowrap;
 
   // Color preview within pill (display in Admin side)
   &.color-pill {

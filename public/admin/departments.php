@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Departments Management
  * Allows administrators to view, add, edit, and delete departments
@@ -132,32 +133,34 @@ $departments = get_all_departments($conn);
             <div class="alert alert-success"><?php echo $success_message; ?></div>
         <?php endif; ?>
 
-        <form action="departments.php<?php echo isset($department_id) ? "?edit={$department_id}" : ""; ?>" method="POST">
-            <?php if (isset($department_id)): ?>
-                <input type="hidden" name="department_id" value="<?php echo $department_id; ?>">
-            <?php endif; ?>
+        <div class="settings-container">
+            <form action="departments.php<?php echo isset($department_id) ? "?edit={$department_id}" : ""; ?>" method="POST">
+                <?php if (isset($department_id)): ?>
+                    <input type="hidden" name="department_id" value="<?php echo $department_id; ?>">
+                <?php endif; ?>
 
-            <div class="form-group">
-                <label for="name">Department Name</label>
-                <input type="text" id="name" name="name" value="<?php echo isset($name) ? $name : ''; ?>" required>
-            </div>
+                <div class="form-group">
+                    <label for="name">Department Name</label>
+                    <input type="text" id="name" name="name" value="<?php echo isset($name) ? $name : ''; ?>" required>
+                </div>
 
-            <div class="form-group">
-                <label for="description">Description</label>
-                <textarea id="description" name="description" rows="4"><?php echo isset($description) ? $description : ''; ?></textarea>
-            </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="4"><?php echo isset($description) ? $description : ''; ?></textarea>
+                </div>
 
-            <div class="form-group">
-                <label for="color">Department Color</label>
-                <input type="color" id="color" name="color" value="<?php echo isset($color) ? $color : '#6c757d'; ?>" required>
-                <small class="form-text">Choose a color to represent this department</small>
-            </div>
+                <div class="form-group">
+                    <label for="color">Department Color</label>
+                    <input type="color" id="color" name="color" value="<?php echo isset($color) ? $color : '#6c757d'; ?>" required>
+                    <small class="form-text">Choose a color to represent this department</small>
+                </div>
 
-            <div class="form-actions">
-                <a href="departments.php" class="btn outline-secondary">Cancel</a>
-                <button type="submit" class="btn"><?php echo $button_text; ?></button>
-            </div>
-        </form>
+                <div class="form-actions">
+                    <a href="departments.php" class="btn outline-secondary">Cancel</a>
+                    <button type="submit" class="btn"><?php echo $button_text; ?></button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <div class="admin-content">
@@ -213,8 +216,8 @@ $departments = get_all_departments($conn);
                             <td class="action-buttons">
                                 <a href="departments.php?edit=<?php echo $dept['id']; ?>" class="btn outline-secondary"><i class="lni lni-file-pencil"></i> Edit</a>
                                 <a href="departments.php?delete=<?php echo $dept['id']; ?>" class="btn outline-danger <?php echo ($staff_count > 0) ? 'disabled' : ''; ?>"
-                                   <?php if ($staff_count > 0): ?>onclick="alert('Cannot delete a department that has staff members assigned to it.'); return false;"<?php endif; ?>>
-                                   <i class="lni lni-trash-3"></i> Delete
+                                    <?php if ($staff_count > 0): ?>onclick="alert('Cannot delete a department that has staff members assigned to it.'); return false;" <?php endif; ?>>
+                                    <i class="lni lni-trash-3"></i> Delete
                                 </a>
                             </td>
                         </tr>
@@ -230,19 +233,19 @@ $departments = get_all_departments($conn);
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Add confirmation for delete buttons
-    const deleteButtons = document.querySelectorAll('.outline-danger:not(.disabled)')
-    if (deleteButtons) {
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                if (!confirm('Are you sure you want to delete this department?')) {
-                    e.preventDefault()
-                }
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add confirmation for delete buttons
+        const deleteButtons = document.querySelectorAll('.outline-danger:not(.disabled)')
+        if (deleteButtons) {
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    if (!confirm('Are you sure you want to delete this department?')) {
+                        e.preventDefault()
+                    }
+                })
             })
-        })
-    }
-});
+        }
+    });
 </script>
 
 <?php require_once '../includes/admin_footer.php'; ?>
