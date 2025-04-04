@@ -1,14 +1,20 @@
-# Staff Directory Application -- Version 1.2
+# Staff Directory Application -- Version 1.2.5
 
 A web-based staff directory application that allows administrators to manage staff members and provides a user-friendly interface for employees to browse the directory.
 
 ## Features
 
 ### Admin Dashboard
-- Add new staff members with details like name, department, job title, email, and profile picture
+- Add new staff members with details like name, company, department, job title, email, and profile picture
+  - Real-time duplicate checking prevents adding staff with identical names or email addresses
 - Edit existing staff members
 - Delete staff members
-- Protected by .htaccess authentication
+- Manage companies with logo upload functionality
+- Manage departments with custom color coding
+- View company statistics and staff distribution
+- Filter and search functionality for staff list
+- Customizable application settings (logo, default placeholder image for staff members, and title)
+- Protected by authentication system
 
 ### Frontend Display
 - Grid view of staff members
@@ -17,7 +23,7 @@ A web-based staff directory application that allows administrators to manage sta
 - Responsive design for desktop and mobile
 
 ## Tech Stack
-- Frontend: HTML, SCSS, Vanilla JavaScript
+- Frontend: HTML, Tailwind, Vanilla JavaScript
 - Backend: PHP 7.4, MySQL
 - Image Processing: Intervention Image 2.7 (WebP support)
 - Image Storage: Local upload folder
@@ -26,10 +32,10 @@ A web-based staff directory application that allows administrators to manage sta
 1. Clone the repository
 2. Import the database schema from `database/staff_dir.sql`
 3. Configure database connection in `config/database.php`
-4. Set up .htaccess authentication for the admin area
+4. Set up .env file for the authentication of the admin area
 5. Ensure the uploads directory is writable by the web server
 
-## Directory Structure
+## Folder tree
 The application follows a secure directory structure:
 
 ```
@@ -47,19 +53,19 @@ The application follows a secure directory structure:
 │   │   ├── `departments.php`       # Department management interface
 │   │   ├── `edit.php`              # Edit existing staff member
 │   │   ├── `index.php`             # Admin dashboard page
-│   │   └── `settings.php`          # Placeholder image settings page
+│   │   └── `settings.php`          # Application settings & placeholder image configuration
 │   ├── `api/`                      # API endpoints for the application
 │   ├── `assets/`                   # CSS, JavaScript, images and other assets
 │   │   ├── `css/`                  # Compiled CSS files
 │   │   ├── `fonts/`                # Font files
+│   │   │   ├── `Outfit/`           # Outfit font files
+│   │   │   └── `remixicon/`        # Remix icon font files
 │   │   ├── `images/`               # Image assets
 │   │   ├── `js/`                   # JavaScript files
-│   │   ├── `scss/`                 # SCSS source files (edit these, not CSS directly)
-│   │   │   ├── `_common.scss`      # Common styles
-│   │   │   ├── `_login-modal.scss` # Login modal styles
-│   │   │   ├── `_variables.scss`   # SCSS variables
-│   │   │   ├── `admin.scss`        # Admin-specific styles
-│   │   │   └── `frontend.scss`     # Frontend styles
+│   │   │   ├── `admin-filters.js`  # Admin-specific filtering functionality
+│   │   │   ├── `filter-core.js`    # Core filtering logic shared between admin/frontend
+│   │   │   ├── `frontend-filters.js` # Frontend-specific filtering functionality
+│   │   │   └── `main.js`           # Main application JavaScript
 │   │   └── `vendor/`               # Third-party libraries
 │   ├── `config/`                   # Configuration files accessed by public pages
 │   │   ├── `database.php`          # Database connection configuration
@@ -68,15 +74,23 @@ The application follows a secure directory structure:
 │   │   ├── `admin_footer.php`      # Admin page footer
 │   │   ├── `admin_header.php`      # Admin page header
 │   │   ├── `ajax_handlers.php`     # AJAX request handlers
+│   │   ├── `check_duplicate.php`   # AJAX endpoint for staff duplicate detection
 │   │   ├── `footer.php`            # Frontend page footer
 │   │   ├── `functions.php`         # Utility functions
 │   │   ├── `generate_placeholder.php` # Placeholder image generator
 │   │   └── `header.php`            # Frontend page header
 │   ├── `uploads/`                  # User uploaded content
 │   │   ├── `companies/`            # Company logo images
-│   │   ├── `logos/`                # Other logo images
+│   │   ├── `logos/`                # Application logo images
 │   │   └── `placeholders/`         # Generated placeholder images (WebP format)
 │   └── `index.php`                 # Main entry point
+├── `src/`                          # Source files for development
+│   ├── `fonts/`                    # Original font files
+│   │   ├── `Outfit/`               # Outfit variable font
+│   │   └── `remixicon/`            # Remix icon font files
+│   ├── `input.scss`                # Main SCSS input file
+│   ├── `intermediate.css`          # Intermediate CSS (generated)
+│   └── `intermediate.css.map`      # Source mapping for CSS
 ├── `database/`                     # Database schema and migration scripts
 │   ├── `migrate_departments.sql`   # Migration script for department management
 │   └── `staff_dir.sql`             # Initial database schema and data
@@ -84,9 +98,18 @@ The application follows a secure directory structure:
 │   └── `devbook.md`                # Developer documentation
 ├── `logs/`                         # Application logs
 ├── `vendor/`                       # Composer dependencies
-└── `staff_dir_env/`                # Environment variables (outside web root for security)
-    ├── `.env`                      # Environment variables file
-    └── `.env_example`              # Example environment file template
+├── `node_modules/`                 # NPM dependencies
+├── `staff_dir_env/`                # Environment variables (outside web root for security)
+│   ├── `.env`                      # Environment variables file
+│   └── `.env_example`              # Example environment file template
+├── `.vscode/`                      # VS Code configuration
+│   └── `settings.json`             # Editor settings
+├── `package.json`                  # NPM package configuration
+├── `package-lock.json`             # NPM package lock file
+├── `composer.json`                 # Composer configuration
+├── `composer.lock`                 # Composer lock file
+├── `tailwind.config.js`            # Tailwind CSS configuration
+└── `.gitignore`                    # Git ignore rules
 ```
 
 ## Usage

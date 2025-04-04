@@ -1165,3 +1165,46 @@ function get_active_company_names($conn) {
     $stmt->close();
     return $companies;
 }
+
+/**
+ * Check if a staff member already exists with the same name or email
+ *
+ * @param mysqli $conn Database connection
+ * @param string $first_name First name to check
+ * @param string $last_name Last name to check
+ * @param string $email Email to check
+ * @return array Result with status and message
+ */
+function check_staff_duplicate($conn, $first_name, $last_name, $email) {
+    $result = ['duplicate' => false, 'message' => ''];
+
+    // Check for duplicate name (case insensitive)
+    $sql_name = "SELECT id FROM staff_members WHERE LOWER(first_name) = LOWER(?) AND LOWER(last_name) = LOWER(?)";
+    $stmt_name = $conn->prepare($sql_name);
+    $stmt_name->bind_param("ss", $first_name, $last_name);
+    $stmt_name->execute();
+    $stmt_name->store_result();
+
+    if ($stmt_name->num_rows > 0) {
+        $result['duplicate'] = true;
+        $result['message'] = "A staff member with the same name already exists.";
+        $stmt_name->close();
+        return $result;
+    }
+    $stmt_name->close();
+
+    // Check for duplicate email (case insensitive)
+    $sql_email = "SELECT id FROM staff_members WHERE LOWER(email) = LOWER(?)";
+    $stmt_email = $conn->prepare($sql_email);
+    $stmt_email->bind_param("s", $email);
+    $stmt_email->execute();
+    $stmt_email->store_result();
+
+    if ($stmt_email->num_rows > 0) {
+        $result['duplicate'] = true;
+        $result['message'] = "A staff member with this email address already exists.";
+    }
+    $stmt_email->close();
+
+    return $result;
+}

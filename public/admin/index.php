@@ -164,7 +164,7 @@ $company_stats = get_all_company_statistics($conn);
         <tbody id="admin-staff-table-body">
             <?php if (count($staff_members) > 0): ?>
                 <?php foreach ($staff_members as $staff): ?>
-                    <tr class="border-b hover:bg-gray-50">
+                    <tr class="border-b hover:bg-gray-50" style="--dept-color: <?php echo htmlspecialchars($staff['department_color']); ?>">
                         <td class="px-4 py-2">
                             <img src="<?php echo get_staff_image_url($staff, '50x50', null, $staff['department_color']); ?>"
                                  alt="<?php echo $staff['first_name']; ?>"
@@ -190,7 +190,7 @@ $company_stats = get_all_company_statistics($conn);
                             $text_class = get_text_contrast_class($staff['department_color']);
                             $text_color = ($text_class === 'dark-text') ? 'text-gray-800' : 'text-white';
                             ?>
-                            <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium <?php echo $text_color; ?>"
+                            <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium <?php echo $text_class; ?>"
                                   style="background-color: <?php echo $staff['department_color']; ?>">
                                 <?php echo $staff['department']; ?>
                             </span>

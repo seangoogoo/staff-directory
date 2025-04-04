@@ -527,7 +527,30 @@ graph TD
 - Used settings hash to track changes and avoid unnecessary regeneration
 - Optimized font sizing algorithm based on image dimensions
 
+### Version 1.2.5 (April 2025)
 
+#### April 2, 2025
+*Staff Member Duplicate Checking System*
+
+- Implemented comprehensive duplicate checking for staff member creation
+  - Added case-insensitive duplicate name detection (first name + last name combination)
+  - Added case-insensitive duplicate email detection
+  - Created both client-side and server-side validation for maximum security
+- Enhanced user experience with real-time feedback
+  - Added AJAX-based validation to check duplicates without page reload
+  - Implemented visual indicators (red borders) for duplicate fields
+  - Added clear error messages displayed immediately below relevant fields
+  - Created form submission prevention when duplicates are detected
+- Backend implementation
+  - Created a reusable `check_staff_duplicate()` function in functions.php
+  - Implemented API endpoint `/includes/check_duplicate.php` for AJAX requests
+  - Added server-side validation in form processing as a fallback security measure
+  - Built robust error handling with descriptive user feedback
+- Technical enhancements
+  - Used debouncing technique to limit API calls during typing
+  - Added proper error handling for AJAX requests
+  - Implemented event delegation for efficient event handling
+  - Ensured cross-browser compatibility for all features
 
 ## Environment Configuration
 - PHP 7.4
@@ -537,8 +560,6 @@ graph TD
 - Local image storage in `uploads` directory
 - Custom authentication system for admin area (previously was `.htaccess`/`.htpasswd`)
 - Development URL: https://staffdirectory.local (configured via local hosts file)
-
-
 
 ## Project Roadmap
 
@@ -614,8 +635,9 @@ graph TD
 - ~~Improve UX/UI design for admin and Front-end using Tailwind CSS~~
 - ~~Add search and filters to the staff member management list~~
 - ~~In homepage and admin filter, don't list companies and departments that do not have staff members~~
+- ~~Check for existing user before submitting the form in add.php form~~
 - Add random rotating light rotating effect to staff member's cards
-- Check for existing user before submitting the form in add.php form
+- List and remove unused functions
 - Add internationalization support (FR/EN translation files)
 - Create a favicon
 - Improve unused placeholder images management to remove them when not needed either by programming a folder cleanup once a day and/or by using temporary images when editing settings or creating/editing users
@@ -623,6 +645,7 @@ graph TD
 
 #### Version 1.3 (Planned)
 - Add staff counts by departments in company statistics
+- Add sorting options in admin homepage staff member list
 - Set pagination to admin staff member list
 - Improve and centralize javascript functions for image preview
 - Enable login possibility to access the front-end

@@ -27,35 +27,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['error_message'] = "All fields are required.";
         $_SESSION['form_data'] = $_POST;
     } else {
-        $profile_picture = '';
-        if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['size'] > 0) {
-            $upload_result = upload_profile_picture($_FILES['profile_picture']);
-            if ($upload_result['success']) {
-                $profile_picture = $upload_result['filename'];
-            } else {
-                // Store error message in session
-                $_SESSION['error_message'] = $upload_result['message'];
-                $_SESSION['form_data'] = $_POST;
-            }
-        }
+        // Check for duplicates using the new function
+        $duplicate_check = check_staff_duplicate($conn, $first_name, $last_name, $email);
 
-        if (!isset($_SESSION['error_message'])) {
-            $sql = "INSERT INTO staff_members (first_name, last_name, company_id, department_id, job_title, email, profile_picture)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)";
-
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssiisss", $first_name, $last_name, $company_id, $department_id, $job_title, $email, $profile_picture);
-
-            if ($stmt->execute()) {
-                header("Location: index.php?success=1");
-                exit;
-            } else {
-                // Store database error message in session
-                $_SESSION['error_message'] = "Error adding staff member: " . $stmt->error;
-                $_SESSION['form_data'] = $_POST;
+        if ($duplicate_check['duplicate']) {
+            // Store duplicate error message in session
+            $_SESSION['error_message'] = $duplicate_check['message'];
+            $_SESSION['form_data'] = $_POST;
+        } else {
+            $profile_picture = '';
+            if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['size'] > 0) {
+                $upload_result = upload_profile_picture($_FILES['profile_picture']);
+                if ($upload_result['success']) {
+                    $profile_picture = $upload_result['filename'];
+                } else {
+                    // Store error message in session
+                    $_SESSION['error_message'] = $upload_result['message'];
+                    $_SESSION['form_data'] = $_POST;
+                }
             }
 
-            $stmt->close();
+            if (!isset($_SESSION['error_message'])) {
+                $sql = "INSERT INTO staff_members (first_name, last_name, company_id, department_id, job_title, email, profile_picture)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("ssiisss", $first_name, $last_name, $company_id, $department_id, $job_title, $email, $profile_picture);
+
+                if ($stmt->execute()) {
+                    header("Location: index.php?success=1");
+                    exit;
+                } else {
+                    // Store database error message in session
+                    $_SESSION['error_message'] = "Error adding staff member: " . $stmt->error;
+                    $_SESSION['form_data'] = $_POST;
+                }
+
+                $stmt->close();
+            }
         }
     }
 }
@@ -240,6 +249,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.getElementById('profile_picture')
     const dropzone = document.getElementById('dropzone')
     const removeButton = document.getElementById('remove-image')
+    const form = document.querySelector('form')
+    const emailInput = document.getElementById('email')
+
+    // Create validation message elements
+    const nameValidationMsg = document.createElement('div')
+    nameValidationMsg.className = 'text-red-500 text-sm mt-1 hidden'
+    lastName.parentNode.appendChild(nameValidationMsg)
+
+    const emailValidationMsg = document.createElement('div')
+    emailValidationMsg.className = 'text-red-500 text-sm mt-1 hidden'
+    emailInput.parentNode.appendChild(emailValidationMsg)
 
     // Set initial state if a department is already selected
     // Use the repopulated form_data if available
@@ -401,6 +421,92 @@ document.addEventListener('DOMContentLoaded', function() {
         imagePreview.dataset.isPlaceholder = 'true'
         removeButton.style.display = 'none'
     }
+
+    // Debounce function to limit API calls
+    function debounce(func, wait) {
+        let timeout
+        return function() {
+            const context = this
+            const args = arguments
+            clearTimeout(timeout)
+            timeout = setTimeout(() => func.apply(context, args), wait)
+        }
+    }
+
+    // Check for name duplicates when both first and last name have values
+    const checkNameDuplicate = debounce(function() {
+        const fName = firstName.value.trim()
+        const lName = lastName.value.trim()
+
+        if (fName && lName) {
+            fetch('../includes/check_duplicate.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `type=name&first_name=${encodeURIComponent(fName)}&last_name=${encodeURIComponent(lName)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.duplicate) {
+                    nameValidationMsg.textContent = data.message
+                    nameValidationMsg.classList.remove('hidden')
+                    firstName.classList.add('border-red-500')
+                    lastName.classList.add('border-red-500')
+                } else {
+                    nameValidationMsg.classList.add('hidden')
+                    firstName.classList.remove('border-red-500')
+                    lastName.classList.remove('border-red-500')
+                }
+            })
+            .catch(error => {
+                console.error('Error checking name duplicate:', error)
+            })
+        }
+    }, 500)
+
+    // Check for email duplicates
+    const checkEmailDuplicate = debounce(function() {
+        const email = emailInput.value.trim()
+
+        if (email && email.includes('@')) {
+            fetch('../includes/check_duplicate.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `type=email&value=${encodeURIComponent(email)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.duplicate) {
+                    emailValidationMsg.textContent = data.message
+                    emailValidationMsg.classList.remove('hidden')
+                    emailInput.classList.add('border-red-500')
+                } else {
+                    emailValidationMsg.classList.add('hidden')
+                    emailInput.classList.remove('border-red-500')
+                }
+            })
+            .catch(error => {
+                console.error('Error checking email duplicate:', error)
+            })
+        }
+    }, 500)
+
+    // Add event listeners
+    firstName.addEventListener('blur', checkNameDuplicate)
+    lastName.addEventListener('blur', checkNameDuplicate)
+    emailInput.addEventListener('blur', checkEmailDuplicate)
+
+    // Prevent form submission if duplicates are found
+    form.addEventListener('submit', function(e) {
+        if (!nameValidationMsg.classList.contains('hidden') ||
+            !emailValidationMsg.classList.contains('hidden')) {
+            e.preventDefault()
+            alert('Please resolve duplicate entries before submitting.')
+        }
+    })
 })
 </script>
 
