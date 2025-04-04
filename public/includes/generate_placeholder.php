@@ -8,20 +8,17 @@
  */
 
 // Allow access only within the application
-if (!defined('APP_PATH') && strpos($_SERVER['HTTP_REFERER'], $_SERVER['HTTP_HOST']) === false) {
-    // If directly accessed and not from our domain, block access
-    header('HTTP/1.0 403 Forbidden');
-    exit('Direct access to this file is not allowed.');
+if (!defined('APP_PATH')) {
+    define('APP_PATH', dirname(__DIR__));
 }
 
 // Include required function
 require_once 'functions.php';
-define('APP_PATH', dirname(__DIR__));
 
 // Get parameters
 $name = isset($_GET['name']) ? $_GET['name'] : 'Unknown User';
 $size = isset($_GET['size']) ? $_GET['size'] : '200x200';
-$bg_color = isset($_GET['bg_color']) ? $_GET['bg_color'] : '#6d6d6b';
+$bg_color = isset($_GET['bg_color']) ? $_GET['bg_color'] : '#9CA3AF';
 $text_color = isset($_GET['text_color']) ? '#ffffff' : '#ffffff'; // Default to white text
 $font_weight = isset($_GET['font_weight']) ? $_GET['font_weight'] : 'Regular';
 $font_size_factor = isset($_GET['font_size_factor']) ? floatval($_GET['font_size_factor']) : 3; // Default to 3

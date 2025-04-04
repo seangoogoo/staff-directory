@@ -23,44 +23,51 @@ require_once __DIR__ . '/functions.php';
     $frontend_title = $app_settings['frontend_title']; // Default is already provided by load_app_settings
     ?>
     <title><?php echo htmlspecialchars($frontend_title); ?></title>
-    <link rel="stylesheet" href="/assets/vendor/lineicons/lineicons.css">
-    <?php
-    // Add timestamp to CSS URL in dev mode to force cache refresh
-    $css_url = "/assets/css/frontend.css";
-    if (isset($_ENV['DEV_MODE']) && $_ENV['DEV_MODE'] === 'true') {
-        $css_url .= "?v=" . time();
-    }
-    ?>
-    <link rel="stylesheet" href="<?php echo $css_url; ?>">
+    <link href="/assets/css/styles.css" rel="stylesheet">
+    <!-- Core filter module shared between frontend and admin -->
+    <script src="/assets/js/filter-core.js"></script>
 </head>
-<body>
-    <header class="main-header">
-        <div class="container">
-            <div class="site-branding">
+<!-- Added flex for sticky footer -->
+<body class="antialiased font-sans bg-gray-50 text-gray-800 flex flex-col min-h-screen">
+    <!-- Header Styling: bg-gray-100, py-4 -->
+    <header class="main-header bg-gray-100 py-4">
+        <!-- Container Styling: max-w-screen-xl, mx-auto, px-4, md:flex -->
+        <div class="container w-full max-w-screen-xl mx-auto px-4 md:flex md:items-center md:justify-between">
+            <!-- Site Branding Styling: flex, items-center, gap-4 -->
+            <div class="site-branding flex items-center gap-4">
                 <?php
                 // Use the app settings we already loaded above
                 $logo_path = !empty($app_settings['custom_logo_path']) ? $app_settings['custom_logo_path'] : '/assets/images/staff-directory-logo.svg';
-                $site_title = $app_settings['frontend_title']; // Already has default from load_app_settings
                 $show_logo = isset($app_settings['show_logo']) ? $app_settings['show_logo'] : '1';
 
                 // Only show the logo if the setting is enabled
                 if ($show_logo === '1') :
                 ?>
-                <img src="<?php echo htmlspecialchars($logo_path); ?>" alt="<?php echo htmlspecialchars($site_title); ?> Logo" class="site-logo">
+                <!-- Logo Styling: h-10 -->
+                <img src="<?php echo htmlspecialchars($logo_path); ?>" alt="<?php echo htmlspecialchars($frontend_title); ?> Logo" class="site-logo h-10 w-auto">
                 <?php endif; ?>
-                <span class="site-title dark-text"><?php echo htmlspecialchars($site_title); ?></span>
+                <!-- Title Styling: text-3xl, font-thin, text-gray-800 -->
+                <span class="site-title text-3xl font-thin text-gray-800"><?php echo htmlspecialchars($frontend_title); ?></span>
             </div>
             <nav class="main-nav">
-                <ul>
-                    <li><a href="#" id="adminLink" class="icon-link" title="Admin Area"><i class="lni lni-user-4"></i></a></li>
+                <!-- Nav UL Styling: flex, mobile margin, md margin reset -->
+                <ul class="flex my-4 md:my-0 p-0 list-none">
+                    <li>
+                        <!-- Icon Link Styling: flex center, size, rounded, border, text color, hover, transition -->
+                        <a href="#" id="adminLink" class="icon-link flex items-center justify-center w-10 h-10 rounded-lg border border-gray-200 text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200" title="Admin Area">
+                            <!-- Use RemixIcon for login -->
+                            <i class="ri-login-box-line text-lg"></i>
+                        </a>
+                    </li>
                 </ul>
             </nav>
         </div>
     </header>
 
     <?php
-    // Include the consolidated login modal
+    // Include the consolidated login modal (path remains the same)
     require_once __DIR__ . '/../admin/auth/login-modal.php';
     ?>
 
-    <main class="container">
+    <!-- Main Container Styling: py-8, standard container, flex-grow -->
+    <main class="container w-full max-w-screen-xl mx-auto px-4 py-8 flex-grow">

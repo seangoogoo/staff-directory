@@ -31,28 +31,51 @@ if (isset($_SESSION[LOGIN_MODAL_FLAG])) {
 ?>
 
 <!-- Consolidated Login Modal -->
-<div id="loginModal" class="modal<?php echo $show_login_modal ? ' show' : ''; ?>">
-    <div class="modal-container">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Staff Directory Admin Login</h2>
-                <button type="button" class="close-btn" id="closeLoginModal">&times;</button>
+<div id="loginModal" class="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 transition-opacity duration-300 <?php echo $show_login_modal ? 'opacity-100' : 'opacity-0 pointer-events-none hidden'; ?>">
+    <div class="modal-container min-h-screen px-4 text-center flex items-center justify-center">
+        <!-- Modal panel -->
+        <div class="modal-content w-full max-w-md bg-white rounded-2xl shadow-xl transform transition-all">
+            <div class="modal-header px-6 py-2 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-semibold text-gray-800">Staff Directory Admin Login</h2>
+                    <button type="button" class="text-gray-400 hover:text-gray-500 focus:outline-none" id="closeLoginModal">
+                        <span class="text-2xl">&times;</span>
+                    </button>
+                </div>
             </div>
-            <div class="modal-body">
-                <div id="loginAlert" class="alert alert-danger" style="display: none;"></div>
-                <form id="loginForm">
+            <div class="modal-body p-6">
+                <div id="loginAlert" class="mb-4 px-4 py-3 rounded-lg text-red-800 bg-red-50 border border-red-200" style="display: none;"></div>
+                <form id="loginForm" class="space-y-4">
                     <div class="form-group">
-                        <label for="username"><i class="lni lni-user"></i> Username</label>
-                        <input type="text" id="username" name="username" placeholder="Enter username" required autocomplete="username">
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-1">
+                            <i class="ri-user-line mr-1"></i> Username
+                        </label>
+                        <input type="text"
+                               id="username"
+                               name="username"
+                               placeholder="Enter username"
+                               required
+                               autocomplete="username"
+                               class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
                     </div>
                     <div class="form-group">
-                        <label for="password"><i class="lni lni-lock"></i> Password</label>
-                        <input type="password" id="password" name="password" placeholder="Enter password" required autocomplete="current-password">
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+                            <i class="ri-lock-line mr-1"></i> Password
+                        </label>
+                        <input type="password"
+                               id="password"
+                               name="password"
+                               placeholder="Enter password"
+                               required
+                               autocomplete="current-password"
+                               class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
                     </div>
                     <!-- Hidden field to pass return URL -->
                     <input type="hidden" id="returnUrl" name="returnUrl" value="<?php echo $return_url; ?>">
-                    <div class="form-actions">
-                        <button type="submit" class="btn submit-btn"><i class="lni lni-enter"></i> Login</button>
+                    <div class="form-actions mt-6">
+                        <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors">
+                            <i class="ri-login-circle-line mr-1"></i> Login
+                        </button>
                     </div>
                 </form>
             </div>
@@ -67,25 +90,41 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm')
     const loginAlert = document.getElementById('loginAlert')
     const closeLoginModal = document.getElementById('closeLoginModal')
-    
+    const passwordField = document.getElementById('password')
+
     // Function to open the modal
     function openLoginModal() {
-        loginModal.classList.add('show')
-        document.body.classList.add('modal-open')
+        loginModal.classList.remove('opacity-0', 'pointer-events-none', 'hidden')
+        loginModal.classList.add('opacity-100')
+        document.body.style.overflow = 'hidden'
+
+        // Add a slight delay to enable the password field when modal is visible
+        setTimeout(() => {
+            passwordField.disabled = false
+        }, 10)
     }
-    
+
     // Function to close the modal
     function closeModal() {
-        loginModal.classList.remove('show')
-        document.body.classList.remove('modal-open')
+        loginModal.classList.remove('opacity-100')
+        loginModal.classList.add('opacity-0', 'pointer-events-none', 'hidden')
+        document.body.style.overflow = ''
+
+        // Disable the password field when modal is hidden to prevent password manager icons
+        passwordField.disabled = true
     }
-    
+
+    // Initially disable password field if modal is hidden
+    if (!<?php echo $show_login_modal ? 'true' : 'false'; ?>) {
+        passwordField.disabled = true
+    }
+
     // Handle admin area link clicks
     const adminLink = document.getElementById('adminLink')
     if (adminLink) {
         adminLink.addEventListener('click', function(e) {
             e.preventDefault()
-            
+
             // First check if the user is already logged in
             fetch('/admin/auth/check_login.php', {
                 method: 'GET',
@@ -111,12 +150,12 @@ document.addEventListener('DOMContentLoaded', function() {
             })
         })
     }
-    
+
     // Close modal when clicking the close button
     if (closeLoginModal) {
         closeLoginModal.addEventListener('click', closeModal)
     }
-    
+
     // Close modal when clicking background (outside modal content)
     loginModal.addEventListener('click', function(e) {
         if (e.target === loginModal) {
@@ -166,10 +205,15 @@ document.addEventListener('DOMContentLoaded', function() {
             })
         })
     }
-    
+
     // Auto-open modal if needed (based on PHP flag)
-    if (loginModal.classList.contains('show')) {
-        document.body.classList.add('modal-open')
+    if (<?php echo $show_login_modal ? 'true' : 'false'; ?>) {
+        document.body.style.overflow = 'hidden'
+        // Enable password field when modal is visible
+        passwordField.disabled = false
+    } else {
+        // Make sure the modal is properly hidden with CSS classes
+        loginModal.classList.add('hidden')
     }
 })
 </script>

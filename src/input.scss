@@ -1,0 +1,57 @@
+// Import RemixIcon styles from local copy // @import rule is deprecated in SCSS
+@use './fonts/remixicon/remixicon';
+
+/* Define local variable font */
+@font-face {
+  font-family: 'Outfit';
+  src: url('../fonts/Outfit/Outfit-VariableFont_wght.ttf') format('truetype-variations'); /* Path relative to final CSS location (public/assets/css) */
+  font-weight: 100 900; /* Define the available weight range */
+  font-display: swap; /* Optional: Improves perceived performance */
+}
+
+/*
+ * Tailwind Directives:
+ * These are special instructions for Tailwind CSS. During the build process,
+ * Tailwind will replace these directives with the actual CSS rules.
+ */
+
+/* Inject Tailwind's base styles and any base styles registered by plugins.
+ * This includes Preflight, a set of base styles that smooth over cross-browser inconsistencies.
+ */
+@tailwind base;
+
+/* Inject Tailwind's component classes and any component classes registered by plugins.
+ * These are pre-built classes like 'container'.
+ */
+@tailwind components;
+
+/* Inject Tailwind's utility classes and any utility classes registered by plugins.
+ * This is the core of Tailwind, including classes like 'p-4', 'text-red-500', 'flex', etc.
+ * These are generated based on your tailwind.config.js and the classes used in your template files.
+ */
+@tailwind utilities;
+
+body {
+  font-weight: 300;
+}
+
+input, select, textarea {
+  font-weight: 200;
+}
+//* resize select right arrow icon
+select {
+  background-size: 1.2em 1.2em;
+}
+
+//* Login Modal cross button fix
+.close-btn {
+  aspect-ratio: 1;
+}
+
+.dark-text {
+  color: color-mix(in srgb, var(--dept-color, #333), black 50%);
+}
+
+.light-text {
+  color: color-mix(in srgb, var(--dept-color, white), white 90%);
+}

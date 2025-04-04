@@ -241,6 +241,36 @@ The system is pre-configured with the following departments:
   - Modified `get_all_staff_members()` to JOIN with the departments table
   - Updated `get_staff_member_by_id()` to include department information
 
+#### March 29, 2025
+*Enhanced Search and Filter Architecture*
+
+- Implemented a shared filtering core architecture
+  - Extracted reusable filter functionality into a dedicated `filter-core.js` module
+  - Created specialized frontend and admin filter implementations
+  - Ensured consistent filtering behavior across interfaces
+  - Improved code maintainability by centralizing common functionality
+- Improved frontend filters
+  - Renamed `main.js` to `frontend-filters.js` for better code organization
+  - Adapted frontend code to use the shared filter core
+  - Maintained full backwards compatibility with existing functionality
+  - Added better error handling for filter operations
+- Added admin dashboard filtering capabilities
+  - Implemented consistent search, department, and company filters in admin view
+  - Created `admin-filters.js` that leverages the shared filter core
+  - Added dynamic table filtering for staff management
+  - Ensured proper path handling for AJAX requests in admin context
+- Technical implementation details
+  - Used JavaScript module pattern for better code organization
+  - Implemented Promise-based AJAX request handling
+  - Added state tracking to prevent circular updates between filters
+  - Created helper functions for consistent option handling
+  - Fixed path issues with AJAX requests in different contexts
+- UX improvements for filters (March 30, 2025)
+  - Standardized filter input styles across frontend and admin interfaces
+  - Added intelligent filtering to only show departments and companies with staff members
+  - Created new `get_active_department_names()` and `get_active_company_names()` functions
+  - Eliminated empty search results by removing unused filter options
+
 ### Version 1.1 - March 18, 2025
 *Authentication System Optimization & Environment Configuration*
 
@@ -502,8 +532,8 @@ graph TD
 ## Environment Configuration
 - PHP 7.4
 - MySQL database (Connection name: `staff_dir`)
-- Frontend UI using HTML/SCSS/Vanilla JavaScript
-- LineIcons v2.0 for icon library (installed via npm)
+- Frontend UI using Tailwind CSS and Vanilla JavaScript
+- Remixicon for icon library
 - Local image storage in `uploads` directory
 - Custom authentication system for admin area (previously was `.htaccess`/`.htpasswd`)
 - Development URL: https://staffdirectory.local (configured via local hosts file)
@@ -558,6 +588,15 @@ graph TD
   - Added validation to prevent deleting companies with assigned staff
   - Implemented secure file handling for company logo uploads
   - Ensured consistent UI patterns matching staff management screens
+- ✅ Tailwind CSS Integration (April 5, 2025)
+  - Replaced all custom CSS with Tailwind utility classes
+  - Converted all pages to modern responsive design
+  - Improved UI consistency across the application
+  - Enhanced responsive behavior for mobile and tablet views
+  - Replaced LineIcons with Remixicon for better icon support
+  - Added custom breakpoints for specific UI elements
+  - Implemented Tailwind forms plugin for improved form styling
+  - Streamlined build process with optimized CSS output
 
 ### Planned Improvements
 
@@ -571,18 +610,25 @@ graph TD
 - ~~Create default user images to match the default application setup and alternate between users that have and don't have profile pictures to display examples of placeholder images~~
 - ~~Convert all SCSS variables to CSS custom properties~~
 - ~~Enable company groups management in case a company includes holdings~~
-- Improve and centralize javascript functions for image preview
-- Improve unused placeholder images management to remove them when not needed either by programming a folder cleanup once a day and/or by using temporary images when editing settings or creating/editing users
-- Improve UX/UI design for admin and Front-end maybe using TailAdmin
-- Replace LineIcons by TailAdmin's icon set or Remix Icons
+- ~~Replace LineIcons with Remixicon~~
+- ~~Improve UX/UI design for admin and Front-end using Tailwind CSS~~
+- ~~Add search and filters to the staff member management list~~
+- ~~In homepage and admin filter, don't list companies and departments that do not have staff members~~
+- Add random rotating light rotating effect to staff member's cards
+- Check for existing user before submitting the form in add.php form
 - Add internationalization support (FR/EN translation files)
 - Create a favicon
+- Improve unused placeholder images management to remove them when not needed either by programming a folder cleanup once a day and/or by using temporary images when editing settings or creating/editing users
+- Install example app. on staffdirectory.jensen-siu.net
 
 #### Version 1.3 (Planned)
+- Add staff counts by departments in company statistics
+- Set pagination to admin staff member list
+- Improve and centralize javascript functions for image preview
 - Enable login possibility to access the front-end
-- Add a date of entry into the company for staff members as optional
+- Add an optional date of entrance in the company in the user info (update DB, add.php, edit.php, index.php and admin/index.php)
 - Add a birthday field for staff members as optional
-- Include company logo in the staff member image
+- Include company logo in the staff member image (as a watermark)
 - Add advanced search features for Staff Members Management
 - CSV import/export functionality
 - Enhanced authentication security:

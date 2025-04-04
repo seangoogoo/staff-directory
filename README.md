@@ -43,12 +43,15 @@ The application follows a secure directory structure:
 │   │   │   ├── `login.php`         # Login form page
 │   │   │   └── `logout.php`        # Logout functionality
 │   │   ├── `add.php`               # Add new staff member
+│   │   ├── `companies.php`         # Company management interface
 │   │   ├── `departments.php`       # Department management interface
 │   │   ├── `edit.php`              # Edit existing staff member
 │   │   ├── `index.php`             # Admin dashboard page
 │   │   └── `settings.php`          # Placeholder image settings page
+│   ├── `api/`                      # API endpoints for the application
 │   ├── `assets/`                   # CSS, JavaScript, images and other assets
 │   │   ├── `css/`                  # Compiled CSS files
+│   │   ├── `fonts/`                # Font files
 │   │   ├── `images/`               # Image assets
 │   │   ├── `js/`                   # JavaScript files
 │   │   ├── `scss/`                 # SCSS source files (edit these, not CSS directly)
@@ -64,11 +67,14 @@ The application follows a secure directory structure:
 │   ├── `includes/`                 # PHP includes for the public pages
 │   │   ├── `admin_footer.php`      # Admin page footer
 │   │   ├── `admin_header.php`      # Admin page header
+│   │   ├── `ajax_handlers.php`     # AJAX request handlers
 │   │   ├── `footer.php`            # Frontend page footer
 │   │   ├── `functions.php`         # Utility functions
-│   │   ├── `header.php`            # Frontend page header
-│   │   └── `placeholder_settings.php` # Placeholder image configuration
+│   │   ├── `generate_placeholder.php` # Placeholder image generator
+│   │   └── `header.php`            # Frontend page header
 │   ├── `uploads/`                  # User uploaded content
+│   │   ├── `companies/`            # Company logo images
+│   │   ├── `logos/`                # Other logo images
 │   │   └── `placeholders/`         # Generated placeholder images (WebP format)
 │   └── `index.php`                 # Main entry point
 ├── `database/`                     # Database schema and migration scripts
@@ -76,7 +82,11 @@ The application follows a secure directory structure:
 │   └── `staff_dir.sql`             # Initial database schema and data
 ├── `documentation/`                # Project documentation
 │   └── `devbook.md`                # Developer documentation
-└── `env/`                          # Environment variables (outside web root for security)
+├── `logs/`                         # Application logs
+├── `vendor/`                       # Composer dependencies
+└── `staff_dir_env/`                # Environment variables (outside web root for security)
+    ├── `.env`                      # Environment variables file
+    └── `.env_example`              # Example environment file template
 ```
 
 ## Usage

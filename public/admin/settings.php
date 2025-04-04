@@ -1,4 +1,48 @@
 <?php
+// Start output buffering to prevent "headers already sent" issues
+ob_start();
+
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Handle AJAX requests for logo upload
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['js_form_submit'])) {
+    // Process form
+    require_once '../includes/functions.php';
+
+    // Response will be JSON
+    header('Content-Type: application/json');
+
+    // Process the logo form
+    $form_result = process_form_submission('logo', $_POST, $_FILES);
+
+    // Update app settings with form results if processing was successful
+    if ($form_result && !empty($form_result['settings'])) {
+        global $app_settings;
+        // Load app settings if not already loaded
+        if (!isset($app_settings)) {
+            $app_settings = load_app_settings();
+        }
+        $app_settings = array_merge($app_settings, $form_result['settings']);
+    }
+
+    // Return JSON response
+    $response = [
+        'success' => $form_result['success'],
+        'message' => $form_result['message']
+    ];
+
+    // Add logo path if available
+    if ($form_result['success'] && isset($form_result['settings']['custom_logo_path'])) {
+        $response['logoPath'] = $form_result['settings']['custom_logo_path'];
+    }
+
+    echo json_encode($response);
+    exit;
+}
+
 // Start with auth checks before any output
 require_once 'auth/auth.php';
 
@@ -8,18 +52,73 @@ require_once '../includes/functions.php';
 // Check if user is logged in (will redirect if not logged in)
 require_login();
 
-
-// Start session if not already started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 // Now include admin header which outputs HTML with navigation
 require_once '../includes/admin_header.php';
 
+// Process form submissions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $form_result = null;
 
+    // Determine which form was submitted and process it
+    if (isset($_POST['save_settings'])) {
+        // Process font settings form
+        $form_result = process_form_submission('font', $_POST);
+    }
+    else if (isset($_POST['save_logo_only'])) {
+        // Process logo form
+        $form_result = process_form_submission('logo', $_POST, $_FILES);
+    }
+    else if (isset($_POST['remove_logo_submit'])) {
+        // Special case for logo removal via separate button
+        // Create temporary POST data with remove_logo=1
+        $_POST['remove_logo'] = '1';
 
-//* New functions start
+        // Process logo removal
+        $form_result = process_form_submission('logo', $_POST, $_FILES);
+    }
+    else if (isset($_POST['save_title_settings'])) {
+        // Process title settings form
+        $form_result = process_form_submission('title', $_POST);
+    }
+    else if (isset($_POST['reset_title_settings'])) {
+        // Process title reset form
+        $form_result = process_form_submission('title_reset', $_POST);
+    }
+
+    // Update app settings with form results if processing was successful
+    if ($form_result && !empty($form_result['settings'])) {
+        $app_settings = array_merge($app_settings, $form_result['settings']);
+    }
+
+    // Set session message directly
+    if ($form_result) {
+        if ($form_result['success']) {
+            // Set success message in session
+            $_SESSION[$form_result['success_key']] = $form_result['message'];
+
+            // For logo uploads, ensure the success message is written to session before redirect
+            if (isset($_POST['save_logo_only']) || isset($_POST['remove_logo_submit'])) {
+                session_write_close();
+                session_start();
+            }
+        } else {
+            // Set error message in session
+            $_SESSION[$form_result['error_key']] = $form_result['message'];
+        }
+
+        // Redirect to prevent form resubmission
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit;
+    }
+}
+
+// Get session messages
+$success_message = get_session_message('success_message');
+$error_message = get_session_message('error_message');
+$logo_success_message = get_session_message('logo_success_message');
+$logo_error_message = get_session_message('logo_error_message');
+$title_success_message = get_session_message('title_success_message');
+$title_error_message = get_session_message('title_error_message');
 
 /**
  * Process form submissions based on form type
@@ -59,8 +158,19 @@ function process_form_submission($form_type, $post_data, $files_data = []) {
             $visibility_result = process_logo_visibility($post_data);
             $result['settings']['show_logo'] = $visibility_result['show_logo'];
 
+            // Check if there's a file upload or removal - these take precedence over visibility
+            $has_upload = isset($files_data['custom_logo']) && $files_data['custom_logo']['error'] === UPLOAD_ERR_OK;
+            $has_removal = isset($post_data['remove_logo']) && ($post_data['remove_logo'] === '1' || $post_data['remove_logo'] === 1);
+
+            // Only set the visibility message if there's no upload or removal
+            if (!$has_upload && !$has_removal) {
+                // Set initial success for visibility change if there's no other operation
+                $result['success'] = $visibility_result['success'];
+                $result['message'] = "Logo visibility settings saved successfully!";
+            }
+
             // Process logo removal
-            if (isset($post_data['remove_logo']) && ($post_data['remove_logo'] === '1' || $post_data['remove_logo'] === 1)) {
+            if ($has_removal) {
                 $removal_result = process_logo_removal();
                 $result['success'] = $removal_result['success'];
                 $result['message'] = $removal_result['message'];
@@ -70,7 +180,7 @@ function process_form_submission($form_type, $post_data, $files_data = []) {
                 }
             }
             // Process logo upload
-            else if (isset($files_data['custom_logo']) && $files_data['custom_logo']['error'] === UPLOAD_ERR_OK) {
+            else if ($has_upload) {
                 $upload_result = process_logo_upload($files_data);
                 $result['success'] = $upload_result['success'];
                 $result['message'] = $upload_result['message'];
@@ -80,17 +190,18 @@ function process_form_submission($form_type, $post_data, $files_data = []) {
                 }
             }
             // Handle logo upload errors
-            else if (!isset($post_data['remove_logo'])) {
+            else if (!$has_removal && isset($files_data['custom_logo']) && $files_data['custom_logo']['error'] !== UPLOAD_ERR_NO_FILE) {
                 $error_message = handle_logo_upload_error($files_data);
                 $result['success'] = false;
                 $result['message'] = $error_message;
             }
+
             break;
 
         case 'title':
-            // Set session keys for title operations
-            $result['success_key'] = 'logo_success_message';
-            $result['error_key'] = 'logo_error_message';
+            // Set session keys for title operations (use separate keys for title)
+            $result['success_key'] = 'title_success_message';
+            $result['error_key'] = 'title_error_message';
 
             // Process title settings
             $title_result = process_title_settings($post_data);
@@ -104,9 +215,9 @@ function process_form_submission($form_type, $post_data, $files_data = []) {
             break;
 
         case 'title_reset':
-            // Set session keys for title operations
-            $result['success_key'] = 'logo_success_message';
-            $result['error_key'] = 'logo_error_message';
+            // Set session keys for title operations (use separate keys for title)
+            $result['success_key'] = 'title_success_message';
+            $result['error_key'] = 'title_error_message';
 
             // Reset title settings
             $reset_result = reset_title_settings();
@@ -126,63 +237,6 @@ function process_form_submission($form_type, $post_data, $files_data = []) {
 
     return $result;
 }
-
-// Update settings in database function has been moved to functions.php
-
-// Settings are already loaded in admin_header.php
-// No need to load settings again
-
-// Process form submissions
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $form_result = null;
-
-    // Determine which form was submitted and process it
-    if (isset($_POST['save_settings'])) {
-        // Process font settings form
-        $form_result = process_form_submission('font', $_POST);
-    }
-    else if (isset($_POST['save_logo_only'])) {
-        // Process logo form
-        $form_result = process_form_submission('logo', $_POST, $_FILES);
-    }
-    else if (isset($_POST['save_title_settings'])) {
-        // Process title settings form
-        $form_result = process_form_submission('title', $_POST);
-    }
-    else if (isset($_POST['reset_title_settings'])) {
-        // Process title reset form
-        $form_result = process_form_submission('title_reset', $_POST);
-    }
-
-    // Update app settings with form results if processing was successful
-    if ($form_result && !empty($form_result['settings'])) {
-        $app_settings = array_merge($app_settings, $form_result['settings']);
-    }
-
-    // Handle redirect with appropriate messages if form was processed
-    if ($form_result) {
-        handle_redirect(
-            $form_result['success_key'],
-            $form_result['success'] ? $form_result['message'] : '',
-            $form_result['error_key'],
-            !$form_result['success'] ? $form_result['message'] : ''
-        );
-    }
-}
-
-// Generate a sample placeholder image with current settings
-$sample_image_url = generate_sample_placeholder_image($app_settings);
-
-// Sample placeholder image generation function has been moved to functions.php
-
-//* New functions end
-
-// Session message and redirect functions have been moved to functions.php
-
-// Default settings function has been moved to functions.php
-
-
-// Clear placeholder images function has been moved to functions.php
 
 /**
  * Process and save font settings
@@ -355,7 +409,7 @@ function process_logo_upload($files) {
     global $conn, $app_settings;
     $result = ['success' => false, 'message' => ''];
 
-    $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml'];
+    $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp'];
     $max_size = 2 * 1024 * 1024; // 2MB
 
     // Validate file type and size
@@ -382,8 +436,23 @@ function process_logo_upload($files) {
                 $stmt->execute();
                 $stmt->close();
 
+                // Set a success message that we'll display on page refresh
+                $upload_success_message = "Logo uploaded successfully: " . $files['custom_logo']['name'];
+
+                // FORCE the session variable to be set and saved immediately
+                if (session_status() === PHP_SESSION_NONE) {
+                    session_start();
+                }
+                $_SESSION['logo_success_message'] = $upload_success_message;
+
+                // Immediately write the session to disk
+                session_write_close();
+
+                // Start it again so we can continue using it
+                session_start();
+
                 $result['success'] = true;
-                $result['message'] = "Logo updated successfully!";
+                $result['message'] = $upload_success_message;
                 $result['logo_path'] = $logo_path;
 
                 // Delete old logo if there was one
@@ -399,11 +468,11 @@ function process_logo_upload($files) {
     } else {
         // Validation failed, store appropriate error message
         if (!in_array($files['custom_logo']['type'], $allowed_types)) {
-            $result['message'] = "Invalid file type. Please upload an image file (JPG, PNG, GIF, SVG or WEBP).";
+            $result['message'] = "Invalid file type. Please upload an image file (JPG, PNG, GIF, SVG, WEBP).";
         } else if ($files['custom_logo']['size'] > $max_size) {
             $result['message'] = "File too large. Please upload an image under 2MB.";
         } else {
-            $result['message'] = "Invalid file. Please upload an image file (JPG, PNG, GIF, SVG or WEBP) under 2MB.";
+            $result['message'] = "Invalid file. Please upload an image file (JPG, PNG, GIF, SVG, WEBP) under 2MB.";
         }
     }
 
@@ -481,7 +550,7 @@ function process_title_settings($post_data) {
  * @return array Result with status and messages
  */
 function reset_title_settings() {
-    $original_app_settings= get_default_app_settings();
+    $original_app_settings = get_default_app_settings();
     $result = ['success' => false, 'message' => ''];
 
     try {
@@ -507,522 +576,189 @@ function reset_title_settings() {
     return $result;
 }
 
-// Load application settings function has been moved to functions.php
-
-// Settings are already loaded in admin_header.php
-// Just get session messages
-
-// Get session messages
-$success_message = get_session_message('success_message');
-$error_message = get_session_message('error_message');
-$logo_success_message = get_session_message('logo_success_message');
-$logo_error_message = get_session_message('logo_error_message');
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
-    // Validate font weight
-    $valid_weights = ['Thin', 'ExtraLight', 'Light', 'Regular', 'Medium', 'SemiBold', 'Bold', 'ExtraBold', 'Black'];
-    $font_weight = isset($_POST['font_weight']) && in_array($_POST['font_weight'], $valid_weights)
-        ? $_POST['font_weight']
-        : 'Regular';
-
-    // Validate font size factor (between 1 and 6)
-    $font_size_factor = isset($_POST['font_size_factor']) && is_numeric($_POST['font_size_factor'])
-        && $_POST['font_size_factor'] >= 1 && $_POST['font_size_factor'] <= 6
-        ? (float)$_POST['font_size_factor']
-        : 3;
-
-    // Save settings to database
-    try {
-        // Update each setting in the database
-        $settings = [
-            'font_weight' => $font_weight,
-            'font_size_factor' => $font_size_factor
-        ];
-
-        foreach ($settings as $key => $value) {
-            // Check if setting exists
-            $check = $conn->prepare("SELECT id FROM app_settings WHERE setting_key = ?");
-            $check->bind_param("s", $key);
-            $check->execute();
-            $result = $check->get_result();
-
-            if ($result->num_rows > 0) {
-                // Update existing setting
-                $stmt = $conn->prepare("UPDATE app_settings SET setting_value = ?, updated_at = NOW() WHERE setting_key = ?");
-                $stmt->bind_param("ss", $value, $key);
-                $stmt->execute();
-            } else {
-                // Insert new setting
-                $stmt = $conn->prepare("INSERT INTO app_settings (setting_key, setting_value) VALUES (?, ?)");
-                $stmt->bind_param("ss", $value, $key);
-                $stmt->execute();
-            }
-
-            // Close statements
-            $check->close();
-            $stmt->close();
-        }
-
-        // Store success message in session
-        $_SESSION['success_message'] = "Settings saved successfully!";
-
-        // Update our current settings for this page
-        $app_settings['font_weight'] = $font_weight;
-        $app_settings['bg_color'] = $bg_color;
-        $app_settings['text_color'] = $text_color;
-        $app_settings['font_size_factor'] = $font_size_factor;
-
-        // Clear placeholder images to force regeneration
-        $placeholder_dir = __DIR__ . '/../uploads/placeholders';
-        if (is_dir($placeholder_dir)) {
-            // Clear both PNG and WebP placeholder images
-            $png_files = glob($placeholder_dir . '/*.png');
-            $webp_files = glob($placeholder_dir . '/*.webp');
-            $all_files = array_merge($png_files, $webp_files);
-
-            foreach ($all_files as $file) {
-                @unlink($file);
-            }
-        }
-
-        // Redirect to prevent form resubmission
-        header("Location: " . $_SERVER['PHP_SELF']);
-        exit;
-    } catch (PDOException $e) {
-        // Store error message in session
-        $_SESSION['error_message'] = "Database error: " . $e->getMessage();
-
-        // Redirect to prevent form resubmission
-        header("Location: " . $_SERVER['PHP_SELF']);
-        exit;
-    }
-}
-
-// Handle logo settings
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_logo_only'])) {
-    // Process show_logo option
-    $show_logo = isset($_POST['show_logo']) ? '1' : '0';
-
-    try {
-        // Update show_logo setting
-        $stmt = $conn->prepare("UPDATE app_settings SET setting_value = ?, updated_at = NOW() WHERE setting_key = 'show_logo'");
-        $stmt->bind_param("s", $show_logo);
-        $stmt->execute();
-        $stmt->close();
-
-        // Update current settings
-        $app_settings['show_logo'] = $show_logo;
-    } catch (Exception $e) {
-        // Store error message in session
-        $_SESSION['logo_error_message'] = "Database error: " . $e->getMessage();
-
-        // Redirect to prevent form resubmission
-        header("Location: " . $_SERVER['PHP_SELF']);
-        exit;
-    }
-
-    // Process logo removal or upload
-    // Handle logo removal
-    if (isset($_POST['remove_logo']) && ($_POST['remove_logo'] === '1' || $_POST['remove_logo'] === 1)) {
-
-        // Re-query the database to ensure we have the most up-to-date logo path
-        // This is critical for proper logo deletion
-        $logo_path_query = $conn->prepare("SELECT setting_value FROM app_settings WHERE setting_key = 'custom_logo_path'");
-        $logo_path_query->execute();
-        $logo_path_result = $logo_path_query->get_result();
-        $logo_path_row = $logo_path_result->fetch_assoc();
-        $logo_path_query->close();
-
-        // Store the logo path before clearing it from the database
-        $old_logo_path = null;
-        if ($logo_path_row && !empty($logo_path_row['setting_value'])) {
-            $old_logo_path = $logo_path_row['setting_value'];
-        } else if (!empty($app_settings['custom_logo_path'])) {
-            // Fallback to app_settings if database query fails
-            $old_logo_path = $app_settings['custom_logo_path'];
-        }
-
-        // Remove logo by setting empty path in database
-        try {
-            $empty_path = '';
-            $stmt = $conn->prepare("UPDATE app_settings SET setting_value = ?, updated_at = NOW() WHERE setting_key = 'custom_logo_path'");
-            $stmt->bind_param("s", $empty_path);
-            $stmt->execute();
-            $stmt->close();
-
-            // Store success message in session
-            $_SESSION['logo_success_message'] = "Logo has been reset to default!";
-
-            // Delete old logo file if it exists
-            if ($old_logo_path) {
-                // Get absolute paths
-                $app_root = realpath(__DIR__ . '/..');
-                $old_logo = $app_root . $old_logo_path;
-
-                // Try to delete the file if it exists
-                if (file_exists($old_logo)) {
-                    unlink($old_logo);
-                } else {
-                    // Fallback: search for logo files in the uploads directory
-                    $logos_dir = $app_root . '/uploads/logos/';
-
-                    if (is_dir($logos_dir)) {
-                        $files = scandir($logos_dir);
-                        $custom_logos = [];
-
-                        // Find all custom logo files
-                        foreach ($files as $file) {
-                            if (strpos($file, 'custom_logo_') === 0) {
-                                $custom_logos[] = $file;
-                            }
-                        }
-
-                        if (!empty($custom_logos)) {
-                            // Sort files by name (which includes timestamp) to get the most recent
-                            rsort($custom_logos);
-                            $latest_logo = $logos_dir . $custom_logos[0];
-
-                            // Attempt to delete the file
-                            unlink($latest_logo);
-                        }
-                    }
-                }
-            }
-
-            // Update current settings
-            $app_settings['custom_logo_path'] = '';
-
-            // Redirect to prevent form resubmission
-            header("Location: " . $_SERVER['PHP_SELF']);
-            exit;
-        } catch (Exception $e) {
-            // Store error message in session
-            $_SESSION['logo_error_message'] = "Database error: " . $e->getMessage();
-
-            // Redirect to prevent form resubmission
-            header("Location: " . $_SERVER['PHP_SELF']);
-            exit;
-        }
-    }
-    // Process custom logo upload
-    else if (isset($_FILES['custom_logo']) && $_FILES['custom_logo']['error'] === UPLOAD_ERR_OK) {
-        $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml'];
-        $max_size = 2 * 1024 * 1024; // 2MB
-
-        // Log upload attempt details
-
-
-        // Validate file type and size
-        if (in_array($_FILES['custom_logo']['type'], $allowed_types) && $_FILES['custom_logo']['size'] <= $max_size) {
-            // Create uploads/logos directory if it doesn't exist
-            $upload_dir = __DIR__ . '/../uploads/logos/';
-            if (!is_dir($upload_dir)) {
-
-                mkdir($upload_dir, 0755, true);
-            }
-
-            // Generate unique filename
-            $file_ext = pathinfo($_FILES['custom_logo']['name'], PATHINFO_EXTENSION);
-            $filename = 'custom_logo_' . time() . '.' . $file_ext;
-            $file_path = $upload_dir . $filename;
-            // Move uploaded file
-            if (move_uploaded_file($_FILES['custom_logo']['tmp_name'], $file_path)) {
-                // Save path to database (relative path for portability)
-                $logo_path = '/uploads/logos/' . $filename;
-
-                // Update settings in database
-                try {
-                    $stmt = $conn->prepare("UPDATE app_settings SET setting_value = ?, updated_at = NOW() WHERE setting_key = 'custom_logo_path'");
-                    $stmt->bind_param("s", $logo_path);
-                    $stmt->execute();
-                    $stmt->close();
-
-                    // Store success message in session
-                    $_SESSION['logo_success_message'] = "Logo updated successfully!";
-
-                    // Delete old logo if there was one
-                    if (!empty($app_settings['custom_logo_path']) && $app_settings['custom_logo_path'] !== $logo_path) {
-                        // Get absolute path to old logo
-                        $app_root = realpath(__DIR__ . '/..');
-                        $old_logo_relative = $app_settings['custom_logo_path'];
-                        $old_logo = $app_root . $old_logo_relative;
-
-                        // Try to delete the old logo file if it exists
-                        if (file_exists($old_logo)) {
-                            unlink($old_logo);
-                        }
-                    }
-
-                    // Update current settings
-                    $app_settings['custom_logo_path'] = $logo_path;
-
-                    // Redirect to prevent form resubmission
-                    header("Location: " . $_SERVER['PHP_SELF']);
-                    exit;
-
-                } catch (Exception $e) {
-                    // Store error message in session
-                    $_SESSION['logo_error_message'] = "Database error: " . $e->getMessage();
-
-                    // Redirect to prevent form resubmission
-                    header("Location: " . $_SERVER['PHP_SELF']);
-                    exit;
-                }
-            } else {
-                // Store error message in session
-                $_SESSION['logo_error_message'] = "Error uploading logo. Please try again.";
-
-                // Redirect to prevent form resubmission
-                header("Location: " . $_SERVER['PHP_SELF']);
-                exit;
-            }
-        } else {
-            // Validation failed, store appropriate error message
-            if (!in_array($_FILES['custom_logo']['type'], $allowed_types)) {
-                $_SESSION['logo_error_message'] = "Invalid file type. Please upload an image file (JPG, PNG, GIF, SVG or WEBP).";
-            } else if ($_FILES['custom_logo']['size'] > $max_size) {
-                $_SESSION['logo_error_message'] = "File too large. Please upload an image under 2MB.";
-            } else {
-                $_SESSION['logo_error_message'] = "Invalid file. Please upload an image file (JPG, PNG, GIF, SVG or WEBP) under 2MB.";
-            }
-
-            // Redirect to prevent form resubmission
-            header("Location: " . $_SERVER['PHP_SELF']);
-            exit;
-        }
-    } else if (!isset($_POST['remove_logo'])) {
-        // Only show this error if we're not trying to remove the logo
-        if (isset($_FILES['custom_logo'])) {
-            // Check if there was an error code
-            $error_code = $_FILES['custom_logo']['error'];
-
-            // Provide human-readable error based on the error code
-            $error_messages = [
-                UPLOAD_ERR_INI_SIZE => 'The uploaded file exceeds the upload_max_filesize directive in php.ini',
-                UPLOAD_ERR_FORM_SIZE => 'The uploaded file exceeds the MAX_FILE_SIZE directive in the HTML form',
-                UPLOAD_ERR_PARTIAL => 'The uploaded file was only partially uploaded',
-                UPLOAD_ERR_NO_FILE => 'No file was uploaded',
-                UPLOAD_ERR_NO_TMP_DIR => 'Missing a temporary folder',
-                UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
-                UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload'
-            ];
-
-            // Set more specific error message if available
-            if (isset($error_messages[$error_code])) {
-                $_SESSION['logo_error_message'] = $error_messages[$error_code];
-            } else {
-                // Default message if error code isn't recognized
-                $_SESSION['logo_error_message'] = "Please select a logo file to upload.";
-            }
-        } else {
-            // No file information at all
-            $_SESSION['logo_error_message'] = "Please select a logo file to upload.";
-        }
-
-        // Redirect to prevent form resubmission
-        header("Location: " . $_SERVER['PHP_SELF']);
-        exit;
-    }
-}
-
-// Handle title settings update
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_title_settings'])) {
-    // Update titles - allow empty values
-    $frontend_title = filter_input(INPUT_POST, 'frontend_title', FILTER_SANITIZE_SPECIAL_CHARS);
-    $admin_title = filter_input(INPUT_POST, 'admin_title', FILTER_SANITIZE_SPECIAL_CHARS);
-
-    $titles = [
-        'frontend_title' => $frontend_title,
-        'admin_title' => $admin_title
-    ];
-
-    try {
-        foreach ($titles as $key => $value) {
-            $stmt = $conn->prepare("UPDATE app_settings SET setting_value = ?, updated_at = NOW() WHERE setting_key = ?");
-            $stmt->bind_param("ss", $value, $key);
-            $stmt->execute();
-            $stmt->close();
-        }
-
-        // Update current settings
-        $app_settings['frontend_title'] = $frontend_title;
-        $app_settings['admin_title'] = $admin_title;
-
-        // Store success message in session
-        $_SESSION['logo_success_message'] = "Title settings saved successfully!";
-
-        // Redirect to prevent form resubmission
-        header("Location: " . $_SERVER['PHP_SELF']);
-        exit;
-    } catch (Exception $e) {
-        // Store error message in session
-        $_SESSION['logo_error_message'] = "Database error: " . $e->getMessage();
-
-        // Redirect to prevent form resubmission
-        header("Location: " . $_SERVER['PHP_SELF']);
-        exit;
-    }
-}
-
-// Handle reset title settings to defaults from .env file
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_title_settings'])) {
-    // Use the reset_title_settings() function for consistency
-    $reset_result = reset_title_settings();
-
-    if ($reset_result['success']) {
-        // Update current settings
-        $app_settings['frontend_title'] = $reset_result['titles']['frontend_title'];
-        $app_settings['admin_title'] = $reset_result['titles']['admin_title'];
-
-        // Store success message in session
-        $_SESSION['logo_success_message'] = $reset_result['message'];
-    } else {
-        // Store error message in session
-        $_SESSION['logo_error_message'] = $reset_result['message'];
-    }
-
-    // Redirect to prevent form resubmission
-    header("Location: " . $_SERVER['PHP_SELF']);
-    exit;
-}
-
-// App settings are already loaded as a global variable in admin_header.php
-// No need to reload them here
-
-// Generate a sample placeholder image with current settings
-$sample_initials = 'AB';
-$sample_size = '200x200';
-$sample_image_url = get_staff_image_url([
-    'first_name' => 'Admin',
-    'last_name' => 'Buddy',
-    'profile_picture' => ''
-], $sample_size);
-
 ?>
 
-    <h1 class="page-title">Application Settings</h1>
+<!-- Logo Settings Section -->
+<div class="mb-10 logo-section">
 
-    <!-- Logo Settings Section -->
-    <div class="settings-section">
-        <h2 class="page-title">Logo Settings</h2>
+    <h1 class="text-2xl font-semibold text-gray-900 mb-4">Settings</h1>
+    <?php if (!empty($logo_success_message)): ?>
+        <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg" role="alert">
+            <?php echo htmlspecialchars($logo_success_message); ?>
+        </div>
+    <?php endif; ?>
 
-        <?php if (!empty($logo_success_message) && isset($_POST['save_logo_only'])): ?>
-            <div class="alert alert-success"><?php echo $logo_success_message; ?></div>
-        <?php endif; ?>
+    <?php if (!empty($logo_error_message)): ?>
+        <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
+            <?php echo htmlspecialchars($logo_error_message); ?>
+        </div>
+    <?php endif; ?>
 
-        <?php if (!empty($logo_error_message) && isset($_POST['save_logo_only'])): ?>
-            <div class="alert alert-danger"><?php echo $logo_error_message; ?></div>
-        <?php endif; ?>
+    <div class="bg-white p-6 rounded-lg shadow-sm">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Logo Settings</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-
-
-        <div class="settings-container">
-            <div class="row">
-                <div class="col-md-6">
-                    <form method="post" action="" enctype="multipart/form-data" id="logo-form">
-                        <div class="form-group">
-                            <label for="custom_logo">Custom Logo:</label>
-                            <input type="file" name="custom_logo" id="custom_logo" class="dropzone-input" accept="image/*">
-                            <div class="dropzone" id="logo-dropzone">
-                                <div class="dropzone-icon">
-                                    <i class="lni lni-cloud-upload"></i>
-                                </div>
-                                <div class="dropzone-text">Drag & drop your logo here</div>
-                                <div class="dropzone-subtext">or click to browse files (JPG, PNG, GIF, SVG, WEBP only)</div>
-                                <div class="dropzone-file-info" style="display: none;"></div>
-                            </div>
-                            <small class="form-text text-muted">Recommended size: 50x50px. Max size: 2MB.</small>
-                        </div>
-
-                        <!-- Hide logo option -->
-                        <div class="form-group form-check mt-3">
-                            <input type="checkbox" class="form-check-input" id="show_logo" name="show_logo" value="1" <?php echo (isset($app_settings['show_logo']) && $app_settings['show_logo'] === '1') ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="show_logo">Show logo in header</label>
-                            <small class="form-text text-muted">Uncheck to hide both custom and default logo</small>
-                        </div>
-
-                        <!-- Hidden input for removing logo, initially disabled -->
-                        <input type="hidden" id="remove_logo" name="remove_logo" value="0">
-
-                        <div class="form-group">
-                            <button type="submit" name="save_logo_only" class="btn btn-primary">Save Logo Settings</button>
-                        </div>
-                    </form>
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Logo Preview</h3>
+                <div class="relative logo-preview border border-gray-200 p-4 rounded-md flex items-center justify-center bg-gray-50 h-48 w-full">
+                        <?php if (!empty($app_settings['custom_logo_path'])): ?>
+                        <img id="image-preview" src="<?php echo htmlspecialchars($app_settings['custom_logo_path']); ?>" alt="Custom Logo" class="max-h-full max-w-full">
+                        <?php else: ?>
+                        <img id="image-preview" src="/assets/images/staff-directory-logo.svg" alt="Default Logo" class="max-h-full max-w-full">
+                        <?php endif; ?>
+                    <button type="button" id="remove-image" style="display: <?php echo !empty($app_settings['custom_logo_path']) ? 'flex' : 'none'; ?>"
+                            class="absolute -top-2 -right-2 bg-gray-600 text-white rounded-full h-6 w-6 flex items-center justify-center hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                        <span class="sr-only">Remove logo</span>
+                        <i class="ri-close-line text-sm"></i>
+                    </button>
                 </div>
+            </div>
 
-                <div class="col-md-6">
-                    <div class="preview-container">
-                        <h3>Logo Preview</h3>
-                        <div class="logo-preview">
-                            <?php if (!empty($app_settings['custom_logo_path'])): ?>
-                                <img id="image-preview" src="<?php echo htmlspecialchars($app_settings['custom_logo_path']); ?>" alt="Custom Logo" class="img-fluid">
-                            <?php else: ?>
-                                <img id="image-preview" src="/assets/images/staff-directory-logo.svg" alt="Default Logo" class="img-fluid">
-                                <p class="text-muted mt-2"><small>Default logo is currently in use</small></p>
-                            <?php endif; ?>
-                            <div class="remove-image" id="remove-image" style="display: <?php echo !empty($app_settings['custom_logo_path']) ? 'block' : 'none'; ?>">
-                                <i class="lni lni-xmark"></i>
+            <div>
+                <form method="post" action="" enctype="multipart/form-data" id="logo-form">
+                    <div class="mb-3">
+                        <label for="custom_logo" class="block text-sm font-medium text-gray-700 mt-4 mb-2">Custom Logo:</label>
+                        <input type="file" name="custom_logo" id="custom_logo" class="hidden" accept="image/*">
+                        <div id="logo-dropzone" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md cursor-pointer hover:border-indigo-500 hover:bg-gray-50 transition-colors duration-150">
+                            <div class="space-y-1 text-center w-full">
+                                <!-- Icon -->
+                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <div class="flex text-sm text-gray-600 justify-center">
+                                    <span class="relative rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                        Drag & drop your logo here
+                                    </span>
+                                </div>
+                                <p class="text-xs text-gray-500">or click to browse files (JPG, PNG, GIF, SVG, WEBP only)</p>
+                                <div class="dropzone-file-info text-xs text-gray-500 font-medium mt-1" style="display: none;"></div>
+                            </div>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">Recommended size: 50x50px. Max size: 2MB.</p>
+                    </div>
+
+                    <!-- Hide logo option -->
+                    <div>
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                       id="show_logo" name="show_logo" value="1"
+                                       <?php echo (isset($app_settings['show_logo']) && $app_settings['show_logo'] === '1') ? 'checked' : ''; ?>>
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="show_logo" class="font-medium text-gray-700">Show logo in header</label>
+                                <p class="text-gray-500">Uncheck to hide both custom and default logo</p>
                             </div>
                         </div>
                     </div>
-                </div>
+
+                    <!-- Hidden input for removing logo, initially disabled -->
+                    <input type="hidden" id="remove_logo" name="remove_logo" value="0">
+                </form>
+            </div>
+        </div>
+
+        <!-- Buttons section at the bottom right -->
+        <div class="flex justify-end pt-4">
+            <div class="flex space-x-4">
+                <button type="submit" form="logo-form" name="save_logo_only" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Save Logo Settings
+                </button>
+
+                <?php if (!empty($app_settings['custom_logo_path'])): ?>
+                <button type="submit" form="logo-form" name="remove_logo_submit" class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Remove Custom Logo
+                </button>
+                <?php endif; ?>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Title Settings Section -->
-    <div class="settings-section">
-        <h2 class="page-title">Title Settings</h2>
+<!-- Title Settings Section -->
+<div class="mb-10">
 
-        <?php if (!empty($logo_success_message) && isset($_POST['save_title_settings'])): ?>
-            <div class="alert alert-success"><?php echo $logo_success_message; ?></div>
+    <?php if (!empty($title_success_message)): ?>
+        <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg" role="alert">
+            <?php echo $title_success_message; ?>
+        </div>
         <?php endif; ?>
 
-        <?php if (!empty($logo_error_message) && isset($_POST['save_title_settings'])): ?>
-            <div class="alert alert-danger"><?php echo $logo_error_message; ?></div>
+    <?php if (!empty($title_error_message)): ?>
+        <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
+            <?php echo $title_error_message; ?>
+        </div>
         <?php endif; ?>
 
-        <div class="settings-container">
-            <form method="post" action="">
-                <div class="form-group">
-                    <label for="frontend_title">Frontend Title:</label>
-                    <input type="text" name="frontend_title" id="frontend_title" class="form-control"
+    <div class="bg-white p-6 rounded-lg shadow-sm">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Title Settings</h2>
+        <form method="post" action="" class="space-y-6" id="title-form">
+            <div>
+                <label for="frontend_title" class="block text-sm font-medium text-gray-700">Frontend Title:</label>
+                <input type="text" name="frontend_title" id="frontend_title"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         value="<?php echo htmlspecialchars($app_settings['frontend_title']); ?>">
                 </div>
 
-                <div class="form-group">
-                    <label for="admin_title">Admin Area Title:</label>
-                    <input type="text" name="admin_title" id="admin_title" class="form-control"
+            <div>
+                <label for="admin_title" class="block text-sm font-medium text-gray-700">Admin Area Title:</label>
+                <input type="text" name="admin_title" id="admin_title"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         value="<?php echo htmlspecialchars($app_settings['admin_title']); ?>">
-                </div>
+            </div>
+        </form>
 
-                <div class="form-group">
-                    <button type="submit" name="reset_title_settings" class="btn btn-secondary ml-2">Reset to Defaults</button>
-                    <button type="submit" name="save_title_settings" class="btn btn-primary">Save Title Settings</button>
-                </div>
-            </form>
+        <!-- Buttons section at the bottom right -->
+        <div class="flex justify-end pt-6">
+            <div class="flex space-x-4">
+                <button type="submit" form="title-form" name="reset_title_settings"
+                        class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Reset to Defaults
+                </button>
+                <button type="submit" form="title-form" name="save_title_settings"
+                        class="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Save Title Settings
+                </button>
+            </div>
         </div>
     </div>
+</div>
 
-    <!-- Placeholder Image Settings Section -->
-    <div class="settings-section">
-        <h2 class="page-title">Placeholder Image Settings</h2>
+<!-- Placeholder Image Settings Section -->
+<div class="mb-10">
 
-        <?php if (!empty($success_message)): ?>
-            <div class="alert alert-success"><?php echo $success_message; ?></div>
-        <?php endif; ?>
+    <?php if (!empty($success_message)): ?>
+        <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg" role="alert">
+            <?php echo $success_message; ?>
+        </div>
+    <?php endif; ?>
 
-        <?php if (!empty($error_message)): ?>
-            <div class="alert alert-danger"><?php echo $error_message; ?></div>
-        <?php endif; ?>
+    <?php if (!empty($error_message)): ?>
+        <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
+            <?php echo $error_message; ?>
+        </div>
+    <?php endif; ?>
 
-    <div class="settings-container">
-        <div class="row">
-            <div class="col-md-6">
-                <form method="post" action="">
-                    <div class="form-group">
-                        <label for="font_weight">Font Weight:</label>
-                        <select name="font_weight" id="font_weight" class="form-control">
+    <div class="bg-white p-6 rounded-lg shadow-sm">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Placeholder Image Settings</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Preview</h3>
+                <div class="border border-gray-200 p-4 rounded-md flex items-center justify-center bg-gray-50">
+                    <img id="preview-image" src="" alt="Sample Placeholder" class="h-48 w-48 rounded-lg object-cover">
+                </div>
+                <p class="mt-3 text-xs text-gray-500 italic">
+                    Note: Changes are shown in the preview but only applied to all placeholder images when you click Save.
+                </p>
+            </div>
+
+            <div>
+                <form method="post" action="" class="space-y-6" id="placeholder-form">
+                    <div>
+                        <label for="font_weight" class="block text-sm font-medium text-gray-700 mt-4 mb-2">Font Weight:</label>
+                        <select name="font_weight" id="font_weight"
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                             <?php
                             $weights = ['Thin', 'ExtraLight', 'Light', 'Regular', 'Medium', 'SemiBold', 'Bold', 'ExtraBold', 'Black'];
                             foreach ($weights as $weight) {
@@ -1033,39 +769,42 @@ $sample_image_url = get_staff_image_url([
                         </select>
                     </div>
 
-                    <div class="form-group">
-                        <p class="text-info"><i class="fa fa-info-circle"></i> Placeholder backgrounds now use department colors automatically.</p>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="font_size_factor">Font Size:</label>
-                        <input type="range" name="font_size_factor" id="font_size_factor" class="form-control"
-                               min="1" max="6" step="0.5"
-                               value="<?php echo isset($app_settings['font_size_factor']) ? $app_settings['font_size_factor'] : 3; ?>">
-                        <div class="range-labels">
-                            <span class="small">Small</span>
-                            <span class="current-value"><?php echo isset($app_settings['font_size_factor']) ? $app_settings['font_size_factor'] : 3; ?></span>
-                            <span class="large">Large</span>
+                    <div class="rounded-md bg-blue-50 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="ri-information-line text-blue-400"></i>
+                            </div>
+                            <div class="flex items-center ml-3">
+                                <p class="text-sm text-blue-700">
+                                    Placeholder backgrounds now use department colors automatically.
+                                </p>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <button type="submit" name="save_settings" class="btn btn-primary">Save Settings</button>
+                    <div>
+                        <label for="font_size_factor" class="block text-sm font-medium text-gray-700">Font Size:</label>
+                        <input type="range" name="font_size_factor" id="font_size_factor"
+                            class="mt-1 w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                            min="1" max="6" step="0.5"
+                            value="<?php echo isset($app_settings['font_size_factor']) ? $app_settings['font_size_factor'] : 3; ?>">
+                        <div class="flex justify-between px-2 text-xs text-gray-600">
+                            <span>Small</span>
+                            <span class="current-value font-medium"><?php echo isset($app_settings['font_size_factor']) ? $app_settings['font_size_factor'] : 3; ?></span>
+                            <span>Large</span>
+                        </div>
                     </div>
                 </form>
             </div>
 
-            <div class="col-md-6">
-                <div class="preview-container">
-                    <h3>Preview</h3>
-                    <div class="sample-image">
-                        <img id="preview-image" src="<?php echo $sample_image_url; ?>" alt="Sample Placeholder" class="img-fluid">
-                    </div>
-                    <p class="text-muted mt-3">
-                       <small><i>Note: Changes are shown in the preview but only applied to all placeholder images when you click Save.</i></small>
-                    </p>
-                </div>
-            </div>
+        </div>
+
+        <!-- Buttons section at the bottom right -->
+        <div class="flex justify-end pt-4">
+            <button type="submit" form="placeholder-form" name="save_settings"
+                    class="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Save Settings
+            </button>
         </div>
     </div>
 </div>
@@ -1076,14 +815,13 @@ $sample_image_url = get_staff_image_url([
         // Get form elements
         const fontSizeSlider = document.getElementById('font_size_factor')
         const fontWeightSelect = document.getElementById('font_weight')
-        const fontSizeDisplay = document.querySelector('.range-labels .current-value')
+        const fontSizeDisplay = document.querySelector('.current-value')
         const previewImage = document.getElementById('preview-image')
 
         // Generate placeholder URL with specific parameters
         function generatePlaceholderUrl(fontWeight, fontSizeFactor) {
             // Use Admin Buddy as our demo initials
             const timestamp = new Date().getTime() // Prevent caching
-            console.log(`Generating preview with font size factor: ${fontSizeFactor}`)
             // Force clearing out the browser's cache by adding timestamp and random value
             return `../includes/generate_placeholder.php?name=${encodeURIComponent('Admin Buddy')}&size=200x200&font_weight=${encodeURIComponent(fontWeight)}&font_size_factor=${fontSizeFactor}&nocache=${timestamp}-${Math.random()}`
         }
@@ -1109,9 +847,6 @@ $sample_image_url = get_staff_image_url([
                 previewImage.src = this.src
             }
             newImage.src = generatePlaceholderUrl(fontWeight, fontSizeFactor)
-
-            // For debugging
-            console.log('Preview update requested for font size factor:', fontSizeFactor)
         }
 
         // Add event listeners
@@ -1150,16 +885,16 @@ $sample_image_url = get_staff_image_url([
             // Handle drag and drop events
             logoDropzone.addEventListener('dragover', function(e) {
                 e.preventDefault()
-                logoDropzone.classList.add('dragover')
+                logoDropzone.classList.add('border-indigo-500', 'bg-gray-50')
             })
 
             logoDropzone.addEventListener('dragleave', function() {
-                logoDropzone.classList.remove('dragover')
+                logoDropzone.classList.remove('border-indigo-500', 'bg-gray-50')
             })
 
             logoDropzone.addEventListener('drop', function(e) {
                 e.preventDefault()
-                logoDropzone.classList.remove('dragover')
+                logoDropzone.classList.remove('border-indigo-500', 'bg-gray-50')
 
                 if (e.dataTransfer.files.length) {
                     fileInput.files = e.dataTransfer.files
@@ -1205,11 +940,11 @@ $sample_image_url = get_staff_image_url([
 
                     // Show remove button
                     if (removeButton) {
-                        removeButton.style.display = 'block'
+                        removeButton.style.display = 'flex'
                     }
 
                     // Hide default logo message if exists
-                    const defaultMessage = document.querySelector('.logo-preview .text-muted')
+                    const defaultMessage = document.querySelector('.logo-preview .text-xs')
                     if (defaultMessage) {
                         defaultMessage.style.display = 'none'
                     }
@@ -1259,13 +994,11 @@ $sample_image_url = get_staff_image_url([
                 const logoPreview = document.querySelector('.logo-preview')
                 if (logoPreview) {
                     // Check if the message exists, if not create it
-                    let defaultMessage = logoPreview.querySelector('.text-muted')
+                    let defaultMessage = logoPreview.querySelector('.text-xs')
                     if (!defaultMessage) {
                         defaultMessage = document.createElement('p')
-                        defaultMessage.className = 'text-muted mt-2'
-                        const small = document.createElement('small')
-                        small.textContent = 'Default logo is currently in use'
-                        defaultMessage.appendChild(small)
+                        defaultMessage.className = 'absolute bottom-2 left-0 right-0 text-center text-xs text-gray-500'
+                        defaultMessage.textContent = 'Default logo is currently in use'
                         logoPreview.appendChild(defaultMessage)
                     } else {
                         defaultMessage.style.display = 'block'
@@ -1282,4 +1015,92 @@ $sample_image_url = get_staff_image_url([
     })
 </script>
 
-<?php require_once '../includes/footer.php'; ?>
+<!-- Add special JavaScript for direct form handling -->
+<script>
+function handleLogoFormSubmit(form) {
+    // Create a formData object
+    const formData = new FormData(form)
+
+    // Add a special flag for JavaScript handling
+    formData.append('js_form_submit', '1')
+
+    // Create an AJAX request
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', window.location.href)
+
+    // Track upload progress if desired
+    xhr.upload.onprogress = function(e) {
+        // Optional: Add progress indicator
+    }
+
+    // When completed
+    xhr.onload = function() {
+        // Check if the response was JSON
+        try {
+            const response = JSON.parse(xhr.responseText)
+            if(response.success) {
+                // Display success message directly
+                showMessage('success', response.message)
+
+                // Update image preview if needed
+                if (response.logoPath) {
+                    document.getElementById('image-preview').src = response.logoPath
+                    document.getElementById('remove-image').style.display = 'flex'
+                }
+            } else {
+                // Display error message
+                showMessage('error', response.message || 'An error occurred')
+            }
+        } catch(e) {
+            // If response wasn't JSON, reload the page
+            window.location.reload()
+        }
+    }
+
+    // Handle errors
+    xhr.onerror = function() {
+        showMessage('error', 'Failed to upload logo')
+    }
+
+    // Send the form data
+    xhr.send(formData)
+
+    // Prevent regular form submission
+    return false
+}
+
+function showMessage(type, message) {
+    // Remove any existing messages
+    const existingMessages = document.querySelectorAll('.logo-section .alert-message')
+    existingMessages.forEach(el => el.remove())
+
+    // Create a new message element
+    const messageEl = document.createElement('div')
+    messageEl.className = type === 'success'
+        ? 'p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg alert-message'
+        : 'p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg alert-message'
+    messageEl.setAttribute('role', 'alert')
+    messageEl.textContent = message
+
+    // Insert it at the beginning of the logo section
+    const logoSection = document.querySelector('.logo-section')
+    const heading = logoSection.querySelector('h2')
+    logoSection.insertBefore(messageEl, heading.nextSibling)
+
+    // Scroll to the message
+    messageEl.scrollIntoView({behavior: 'smooth', block: 'center'})
+}
+</script>
+
+<?php require_once '../includes/footer.php';
+
+// Make sure all session data is written
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
+}
+
+// Flush the output buffer to ensure all content is sent
+if (ob_get_level()) {
+    ob_end_flush();
+}
+?>

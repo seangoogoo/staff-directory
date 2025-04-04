@@ -587,7 +587,7 @@ function get_all_department_names($conn) {
 
 /**
  * Get departments by company name
- * 
+ *
  * @param mysqli $conn Database connection
  * @param string $company_name Company name to filter departments by
  * @return array Array of department names that belong to the specified company
@@ -597,15 +597,15 @@ function get_departments_by_company($conn, $company_name) {
     if (empty($company_name)) {
         return get_all_department_names($conn);
     }
-    
+
     // Query to find departments that have staff members in the specified company
-    $sql = "SELECT DISTINCT d.name 
+    $sql = "SELECT DISTINCT d.name
             FROM departments d
             JOIN staff_members s ON d.id = s.department_id
             JOIN companies c ON s.company_id = c.id
             WHERE c.name = ?
             ORDER BY d.name";
-            
+
     $stmt = $conn->prepare($sql);
     $stmt->bind_param('s', $company_name);
     $stmt->execute();
@@ -619,13 +619,13 @@ function get_departments_by_company($conn, $company_name) {
     }
 
     $stmt->close();
-    
+
     return $departments;
 }
 
 /**
  * Get companies that have staff members in a specific department
- * 
+ *
  * @param mysqli $conn Database connection
  * @param string $department_name Department name to filter by
  * @return array Array of company names
@@ -635,15 +635,15 @@ function get_companies_by_department($conn, $department_name) {
     if (empty($department_name)) {
         return get_all_company_names($conn);
     }
-    
+
     // Query to find companies that have staff members in the specified department
-    $sql = "SELECT DISTINCT c.name 
+    $sql = "SELECT DISTINCT c.name
             FROM companies c
             JOIN staff_members s ON c.id = s.company_id
             JOIN departments d ON s.department_id = d.id
             WHERE d.name = ?
             ORDER BY c.name";
-            
+
     $stmt = $conn->prepare($sql);
     $stmt->bind_param('s', $department_name);
     $stmt->execute();
@@ -657,7 +657,7 @@ function get_companies_by_department($conn, $department_name) {
     }
 
     $stmt->close();
-    
+
     return $companies;
 }
 
@@ -718,39 +718,51 @@ function get_text_contrast_class($hex_color, $return_class = true) {
 }
 
 /**
- * Get session message and clear it from the session
+ * Set a session message
  *
- * Used in: admin/settings.php, admin/staff_edit.php, admin/departments.php
- * This function retrieves a message stored in the session and clears it
- *
- * @param string $key The session key to retrieve
- * @return string The message or empty string if not set
- */
-function get_session_message($key) {
-    $message = '';
-    if (isset($_SESSION[$key])) {
-        $message = $_SESSION[$key];
-        unset($_SESSION[$key]);
-    }
-    return $message;
-}
-
-/**
- * Set a session message if not empty
- *
- * Used in: admin/settings.php, admin/staff_edit.php, admin/departments.php
- * This function stores a non-empty message in the session
- *
- * @param string $key The session key to set
- * @param string $message The message to store
- * @return bool True if message was set, false if empty
+ * @param string $key Session key for message
+ * @param string $message Message to store
+ * @return bool True if message was set, false otherwise
  */
 function set_session_message($key, $message) {
+    // Start session if not already started
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    // Only set message if it's not empty
     if (!empty($message)) {
         $_SESSION[$key] = $message;
+        error_log("Session message set: $key = $message");
         return true;
     }
     return false;
+}
+
+/**
+ * Get and clear a session message
+ *
+ * @param string $key Session key for message
+ * @return string Message from session or empty string if none
+ */
+function get_session_message($key) {
+    // Start session if not already started
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    $message = '';
+
+    // Get message if it exists
+    if (isset($_SESSION[$key])) {
+        $message = $_SESSION[$key];
+        error_log("Retrieved session message: $key = $message");
+
+        // Clear message
+        unset($_SESSION[$key]);
+    }
+
+    return $message;
 }
 
 /**
@@ -766,18 +778,58 @@ function set_session_message($key, $message) {
  * @param string $redirect_url URL to redirect to (defaults to current page)
  */
 function handle_redirect($success_key, $success_message, $error_key, $error_message, $redirect_url = '') {
+    error_log('handle_redirect function called');
+
+    // Make sure session is started
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    // Debug output buffer status
+    error_log('Output buffering status: ' . (ob_get_level() ? 'ON (level: ' . ob_get_level() . ')' : 'OFF'));
+    error_log('Headers sent: ' . (headers_sent($file, $line) ? 'YES at ' . $file . ':' . $line : 'NO'));
+
+    // Check if headers have already been sent
+    if (headers_sent($file, $line)) {
+        error_log("Cannot redirect - headers already sent in $file on line $line");
+    }
+
     // Set messages if they exist
-    set_session_message($success_key, $success_message);
-    set_session_message($error_key, $error_message);
+    if (!empty($success_message)) {
+        $_SESSION[$success_key] = $success_message;
+        error_log("Set success message directly in session: $success_key = $success_message");
+    }
+
+    if (!empty($error_message)) {
+        $_SESSION[$error_key] = $error_message;
+        error_log("Set error message directly in session: $error_key = $error_message");
+    }
 
     // If no redirect URL provided, use current page
     if (empty($redirect_url)) {
         $redirect_url = $_SERVER['PHP_SELF'];
     }
 
+    error_log('Attempting to redirect to: ' . $redirect_url);
+
+    // Commit session data before redirecting
+    session_write_close();
+
+    // End output buffering if active
+    if (ob_get_level()) {
+        ob_end_clean();
+    }
+
     // Redirect to prevent form resubmission
-    header("Location: " . $redirect_url);
-    exit;
+    if (!headers_sent()) {
+        error_log('Performing redirect with header()');
+        header("Location: " . $redirect_url);
+        exit;
+    } else {
+        error_log('Using JavaScript fallback for redirect');
+        echo '<script>window.location.href="' . $redirect_url . '";</script>';
+        exit;
+    }
 }
 
 /**
@@ -902,26 +954,6 @@ function load_app_settings()
 }
 
 /**
- * Generate a sample placeholder image with current settings
- *
- * Used in: admin/settings.php (for settings preview)
- * Generates a sample placeholder image to preview current settings
- *
- * @param array $app_settings Current application settings
- * @return string URL to the sample placeholder image
- */
-function generate_sample_placeholder_image($app_settings)
-{
-    $sample_initials = 'AB';
-    $sample_size = '200x200';
-    return get_staff_image_url([
-        'first_name' => 'Admin',
-        'last_name' => 'Buddy',
-        'profile_picture' => ''
-    ], $sample_size);
-}
-
-/**
  * Log debug information to a file
  *
  * @param mixed $data The data to log
@@ -971,11 +1003,11 @@ function get_company_by_id($conn, $id) {
     $stmt->bind_param('i', $id);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     if ($result->num_rows > 0) {
         return $result->fetch_assoc();
     }
-    
+
     return null;
 }
 
@@ -989,39 +1021,39 @@ function upload_company_logo($file) {
     // Define allowed file types and maximum size
     $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp'];
     $max_size = 5 * 1024 * 1024; // 5MB
-    
+
     // Check for errors
     if ($file['error'] !== UPLOAD_ERR_OK) {
         return false;
     }
-    
+
     // Validate file type
     if (!in_array($file['type'], $allowed_types)) {
         return false;
     }
-    
+
     // Validate file size
     if ($file['size'] > $max_size) {
         return false;
     }
-    
+
     // Create the upload directory if it doesn't exist
     $upload_dir = __DIR__ . '/../uploads/companies/';
     if (!is_dir($upload_dir)) {
         mkdir($upload_dir, 0755, true);
     }
-    
+
     // Generate a unique filename
     $file_ext = pathinfo($file['name'], PATHINFO_EXTENSION);
     $filename = uniqid('company_') . '.' . $file_ext;
     $upload_path = $upload_dir . $filename;
-    
+
     // Move the uploaded file
     if (move_uploaded_file($file['tmp_name'], $upload_path)) {
         // Return the relative path
         return '/uploads/companies/' . $filename;
     }
-    
+
     return false;
 }
 
@@ -1040,7 +1072,7 @@ function get_company_staff_count($conn, $company_id) {
     $result = $stmt->get_result();
     $row = $result->fetch_assoc();
     $stmt->close();
-    
+
     return $row['count'];
 }
 
@@ -1052,36 +1084,84 @@ function get_company_staff_count($conn, $company_id) {
  */
 function get_all_company_statistics($conn) {
     // Get all companies with their staff counts
-    $sql = "SELECT c.id, c.name, c.logo, COUNT(s.id) as staff_count 
-            FROM companies c 
-            LEFT JOIN staff_members s ON c.id = s.company_id 
-            GROUP BY c.id 
+    $sql = "SELECT c.id, c.name, c.logo, COUNT(s.id) as staff_count
+            FROM companies c
+            LEFT JOIN staff_members s ON c.id = s.company_id
+            GROUP BY c.id
             ORDER BY staff_count DESC";
-    
+
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     $companies = [];
     $total_staff = 0;
-    
+
     // First pass to get all companies and the total staff count
     while ($row = $result->fetch_assoc()) {
         $companies[] = $row;
         $total_staff += $row['staff_count'];
     }
-    
+
     $stmt->close();
-    
+
     // Second pass to calculate percentages
     foreach ($companies as &$company) {
         $company['percentage'] = $total_staff > 0 ? round(($company['staff_count'] / $total_staff) * 100, 1) : 0;
     }
-    
+
     return [
         'companies' => $companies,
         'total_staff' => $total_staff
     ];
 }
 
-?>
+/**
+ * Get all department names that have at least one staff member
+ *
+ * @param mysqli $conn Database connection
+ * @return array Array of department names with at least one staff member
+ */
+function get_active_department_names($conn) {
+    $sql = "SELECT DISTINCT d.name
+            FROM departments d
+            INNER JOIN staff_members s ON d.id = s.department_id
+            ORDER BY d.name ASC";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $departments = [];
+    while ($row = $result->fetch_assoc()) {
+        $departments[] = $row['name'];
+    }
+
+    $stmt->close();
+    return $departments;
+}
+
+/**
+ * Get all company names that have at least one staff member
+ *
+ * @param mysqli $conn Database connection
+ * @return array Array of company names with at least one staff member
+ */
+function get_active_company_names($conn) {
+    $sql = "SELECT DISTINCT c.name
+            FROM companies c
+            INNER JOIN staff_members s ON c.id = s.company_id
+            ORDER BY c.name ASC";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $companies = [];
+    while ($row = $result->fetch_assoc()) {
+        $companies[] = $row['name'];
+    }
+
+    $stmt->close();
+    return $companies;
+}

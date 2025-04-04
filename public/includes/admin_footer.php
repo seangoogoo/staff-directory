@@ -1,7 +1,10 @@
     </main>
-    <footer class="admin-footer">
-        <div class="container">
-            <p>&copy; <?php echo date('Y'); ?> Staff Directory Admin Panel</p>
+
+    <!-- Basic Admin Footer: Padding, top border, small muted text -->
+    <footer class="admin-footer mt-8 py-4 border-t border-gray-200 text-sm text-gray-500">
+        <!-- Standard container -->
+        <div class="container w-full max-w-screen-xl mx-auto px-4">
+            <p>&copy; <?php echo date('Y'); ?> <a href="https://github.com/seangoogoo/staff-directory" target="_blank" rel="noopener noreferrer">Staff Directory</a> Admin Panel</p>
         </div>
     </footer>
 
