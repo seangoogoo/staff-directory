@@ -13,7 +13,7 @@ if (!defined('AUTH_SYSTEM')) {
 
 // Load environment variables if not already loaded
 if (!isset($_ENV['ADMIN_USERNAME'])) {
-    require_once __DIR__ . '/../../config/env_loader.php';
+    require_once __DIR__ . '/env_loader.php';
 }
 
 // =============================================
@@ -21,16 +21,16 @@ if (!isset($_ENV['ADMIN_USERNAME'])) {
 // =============================================
 
 // Session lifetime in seconds (24 hours)
-define('SESSION_LIFETIME', 86400);
+define('SESSION_LIFETIME', isset($_ENV['SESSION_LIFETIME']) ? (int)$_ENV['SESSION_LIFETIME'] : 86400);
 
 // Session activity check interval (1 hour)
-define('SESSION_UPDATE_INTERVAL', 3600);
+define('SESSION_UPDATE_INTERVAL', isset($_ENV['SESSION_UPDATE_INTERVAL']) ? (int)$_ENV['SESSION_UPDATE_INTERVAL'] : 3600);
 
 // Path for cookies (site-wide)
-define('COOKIE_PATH', '/');
+define('COOKIE_PATH', isset($_ENV['COOKIE_PATH']) ? $_ENV['COOKIE_PATH'] : '/');
 
 // Cookie lifetime in seconds (30 days)
-define('COOKIE_LIFETIME', 2592000);
+define('COOKIE_LIFETIME', isset($_ENV['COOKIE_LIFETIME']) ? (int)$_ENV['COOKIE_LIFETIME'] : 2592000);
 
 // =============================================
 // Security Settings

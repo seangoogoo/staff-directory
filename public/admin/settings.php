@@ -2,16 +2,15 @@
 // Start output buffering to prevent "headers already sent" issues
 ob_start();
 
-// Start session if not already started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// Define constant to indicate this is an admin page (required by admin_head.php)
+define('INCLUDED_FROM_ADMIN_PAGE', true);
+
+// Include admin head for initialization, security checks and database connection
+require_once '../includes/admin_head.php';
 
 // Handle AJAX requests for logo upload
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['js_form_submit'])) {
     // Process form
-    require_once '../includes/functions.php';
-
     // Response will be JSON
     header('Content-Type: application/json');
 
@@ -42,18 +41,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['js_form_submit'])) {
     echo json_encode($response);
     exit;
 }
-
-// Start with auth checks before any output
-require_once 'auth/auth.php';
-
-// Include common functions
-require_once '../includes/functions.php';
-
-// Check if user is logged in (will redirect if not logged in)
-require_login();
-
-// Now include admin header which outputs HTML with navigation
-require_once '../includes/admin_header.php';
 
 // Process form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -93,8 +80,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Set session message directly
     if ($form_result) {
         if ($form_result['success']) {
-            // Set success message in session
-            $_SESSION[$form_result['success_key']] = $form_result['message'];
+            // Use set_session_message for success
+            set_session_message($form_result['success_key'], $form_result['message']);
 
             // For logo uploads, ensure the success message is written to session before redirect
             if (isset($_POST['save_logo_only']) || isset($_POST['remove_logo_submit'])) {
@@ -102,8 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 session_start();
             }
         } else {
-            // Set error message in session
-            $_SESSION[$form_result['error_key']] = $form_result['message'];
+            // Use set_session_message for error
+            set_session_message($form_result['error_key'], $form_result['message']);
         }
 
         // Redirect to prevent form resubmission
@@ -439,11 +426,8 @@ function process_logo_upload($files) {
                 // Set a success message that we'll display on page refresh
                 $upload_success_message = "Logo uploaded successfully: " . $files['custom_logo']['name'];
 
-                // FORCE the session variable to be set and saved immediately
-                if (session_status() === PHP_SESSION_NONE) {
-                    session_start();
-                }
-                $_SESSION['logo_success_message'] = $upload_success_message;
+                // Use set_session_message to set the message
+                set_session_message('logo_success_message', $upload_success_message);
 
                 // Immediately write the session to disk
                 session_write_close();
@@ -576,6 +560,9 @@ function reset_title_settings() {
     return $result;
 }
 
+// Include the HTML header after all processing is done
+require_once '../includes/admin_header.php';
+
 ?>
 
 <!-- Logo Settings Section -->
@@ -583,13 +570,13 @@ function reset_title_settings() {
 
     <h1 class="text-2xl font-semibold text-gray-900 mb-4">Settings</h1>
     <?php if (!empty($logo_success_message)): ?>
-        <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg" role="alert">
+        <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 border border-green-200 rounded-lg" role="alert">
             <?php echo htmlspecialchars($logo_success_message); ?>
         </div>
     <?php endif; ?>
 
     <?php if (!empty($logo_error_message)): ?>
-        <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
+        <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 border border-red-200 rounded-lg" role="alert">
             <?php echo htmlspecialchars($logo_error_message); ?>
         </div>
     <?php endif; ?>
@@ -606,7 +593,10 @@ function reset_title_settings() {
                         <?php else: ?>
                         <img id="image-preview" src="/assets/images/staff-directory-logo.svg" alt="Default Logo" class="max-h-full max-w-full">
                         <?php endif; ?>
-                    <button type="button" id="remove-image" style="display: <?php echo !empty($app_settings['custom_logo_path']) ? 'flex' : 'none'; ?>"
+                    <button type="button" id="remove-image"
+                            data-update-field="remove_logo"
+                            data-update-value="1"
+                            style="display: <?php echo !empty($app_settings['custom_logo_path']) ? 'flex' : 'none'; ?>"
                             class="absolute -top-2 -right-2 bg-gray-600 text-white rounded-full h-6 w-6 flex items-center justify-center hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
                         <span class="sr-only">Remove logo</span>
                         <i class="ri-close-line text-sm"></i>
@@ -661,15 +651,11 @@ function reset_title_settings() {
         <!-- Buttons section at the bottom right -->
         <div class="flex justify-end pt-4">
             <div class="flex space-x-4">
+
                 <button type="submit" form="logo-form" name="save_logo_only" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     Save Logo Settings
                 </button>
 
-                <?php if (!empty($app_settings['custom_logo_path'])): ?>
-                <button type="submit" form="logo-form" name="remove_logo_submit" class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Remove Custom Logo
-                </button>
-                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -679,13 +665,13 @@ function reset_title_settings() {
 <div class="mb-10">
 
     <?php if (!empty($title_success_message)): ?>
-        <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg" role="alert">
+        <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 border border-green-200 rounded-lg" role="alert">
             <?php echo $title_success_message; ?>
         </div>
         <?php endif; ?>
 
     <?php if (!empty($title_error_message)): ?>
-        <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
+        <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 border border-red-200 rounded-lg" role="alert">
             <?php echo $title_error_message; ?>
         </div>
         <?php endif; ?>
@@ -728,13 +714,13 @@ function reset_title_settings() {
 <div class="mb-10">
 
     <?php if (!empty($success_message)): ?>
-        <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg" role="alert">
+        <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 border border-green-200 rounded-lg" role="alert">
             <?php echo $success_message; ?>
         </div>
     <?php endif; ?>
 
     <?php if (!empty($error_message)): ?>
-        <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
+        <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 border border-red-200 rounded-lg" role="alert">
             <?php echo $error_message; ?>
         </div>
     <?php endif; ?>
@@ -872,8 +858,19 @@ function reset_title_settings() {
         const fileInput = document.getElementById('custom_logo')
         const imagePreview = document.getElementById('image-preview')
         const removeButton = document.getElementById('remove-image')
+        // Use the same path as in the PHP code for consistency
         const defaultLogo = '/assets/images/staff-directory-logo.svg'
         const fileInfoElement = document.querySelector('.dropzone-file-info')
+        const removeInput = document.getElementById('remove_logo')
+        console.log('imagePreview.src on page load:', imagePreview.src)
+
+        // Ensure that the remove button is not shown for the default logo on page load
+        if (imagePreview && imagePreview.src.endsWith('staff-directory-logo.svg')) {
+            if (removeButton) {
+                removeButton.style.display = 'none'
+                console.log('removeButton is hidden')
+            }
+        }
 
         // Initialize dropzone functionality
         if (logoDropzone && fileInput) {
@@ -943,14 +940,7 @@ function reset_title_settings() {
                         removeButton.style.display = 'flex'
                     }
 
-                    // Hide default logo message if exists
-                    const defaultMessage = document.querySelector('.logo-preview .text-xs')
-                    if (defaultMessage) {
-                        defaultMessage.style.display = 'none'
-                    }
-
                     // Reset the remove_logo value to 0
-                    const removeInput = document.getElementById('remove_logo')
                     if (removeInput) {
                         removeInput.value = '0'
                     }
@@ -966,130 +956,156 @@ function reset_title_settings() {
             else return (bytes / 1048576).toFixed(1) + ' MB'
         }
 
-        // Handle remove button
-        if (removeButton) {
-            removeButton.addEventListener('click', function(e) {
-                e.preventDefault()
-
-                // Reset the preview to default logo
-                if (imagePreview) {
-                    imagePreview.src = defaultLogo
-                }
-
-                // Clear the file input
-                if (fileInput) {
-                    fileInput.value = ''
-                }
-
-                // Hide the file info text
-                if (fileInfoElement) {
-                    fileInfoElement.style.display = 'none'
-                    fileInfoElement.textContent = ''
-                }
-
-                // Hide the remove button
-                removeButton.style.display = 'none'
-
-                // Show 'default logo' message
-                const logoPreview = document.querySelector('.logo-preview')
-                if (logoPreview) {
-                    // Check if the message exists, if not create it
-                    let defaultMessage = logoPreview.querySelector('.text-xs')
-                    if (!defaultMessage) {
-                        defaultMessage = document.createElement('p')
-                        defaultMessage.className = 'absolute bottom-2 left-0 right-0 text-center text-xs text-gray-500'
-                        defaultMessage.textContent = 'Default logo is currently in use'
-                        logoPreview.appendChild(defaultMessage)
-                    } else {
-                        defaultMessage.style.display = 'block'
-                    }
-                }
-
-                // Set the remove_logo value to 1 to signal logo removal
-                let removeInput = document.getElementById('remove_logo')
-                if (removeInput) {
-                    removeInput.value = '1'
-                }
-            })
-        }
+        // Note: We don't need a custom remove button handler anymore.
+        // The button will now be handled by main.js through the data-update-field attribute.
+        // This prevents the "Image reset on add page" console message and ensures the logo
+        // is correctly reset to the default when clicking the remove button.
     })
 </script>
 
 <!-- Add special JavaScript for direct form handling -->
 <script>
 function handleLogoFormSubmit(form) {
+    console.log('handleLogoFormSubmit called with form:', form);
+
     // Create a formData object
-    const formData = new FormData(form)
+    const formData = new FormData(form);
+
+    // Log FormData content (can't directly log FormData object)
+    for (let pair of formData.entries()) {
+        console.log('FormData contains:', pair[0], pair[1]);
+    }
 
     // Add a special flag for JavaScript handling
-    formData.append('js_form_submit', '1')
+    formData.append('js_form_submit', '1');
+    console.log('Added js_form_submit flag to FormData');
 
     // Create an AJAX request
-    const xhr = new XMLHttpRequest()
-    xhr.open('POST', window.location.href)
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', window.location.href);
+    console.log('XHR request created and opened to:', window.location.href);
 
     // Track upload progress if desired
     xhr.upload.onprogress = function(e) {
         // Optional: Add progress indicator
-    }
+        if (e.lengthComputable) {
+            const percentComplete = (e.loaded / e.total) * 100;
+            console.log('Upload progress:', percentComplete.toFixed(2) + '%');
+        }
+    };
 
     // When completed
     xhr.onload = function() {
+        console.log('XHR onload triggered. Status:', xhr.status);
+        console.log('Response text:', xhr.responseText);
+
         // Check if the response was JSON
         try {
-            const response = JSON.parse(xhr.responseText)
+            const response = JSON.parse(xhr.responseText);
+            console.log('Parsed JSON response:', response);
+
             if(response.success) {
                 // Display success message directly
-                showMessage('success', response.message)
+                console.log('Success! Showing message:', response.message);
+                showMessage('success', response.message);
 
                 // Update image preview if needed
                 if (response.logoPath) {
-                    document.getElementById('image-preview').src = response.logoPath
-                    document.getElementById('remove-image').style.display = 'flex'
+                    console.log('Updating image preview with new logo path:', response.logoPath);
+                    document.getElementById('image-preview').src = response.logoPath;
+                    document.getElementById('remove-image').style.display = 'flex';
                 }
             } else {
                 // Display error message
-                showMessage('error', response.message || 'An error occurred')
+                console.log('Error! Showing message:', response.message || 'An error occurred');
+                showMessage('error', response.message || 'An error occurred');
             }
         } catch(e) {
             // If response wasn't JSON, reload the page
-            window.location.reload()
+            console.error('Failed to parse JSON response:', e);
+            console.log('Reloading page...');
+            window.location.reload();
         }
-    }
+    };
 
     // Handle errors
-    xhr.onerror = function() {
-        showMessage('error', 'Failed to upload logo')
-    }
+    xhr.onerror = function(e) {
+        console.error('XHR error occurred:', e);
+        showMessage('error', 'Failed to upload logo');
+    };
 
     // Send the form data
-    xhr.send(formData)
+    console.log('Sending form data via XHR...');
+    xhr.send(formData);
+    console.log('Form data sent.');
 
     // Prevent regular form submission
-    return false
+    console.log('Preventing default form submission');
+    return false;
 }
 
 function showMessage(type, message) {
+    console.log('showMessage called with type:', type, 'and message:', message);
+
     // Remove any existing messages
-    const existingMessages = document.querySelectorAll('.logo-section .alert-message')
-    existingMessages.forEach(el => el.remove())
+    const existingMessages = document.querySelectorAll('.logo-section .alert-message');
+    console.log('Removing', existingMessages.length, 'existing messages');
+    existingMessages.forEach(el => el.remove());
 
     // Create a new message element
-    const messageEl = document.createElement('div')
+    const messageEl = document.createElement('div');
     messageEl.className = type === 'success'
-        ? 'p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg alert-message'
-        : 'p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg alert-message'
-    messageEl.setAttribute('role', 'alert')
-    messageEl.textContent = message
+        ? 'p-4 mb-4 text-sm text-green-700 bg-green-100 border border-green-200 rounded-lg alert-message'
+        : 'p-4 mb-4 text-sm text-red-700 bg-red-100 border border-red-200 rounded-lg alert-message';
+    messageEl.setAttribute('role', 'alert');
+    messageEl.textContent = message;
 
     // Insert it at the beginning of the logo section
-    const logoSection = document.querySelector('.logo-section')
-    const heading = logoSection.querySelector('h2')
-    logoSection.insertBefore(messageEl, heading.nextSibling)
+    const logoSection = document.querySelector('.logo-section');
+    const heading = logoSection.querySelector('h2');
+    logoSection.insertBefore(messageEl, heading.nextSibling);
+    console.log('Message element inserted into DOM');
 
     // Scroll to the message
-    messageEl.scrollIntoView({behavior: 'smooth', block: 'center'})
+    messageEl.scrollIntoView({behavior: 'smooth', block: 'center'});
 }
+
+// Add event listener for form submission
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM fully loaded');
+
+    // Get the logo form and submit button
+    const logoForm = document.getElementById('logo-form');
+    const submitButton = document.querySelector('button[name="save_logo_only"]');
+
+    console.log('Form element found:', !!logoForm);
+    console.log('Submit button found:', !!submitButton);
+
+    // If form exists, handle its submission
+    if (logoForm) {
+        console.log('Adding submit event listener to logo form');
+        logoForm.addEventListener('submit', function(e) {
+            console.log('Form submit event triggered');
+            e.preventDefault();
+            console.log('Default form submission prevented');
+            return handleLogoFormSubmit(this);
+        });
+
+        // Optional: Add click handler directly to the button as a fallback
+        if (submitButton) {
+            console.log('Adding click event listener to submit button');
+            submitButton.addEventListener('click', function(e) {
+                console.log('Submit button clicked');
+                // Only handle if not already being handled by form submit
+                if (!e.defaultPrevented) {
+                    e.preventDefault();
+                    console.log('Handling button click - calling handleLogoFormSubmit');
+                    return handleLogoFormSubmit(logoForm);
+                }
+            });
+        }
+    }
+});
 </script>
 
 <?php require_once '../includes/footer.php';

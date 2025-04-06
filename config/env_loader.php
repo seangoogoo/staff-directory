@@ -61,9 +61,11 @@ function load_env($path) {
 }
 
 // Load environment variables from file outside the web root
-// The env folder is now directly in the project root, one level above public
-$env_path = dirname(__DIR__, 2) . '/staff_dir_env/.env';
+// The env folder is now directly in the project root, at the same level as config
+$env_path = dirname(__DIR__) . '/staff_dir_env/.env';
 $env_vars = load_env($env_path);
 
 // Debug line to help diagnose errors
-error_log("Trying to load env file from: {$env_path} - File exists: " . (file_exists($env_path) ? 'Yes' : 'No'));
+if ($_ENV['DEV_MODE'] == 'true') {
+    error_log("Trying to load env file from: {$env_path} - File exists: " . (file_exists($env_path) ? 'Yes' : 'No'));
+}

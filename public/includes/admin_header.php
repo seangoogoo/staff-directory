@@ -1,37 +1,21 @@
 <?php
-// Include authentication system first (handles session start and auth check)
-require_once __DIR__ . '/../admin/auth/auth.php';
-
-// Include other requirements after auth check
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/functions.php';
-
-// Send cache control headers before any output
-header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-header("Cache-Control: post-check=0, pre-check=0", false);
-header("Pragma: no-cache");
-
-// Check if user is logged in, redirect to login if not
-// Note: require_login() will handle its own headers
-if (!is_logged_in()) {
-    require_login();
+// This file should be included after admin_head.php
+// It assumes $app_settings has already been set
+if (!isset($app_settings)) {
+    die('Error: This file must be included after admin_head.php');
 }
+
+// Get admin title from settings
+$admin_title = $app_settings['admin_title']; // Default is already provided by load_app_settings
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <?php
-    // Get application settings with defaults - make them globally accessible
-    global $app_settings;
-    $app_settings = load_app_settings();
-    $admin_title = $app_settings['admin_title']; // Default is already provided by load_app_settings
-    ?>
     <title><?php echo htmlspecialchars($admin_title); ?></title>
     <link href="/assets/css/styles.css" rel="stylesheet">
-    <link href="/assets/css/admin.css" rel="stylesheet">
-    <script src="assets/js/main.js"></script>
+    <script src="/assets/js/main.js"></script>
 </head>
 <body class="antialiased font-sans bg-gray-100 text-gray-900 flex flex-col min-h-screen">
     <!-- Admin Header: White background, padding, border, flex layout -->

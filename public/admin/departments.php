@@ -4,7 +4,16 @@
  * Departments Management
  * Allows administrators to view, add, edit, and delete departments
  */
-require_once '../includes/admin_header.php';
+
+// Define constant to indicate this is an admin page (required by admin_head.php)
+define('INCLUDED_FROM_ADMIN_PAGE', true);
+
+// Include admin head for initialization and security checks
+require_once '../includes/admin_head.php';
+
+// Get any flash messages stored in session
+$error_message = get_session_message('error_message');
+$success_message = get_session_message('success_message');
 
 // Process delete request if submitted
 if (isset($_GET['delete']) && !empty($_GET['delete'])) {
@@ -27,14 +36,18 @@ if (isset($_GET['delete']) && !empty($_GET['delete'])) {
         $stmt->bind_param('i', $id);
 
         if ($stmt->execute()) {
-            $success_message = "Department deleted successfully.";
+            set_session_message('success_message', "Department deleted successfully.");
         } else {
-            $error_message = "Error deleting department: " . $stmt->error;
+            set_session_message('error_message', "Error deleting department: " . $stmt->error);
         }
         $stmt->close();
     } else {
-        $error_message = "Cannot delete department because it is assigned to {$staff_count} staff member(s).";
+        set_session_message('error_message', "Cannot delete department because it is assigned to {$staff_count} staff member(s).");
     }
+
+    // Redirect to prevent form resubmission on refresh
+    header("Location: departments.php");
+    exit;
 }
 
 // Process form submission for Add/Edit
@@ -52,7 +65,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Validate required fields
     if (empty($name)) {
-        $error_message = "Department name is required.";
+        set_session_message('error_message', "Department name is required.");
+        header("Location: departments.php" . ($department_id ? "?edit={$department_id}" : ""));
+        exit;
     } else {
         // Check if this is an edit or add operation
         if ($department_id) {
@@ -62,18 +77,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param("sssi", $name, $description, $color, $department_id);
 
             if ($stmt->execute()) {
-                $success_message = "Department updated successfully.";
-                // Reset form fields
-                unset($name, $description, $color, $department_id);
+                set_session_message('success_message', "Department updated successfully.");
+                $stmt->close();
+                header("Location: departments.php");
+                exit;
             } else {
                 // Check for duplicate entry error
                 if ($stmt->errno == 1062) { // MySQL duplicate entry error code
-                    $error_message = "A department with this name already exists.";
+                    set_session_message('error_message', "A department with this name already exists.");
                 } else {
-                    $error_message = "Error updating department: " . $stmt->error;
+                    set_session_message('error_message', "Error updating department: " . $stmt->error);
                 }
+                $stmt->close();
+                header("Location: departments.php?edit={$department_id}");
+                exit;
             }
-            $stmt->close();
         } else {
             // Add new department
             $sql = "INSERT INTO departments (name, description, color) VALUES (?, ?, ?)";
@@ -81,18 +99,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param("sss", $name, $description, $color);
 
             if ($stmt->execute()) {
-                $success_message = "Department added successfully.";
-                // Reset form fields
-                unset($name, $description, $color);
+                set_session_message('success_message', "Department added successfully.");
+                $stmt->close();
+                header("Location: departments.php");
+                exit;
             } else {
                 // Check for duplicate entry error
                 if ($stmt->errno == 1062) { // MySQL duplicate entry error code
-                    $error_message = "A department with this name already exists.";
+                    set_session_message('error_message', "A department with this name already exists.");
                 } else {
-                    $error_message = "Error adding department: " . $stmt->error;
+                    set_session_message('error_message', "Error adding department: " . $stmt->error);
                 }
+                $stmt->close();
+                header("Location: departments.php");
+                exit;
             }
-            $stmt->close();
         }
     }
 }
@@ -110,7 +131,9 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
         $form_title = "Edit Department";
         $button_text = "Update Department";
     } else {
-        $error_message = "Department not found.";
+        set_session_message('error_message', "Department not found.");
+        header("Location: departments.php");
+        exit;
     }
 } else {
     $form_title = "Add New Department";
@@ -119,6 +142,9 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
 
 // Get all departments
 $departments = get_all_departments($conn);
+
+// Include the HTML header after all processing is done
+require_once '../includes/admin_header.php';
 ?>
 
 <!-- Main content wrapper with flex layout -->
@@ -128,14 +154,14 @@ $departments = get_all_departments($conn);
     <div class="lg:w-1/3">
         <h1 class="text-2xl font-semibold text-gray-900 mb-4"><?php echo $form_title; ?></h1>
 
-        <?php if (isset($error_message)): ?>
-            <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
+        <?php if (!empty($error_message)): ?>
+            <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 border border-red-200 rounded-lg" role="alert">
                 <?php echo $error_message; ?>
             </div>
         <?php endif; ?>
 
-        <?php if (isset($success_message)): ?>
-            <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg" role="alert">
+        <?php if (!empty($success_message)): ?>
+            <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 border border-green-200 rounded-lg" role="alert">
                 <?php echo $success_message; ?>
             </div>
         <?php endif; ?>
@@ -221,15 +247,15 @@ $departments = get_all_departments($conn);
                             $b = hexdec(substr($hex, 4, 2));
                             // Calculate luminance - if luminance is greater than 150, use dark text
                             $luminance = (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
-                            $text_color = ($luminance > 150) ? 'text-gray-900' : 'text-white';
+                            $text_class = get_text_contrast_class($dept['color']);
                             ?>
-                            <tr>
+                            <tr style="--dept-color: <?php echo htmlspecialchars($dept['color']); ?>">
                                 <td class="px-3 py-2 text-sm font-medium text-gray-900 text-center"><?php echo htmlspecialchars($dept['name']); ?></td>
                                 <td class="px-3 py-2 text-sm text-gray-500 max-w-xs truncate" title="<?php echo htmlspecialchars($dept['description']); ?>">
                                     <?php echo $dept['description'] ? htmlspecialchars(substr($dept['description'], 0, 60)) . (strlen($dept['description']) > 60 ? '...' : '') : ''; ?>
                                 </td>
                                 <td class="px-3 py-2 text-center">
-                                    <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-medium <?php echo $text_color; ?>" style="background-color: <?php echo htmlspecialchars($dept['color']); ?>">
+                                    <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-medium <?php echo $text_class; ?>" style="background-color: <?php echo htmlspecialchars($dept['color']); ?>">
                                         <?php echo htmlspecialchars($dept['color']); ?>
                                     </span>
                                 </td>

@@ -1,17 +1,13 @@
 <?php
-// Include essential files ONCE at the top.
-// admin_header.php also includes them, but require_once prevents double inclusion.
-require_once __DIR__ . '/../config/database.php'; // Establishes $conn
-require_once __DIR__ . '/../includes/functions.php'; // Provides necessary functions
+// Define constant to indicate this is an admin page (required by admin_head.php)
+define('INCLUDED_FROM_ADMIN_PAGE', true);
 
-// Start session if not already started (needed for storing error messages/form data)
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// Include admin head for initialization, security checks and database connection
+require_once '../includes/admin_head.php';
 
 // Process form submission first, before any output
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Dependencies ($conn, functions) are already included above
+    // Dependencies ($conn, functions) are already included in admin_head.php
 
     // Sanitize and validate input
     $first_name = sanitize_input($_POST['first_name']);
@@ -23,17 +19,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Validate required fields
     if (empty($first_name) || empty($last_name) || empty($company_id) || empty($department_id) || empty($job_title) || empty($email)) {
-        // Store error message in session to display after redirect or on page load
-        $_SESSION['error_message'] = "All fields are required.";
-        $_SESSION['form_data'] = $_POST;
+        set_session_message('error_message', "All fields are required.");
+        set_form_data($_POST);
+        header("Location: add.php");
+        exit;
     } else {
         // Check for duplicates using the new function
         $duplicate_check = check_staff_duplicate($conn, $first_name, $last_name, $email);
 
         if ($duplicate_check['duplicate']) {
-            // Store duplicate error message in session
-            $_SESSION['error_message'] = $duplicate_check['message'];
-            $_SESSION['form_data'] = $_POST;
+            set_session_message('error_message', $duplicate_check['message']);
+            set_form_data($_POST);
+            header("Location: add.php");
+            exit;
         } else {
             $profile_picture = '';
             if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['size'] > 0) {
@@ -41,52 +39,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($upload_result['success']) {
                     $profile_picture = $upload_result['filename'];
                 } else {
-                    // Store error message in session
-                    $_SESSION['error_message'] = $upload_result['message'];
-                    $_SESSION['form_data'] = $_POST;
-                }
-            }
-
-            if (!isset($_SESSION['error_message'])) {
-                $sql = "INSERT INTO staff_members (first_name, last_name, company_id, department_id, job_title, email, profile_picture)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)";
-
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("ssiisss", $first_name, $last_name, $company_id, $department_id, $job_title, $email, $profile_picture);
-
-                if ($stmt->execute()) {
-                    header("Location: index.php?success=1");
+                    set_session_message('error_message', $upload_result['message']);
+                    set_form_data($_POST);
+                    header("Location: add.php");
                     exit;
-                } else {
-                    // Store database error message in session
-                    $_SESSION['error_message'] = "Error adding staff member: " . $stmt->error;
-                    $_SESSION['form_data'] = $_POST;
                 }
-
-                $stmt->close();
             }
+
+            $sql = "INSERT INTO staff_members (first_name, last_name, company_id, department_id, job_title, email, profile_picture)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("ssiisss", $first_name, $last_name, $company_id, $department_id, $job_title, $email, $profile_picture);
+
+            if ($stmt->execute()) {
+                set_session_message('success_message', "Staff member added successfully.");
+                header("Location: index.php");
+                exit;
+            } else {
+                set_session_message('error_message', "Error adding staff member: " . $stmt->error);
+                set_form_data($_POST);
+                header("Location: add.php");
+                exit;
+            }
+
+            $stmt->close();
         }
     }
 }
 
-// Now include the header (it will skip re-including db and functions due to require_once)
-require_once '../includes/admin_header.php';
-
-// Retrieve session error message and form data if they exist (already started session)
-$error_message = null;
-$form_data = [];
-if (isset($_SESSION['error_message'])) {
-    $error_message = $_SESSION['error_message'];
-    unset($_SESSION['error_message']); // Clear the message after retrieving
-}
-if (isset($_SESSION['form_data'])) {
-    $form_data = $_SESSION['form_data'];
-    unset($_SESSION['form_data']); // Clear the data after retrieving
-}
-
-// Get data needed for the form dropdowns (moved after header include)
+// Get data needed for the form dropdowns
 $departments = get_all_departments($conn);
 $companies = get_all_companies($conn);
+
+// Retrieve session error message and form data
+$error_message = get_session_message('error_message');
+$form_data = get_form_data();
+
+// Include the HTML header after all processing is done
+require_once '../includes/admin_header.php';
 
 // --- The rest of the file remains the same, starting from the HTML part ---
 ?>
@@ -238,9 +229,13 @@ $companies = get_all_companies($conn);
     </form>
 </div>
 
-<!-- Add JavaScript to update department color preview and placeholder image -->
+<!-- Include shared JavaScript utilities -->
+<script src="../assets/js/staff-form-utils.js"></script>
+
+<!-- Add page-specific JavaScript -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Get DOM elements
     const departmentSelect = document.getElementById('department_id')
     const colorPreview = document.getElementById('department-color-preview')
     const imagePreview = document.getElementById('image-preview')
@@ -251,6 +246,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const removeButton = document.getElementById('remove-image')
     const form = document.querySelector('form')
     const emailInput = document.getElementById('email')
+
+    // Default image when no user image is available
+    const defaultImagePath = '../assets/images/add-picture.svg'
 
     // Create validation message elements
     const nameValidationMsg = document.createElement('div')
@@ -263,21 +261,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Set initial state if a department is already selected
     // Use the repopulated form_data if available
-    const initialDeptId = "<?php echo isset($form_data['department_id']) ? $form_data['department_id'] : ''; ?>";
+    const initialDeptId = "<?php echo isset($form_data['department_id']) ? $form_data['department_id'] : ''; ?>"
     if (initialDeptId) {
-        departmentSelect.value = initialDeptId;
+        departmentSelect.value = initialDeptId
         // Need to manually trigger change to update color preview and potentially placeholder
         // if name fields were also repopulated
-        departmentSelect.dispatchEvent(new Event('change'));
+        departmentSelect.dispatchEvent(new Event('change'))
     } else if (departmentSelect.value) {
         // Fallback if no form data but a department is selected by default (unlikely but safe)
-        updateColorPreview()
-        updatePlaceholderImage() // This might show initials if name fields have values
+        updateDepartmentColorPreview(departmentSelect, colorPreview)
+        updatePlaceholderImage()
     }
 
-    // Update on change
+    // Set up event listeners
     departmentSelect.addEventListener('change', function() {
-        updateColorPreview()
+        updateDepartmentColorPreview(departmentSelect, colorPreview)
         updatePlaceholderImage()
     })
 
@@ -285,13 +283,16 @@ document.addEventListener('DOMContentLoaded', function() {
     firstName.addEventListener('input', updatePlaceholderImage)
     lastName.addEventListener('input', updatePlaceholderImage)
 
-    // Handle file input change
-    fileInput.addEventListener('change', handleFileSelect)
+    // Set up file input change handler
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0]
+        handleFileSelection(file, imagePreview, removeButton)
+    })
 
     // Remove image button handler
     removeButton.addEventListener('click', function(e) {
         e.preventDefault()
-        imagePreview.src = getPlaceholderUrl()
+        imagePreview.src = getPlaceholderImageUrl(firstName, lastName, departmentSelect, defaultImagePath, '200x200')
         imagePreview.dataset.isPlaceholder = 'true'
         fileInput.value = '' // Clear the file input
         removeButton.style.display = 'none'
@@ -299,117 +300,8 @@ document.addEventListener('DOMContentLoaded', function() {
         dropzone.classList.add('border-gray-300')
     })
 
-    // Drag and drop handlers
-    ;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropzone.addEventListener(eventName, preventDefaults, false)
-        document.body.addEventListener(eventName, preventDefaults, false)
-    })
-
-    function preventDefaults(e) {
-        e.preventDefault()
-        e.stopPropagation()
-    }
-
-    dropzone.addEventListener('dragenter', function(e) {
-        preventDefaults(e)
-        dropzone.classList.remove('border-gray-300')
-        dropzone.classList.add('border-indigo-500')
-    })
-
-    dropzone.addEventListener('dragleave', function(e) {
-        preventDefaults(e)
-        if (!dropzone.contains(e.relatedTarget)) {
-            dropzone.classList.remove('border-indigo-500')
-            dropzone.classList.add('border-gray-300')
-        }
-    })
-
-    dropzone.addEventListener('drop', function(e) {
-        preventDefaults(e)
-        dropzone.classList.remove('border-indigo-500')
-        dropzone.classList.add('border-gray-300')
-        const dt = e.dataTransfer
-        const files = dt.files
-        handleFiles(files)
-    })
-
-    function handleFileSelect(e) {
-        const files = e.target.files
-        handleFiles(files)
-    }
-
-    function handleFiles(files) {
-        if (files && files[0]) {
-            const file = files[0]
-
-            // Check file type
-            if (!file.type.match('image.*')) {
-                alert('Please upload an image file')
-                return
-            }
-
-            // Check file size (10MB max)
-            if (file.size > 10 * 1024 * 1024) {
-                alert('File is too large. Maximum size is 10MB')
-                return
-            }
-
-            const reader = new FileReader()
-            reader.onload = function(e) {
-                imagePreview.src = e.target.result
-                imagePreview.dataset.isPlaceholder = 'false'
-                removeButton.style.display = 'block'
-            }
-            reader.readAsDataURL(file)
-
-            // Update the file input
-            const dataTransfer = new DataTransfer()
-            dataTransfer.items.add(file)
-            fileInput.files = dataTransfer.files
-        }
-    }
-
-    // Function to update color preview
-    function updateColorPreview() {
-        const selectedOption = departmentSelect.options[departmentSelect.selectedIndex]
-        const color = selectedOption.getAttribute('data-color')
-        const deptName = selectedOption.textContent.trim()
-
-        if (color && deptName) {
-            const hex = color.replace('#', '')
-            const r = parseInt(hex.substr(0, 2), 16)
-            const g = parseInt(hex.substr(2, 2), 16)
-            const b = parseInt(hex.substr(4, 2), 16)
-            const luminance = ((r * 299) + (g * 587) + (b * 114)) / 1000
-            const textColor = (luminance > 150) ? 'text-gray-800' : 'text-white'
-
-            colorPreview.innerHTML = `
-                <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium ${textColor}" style="background-color: ${color}">
-                    Selected: ${deptName}
-                </span>
-            `
-            colorPreview.style.display = 'block'
-        } else {
-            colorPreview.style.display = 'none'
-        }
-    }
-
-    function getPlaceholderUrl() {
-        const selectedOption = departmentSelect.options[departmentSelect.selectedIndex]
-        const color = selectedOption?.getAttribute('data-color') || '#cccccc'
-        const fName = firstName?.value || ''
-        const lName = lastName?.value || ''
-
-        // Only generate a placeholder with initials if we have a name
-        if (!fName && !lName) {
-            return '../assets/images/add-picture.svg'
-        }
-
-        const nameParam = `${fName.trim()} ${lName.trim()}`
-        const timestamp = new Date().getTime()
-        const url = `../includes/generate_placeholder.php?name=${encodeURIComponent(nameParam)}&size=200x200&bg_color=${encodeURIComponent(color)}&t=${timestamp}`
-        return url
-    }
+    // Set up drag and drop
+    setupDragAndDrop(dropzone, fileInput, imagePreview, removeButton)
 
     // Function to update the placeholder image
     function updatePlaceholderImage() {
@@ -417,20 +309,9 @@ document.addEventListener('DOMContentLoaded', function() {
             return
         }
 
-        imagePreview.src = getPlaceholderUrl()
+        imagePreview.src = getPlaceholderImageUrl(firstName, lastName, departmentSelect, defaultImagePath, '200x200')
         imagePreview.dataset.isPlaceholder = 'true'
         removeButton.style.display = 'none'
-    }
-
-    // Debounce function to limit API calls
-    function debounce(func, wait) {
-        let timeout
-        return function() {
-            const context = this
-            const args = arguments
-            clearTimeout(timeout)
-            timeout = setTimeout(() => func.apply(context, args), wait)
-        }
     }
 
     // Check for name duplicates when both first and last name have values
@@ -494,7 +375,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 500)
 
-    // Add event listeners
+    // Add event listeners for duplicate checking
     firstName.addEventListener('blur', checkNameDuplicate)
     lastName.addEventListener('blur', checkNameDuplicate)
     emailInput.addEventListener('blur', checkEmailDuplicate)

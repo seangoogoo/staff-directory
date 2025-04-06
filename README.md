@@ -1,4 +1,4 @@
-# Staff Directory Application -- Version 1.2.5
+# Staff Directory Application -- Version 1.2.6
 
 A web-based staff directory application that allows administrators to manage staff members and provides a user-friendly interface for employees to browse the directory.
 
@@ -35,14 +35,13 @@ A web-based staff directory application that allows administrators to manage sta
 4. Set up .env file for the authentication of the admin area
 5. Ensure the uploads directory is writable by the web server
 
-## Folder tree
+## Directory structure
 The application follows a secure directory structure:
 
 ```
 ├── `public/`                       # Web accessible files (the web root)
 │   ├── `admin/`                    # Admin interface files
 │   │   ├── `auth/`                 # Authentication system
-│   │   │   ├── `auth_config.php`   # Centralized auth configuration
 │   │   │   ├── `auth.php`          # Authentication utility functions
 │   │   │   ├── `check_login.php`   # Login validation
 │   │   │   ├── `login-modal.php`   # Login modal template
@@ -65,11 +64,9 @@ The application follows a secure directory structure:
 │   │   │   ├── `admin-filters.js`  # Admin-specific filtering functionality
 │   │   │   ├── `filter-core.js`    # Core filtering logic shared between admin/frontend
 │   │   │   ├── `frontend-filters.js` # Frontend-specific filtering functionality
+│   │   │   ├── `staff-form-utils.js` # Shared utilities for staff add/edit forms
 │   │   │   └── `main.js`           # Main application JavaScript
 │   │   └── `vendor/`               # Third-party libraries
-│   ├── `config/`                   # Configuration files accessed by public pages
-│   │   ├── `database.php`          # Database connection configuration
-│   │   └── `env_loader.php`        # Environment variables loader
 │   ├── `includes/`                 # PHP includes for the public pages
 │   │   ├── `admin_footer.php`      # Admin page footer
 │   │   ├── `admin_header.php`      # Admin page header
@@ -84,6 +81,10 @@ The application follows a secure directory structure:
 │   │   ├── `logos/`                # Application logo images
 │   │   └── `placeholders/`         # Generated placeholder images (WebP format)
 │   └── `index.php`                 # Main entry point
+├── `config/`                       # Configuration files (moved outside web root for security)
+│   ├── `auth_config.php`           # Centralized authentication configuration
+│   ├── `database.php`              # Database connection configuration
+│   └── `env_loader.php`            # Environment variables loader
 ├── `src/`                          # Source files for development
 │   ├── `fonts/`                    # Original font files
 │   │   ├── `Outfit/`               # Outfit variable font
@@ -122,7 +123,7 @@ The application follows a secure directory structure:
 This application uses environment variables to secure sensitive data like database credentials and admin passwords. The environment file is stored outside the web root for enhanced security.
 
 ### Setting Up Environment Variables
-1. Create an `.env` file in the directory `../env/`
+1. Create an `.env` file in the directory `staff_dir_env/`
 2. Add the following variables to the file:
 ```
 # Database Configuration

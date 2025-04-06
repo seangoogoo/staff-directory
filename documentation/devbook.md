@@ -4,6 +4,56 @@
 
 ### Version 1.2 (March 2025)
 
+#### April 5, 2025
+*Config Directory Relocation for Enhanced Security*
+
+- Relocated the config directory from within public folder to project root level
+  - Moved all configuration files out of web-accessible location
+  - Updated file paths in `env_loader.php` to properly reference `.env` file
+  - Modified all include/require statements across the application
+  - Ensured proper relative path references in all files
+- Relocated authentication configuration for additional security
+  - Moved `auth_config.php` from `public/admin/auth/` to the config folder
+  - Updated include paths in all authentication-related files
+  - Centralized all sensitive configuration in a single secured location
+  - Simplified path references by keeping related config files together
+- Security benefits:
+  - Configuration files are now completely outside web root
+  - Protected sensitive database connection details from potential exposure
+  - Authentication settings secured from direct web access
+  - Followed security best practices for PHP applications
+  - Prevents direct access to configuration files even if server misconfiguration occurs
+- Implementation details:
+  - Updated `env_loader.php` to use correct `dirname(__DIR__)` path reference
+  - Modified all files that include config files to use updated paths
+  - Adjusted relative path references in authentication system
+  - Maintained backward compatibility with existing functionality
+  - No changes to actual logic or behavior of the application
+
+#### March 30, 2025
+*Admin Interface Structure Improvement and Session Message Standardization*
+
+- Restructured admin interface files to improve organization and separation of concerns
+  - Created new `admin_head.php` for PHP initialization and security checks
+  - Modified `admin_header.php` to focus solely on HTML output
+  - Implemented consistent admin file pattern with processing before HTML output
+  - Added security constant `INCLUDED_FROM_ADMIN_PAGE` to prevent direct access
+- Standardized session message handling across all admin files
+  - Implemented consistent use of `set_session_message()` and `get_session_message()` functions
+  - Replaced direct `$_SESSION` variable assignments with function calls
+  - Ensured all form processing follows the Post/Redirect/Get pattern
+  - Fixed message display with proper `!empty()` checks to prevent empty alert boxes
+- Enhanced error handling and user experience
+  - Standardized redirects after form submissions to prevent resubmission
+  - Improved header handling to prevent "Headers already sent" errors
+  - Added consistent border styling to alert messages
+  - Ensured form data persistence on validation errors
+- Technical improvements
+  - Reduced code duplication by centralizing common initialization code
+  - Enhanced security by implementing proper redirect patterns
+  - Improved maintainability with standardized session message handling
+  - Optimized code organization for better separation of concerns
+
 #### March 28, 2025
 *Company Statistics Dashboard Implementation*
 
@@ -291,125 +341,14 @@ The system is pre-configured with the following departments:
 
 #### Authentication System Architecture
 
-The authentication system has been optimized with a centralized configuration approach. The system consists of the following components:
+The authentication system has been optimized with a centralized configuration approach. For complete details, please refer to the [dedicated authentication system documentation](authentication-system.md).
 
-##### File Structure
-
-The authentication system files are organized as follows:
-
-```
-public/
-├── admin/
-│   ├── auth/
-│   │   ├── auth_config.php     # Centralized auth configuration
-│   │   ├── auth.php            # Core authentication functions
-│   │   ├── check_login.php     # AJAX endpoint for checking login status
-│   │   ├── login-modal.php     # Login form UI component
-│   │   └── login.php           # AJAX endpoint for processing login
-│   └── index.php               # Admin dashboard (requires authentication)
-├── includes/
-│   ├── admin_header.php        # Admin header (initiates auth check)
-│   ├── footer.php              # Regular footer (includes login modal)
-│   └── header.php              # Regular header (loads auth system)
-├── config/
-│   └── env_loader.php          # Loads environment variables
-└── index.php                   # Frontend entry point
-```
-
-##### Environment Variables
-
-The following environment variables are used for authentication:
-
-```
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=admin
-USE_SECURE_COOKIES=true
-```
-
-In production, these values should be changed to secure credentials.
-
-The `USE_SECURE_COOKIES` variable controls whether secure cookies are used, regardless of the HTTPS detection. Set it to `true` to always use secure cookies, or `false` to never use them. If not specified, the system will automatically detect HTTPS.
-
-##### Authentication Flow Diagram
-
-```mermaid
-graph TD
-    A([User Access]) --> B{Accessing Admin Page?}
-    B -->|Yes| C[Load admin_header.php]
-    B -->|No| D[Regular Frontend]
-
-    C --> E[Include auth.php]
-    E --> F[Load auth_config.php]
-    F --> G[Call require_login]
-    G --> H{Is user logged in?}
-
-    H -->|Yes| I[Allow Admin Access]
-    H -->|No| J{Is AJAX Request?}
-    J -->|Yes| K[Return JSON with redirect URL]
-    J -->|No| L[Set login modal flag]
-    L --> M[Redirect to homepage with login param]
-
-    M --> N[Load index.php]
-    N --> O[Include footer.php]
-    O --> P[Include login-modal.php]
-    P --> Q{login=required param?}
-    P --> R{Session flag set?}
-
-    Q -->|Yes| S[Show Login Modal]
-    R -->|Yes| S
-
-    S --> T[User Submits Login Form]
-    T --> U[AJAX Request to login.php]
-    U --> V{Credentials valid?}
-
-    V -->|Yes| W[Create user session]
-    V -->|No| X[Return Error JSON]
-    X --> Y[Show Error in Modal]
-
-    W --> Z[Return Success JSON]
-    Z --> AA[Redirect to Admin Area]
-
-    D --> BB[Periodic AJAX login checks]
-    BB --> CC{Still logged in?}
-    CC -->|Yes| DD[Continue normally]
-    CC -->|No| EE[May show login modal]
-
-    %% Improved color contrast for better readability
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:#000
-    classDef config fill:#f8d7f9,stroke:#333,stroke-width:1px,color:#000
-    classDef authFiles fill:#d7d7f9,stroke:#333,stroke-width:1px,color:#000
-    classDef endpoints fill:#d7f9d7,stroke:#333,stroke-width:1px,color:#000
-    classDef decision fill:#333,stroke:#333,stroke-width:1px,color:#fff
-
-    class F config
-    class E,G,H,V,W authFiles
-    class U,BB,K endpoints
-    class B,H,J,Q,R,CC,V decision
-```
-
-##### Key Files
-
-- **auth_config.php**: Central configuration file containing all authentication-related constants and settings
-- **auth.php**: Core authentication logic (login verification, session management, access control)
-- **login.php**: AJAX endpoint for processing login requests
-- **login-modal.php**: UI component for login form
-- **check_login.php**: AJAX endpoint for checking current login status
-
-##### Security Measures
-
-- **Configuration Protection**: All config files are protected from direct access
-- **Session Security**: Secure session cookies with HttpOnly flag
-- **Password Hashing**: Uses PHP's PASSWORD_DEFAULT algorithm
-- **Anti-Caching**: Proper cache-control headers prevent authentication state caching
-- **Environment Variables**: Credentials stored in environment variables outside web root
-
-##### Login Flow
-
-1. User tries to access restricted admin page
-2. `require_login()` function checks authentication
-3. If not authenticated, user is redirected to login form
-4. Login form submits credentials via AJAX to login.php
-5. Upon successful authentication, user is redirected to intended page
+**Key Features:**
+- Centralized configuration in `auth_config.php`
+- Environment variable-based credentials
+- Comprehensive flow with login modal and AJAX endpoints
+- Secure session management with proper cookie handling
+- Detailed security measures including protection against common vulnerabilities
 
 ### Version 1.0 - March 16-17, 2025
 *Initial Release*
@@ -529,6 +468,32 @@ graph TD
 
 ### Version 1.2.5 (April 2025)
 
+#### April 6, 2025
+*Staff Form JavaScript Refactoring*
+
+- Consolidated shared JavaScript functions from add.php and edit.php into a utility file
+  - Created new `staff-form-utils.js` in assets/js directory
+  - Extracted common form utilities into reusable functions
+  - Added JSDoc comments to document function parameters and return values
+  - Ensured backwards compatibility with existing functionality
+- Implemented properly parameterized utility functions:
+  - `updateDepartmentColorPreview()` - For displaying the department color
+  - `getPlaceholderImageUrl()` - For generating placeholder image URLs
+  - `handleFileSelection()` - For handling file uploads
+  - `setupDragAndDrop()` - For file drag and drop functionality
+  - `preventDefaults()` - Helper for drag and drop events
+  - `debounce()` - Utility for limiting repeated function calls
+- Enhanced code maintainability and organization:
+  - Reduced code duplication between forms
+  - Made future changes easier to implement
+  - Improved code readability
+  - Standardized parameter passing conventions
+  - Enhanced separation of concerns between shared and page-specific code
+- Preserved form-specific behaviors:
+  - Kept duplicate checking logic in add.php
+  - Maintained edit.php-specific image handling for existing staff members
+  - Ensured smooth integration with PHP-generated data
+
 #### April 2, 2025
 *Staff Member Duplicate Checking System*
 
@@ -609,6 +574,22 @@ graph TD
   - Added validation to prevent deleting companies with assigned staff
   - Implemented secure file handling for company logo uploads
   - Ensured consistent UI patterns matching staff management screens
+- ✅ Enhanced Search and Filter Architecture (March 29, 2025)
+  - Implemented shared filtering core architecture with `filter-core.js`
+  - Created specialized frontend and admin filter implementations
+  - Added dynamic table filtering for staff management
+  - Standardized filter input styles across frontend and admin interfaces
+  - Implemented intelligent filtering to only show departments and companies with staff
+  - Added proper path handling for AJAX requests in different contexts
+  - Used state tracking to prevent circular updates between filters
+  - Improved code maintainability by centralizing common filtering functionality
+- ✅ Staff Member Duplicate Checking System (April 2, 2025)
+  - Added case-insensitive duplicate name and email detection
+  - Implemented real-time AJAX-based validation with visual indicators
+  - Created form submission prevention when duplicates are detected
+  - Added server-side validation as a fallback security measure
+  - Used debouncing technique to optimize AJAX request frequency
+  - Implemented comprehensive error handling with descriptive feedback
 - ✅ Tailwind CSS Integration (April 5, 2025)
   - Replaced all custom CSS with Tailwind utility classes
   - Converted all pages to modern responsive design
@@ -618,6 +599,7 @@ graph TD
   - Added custom breakpoints for specific UI elements
   - Implemented Tailwind forms plugin for improved form styling
   - Streamlined build process with optimized CSS output
+- ✅ Merge shared Javascript of edit.php and add.php in a dedicated js file
 
 ### Planned Improvements
 
@@ -636,8 +618,9 @@ graph TD
 - ~~Add search and filters to the staff member management list~~
 - ~~In homepage and admin filter, don't list companies and departments that do not have staff members~~
 - ~~Check for existing user before submitting the form in add.php form~~
-- Add random rotating light rotating effect to staff member's cards
-- List and remove unused functions
+- ~~List every Php and remove unused functions~~
+- ~~Merge shared Javascript of edit.php and add.php in a dedicated js file~~
+- Set a customizable path and folder name for the public folder in the .env file that could be use everywhere where public path is hardcoded
 - Add internationalization support (FR/EN translation files)
 - Create a favicon
 - Improve unused placeholder images management to remove them when not needed either by programming a folder cleanup once a day and/or by using temporary images when editing settings or creating/editing users
@@ -645,9 +628,15 @@ graph TD
 
 #### Version 1.3 (Planned)
 - Add staff counts by departments in company statistics
+- Set auto hide behavior to context messages
 - Add sorting options in admin homepage staff member list
 - Set pagination to admin staff member list
 - Improve and centralize javascript functions for image preview
+- Refactor image handling architecture to address the following issues:
+  - Separate image handling concerns across different page types (settings, add, edit)
+  - Implement consistent interface for image actions (upload, remove, preview)
+  - Remove temporary fixes in settings.php for logo handling
+  - Create modular, page-specific image handlers that share common functionality
 - Enable login possibility to access the front-end
 - Add an optional date of entrance in the company in the user info (update DB, add.php, edit.php, index.php and admin/index.php)
 - Add a birthday field for staff members as optional

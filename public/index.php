@@ -85,7 +85,7 @@ $companies = get_active_company_names($conn);
             <!-- Card Styling: grid rows, bg, rounded, shadow, overflow -->
             <div class="staff-card grid grid-rows-[auto_1fr] bg-white rounded-[20px] shadow-md overflow-hidden">
                 <!-- Image or Placeholder -->
-                <?php if ($imageUrl && $imageUrl !== 'https://via.placeholder.com/600x400.png?text=Placeholder'): // Check if a real image URL was returned ?>
+                <?php if ($imageUrl): // Check if a real image URL was returned ?>
                     <img src="<?php echo htmlspecialchars($imageUrl); ?>" alt="<?php echo htmlspecialchars($staff['first_name'] . ' ' . $staff['last_name']); ?>" class="staff-image w-full aspect-square object-cover object-top">
                 <?php else: ?>
                     <!-- Placeholder Styling: bg color, text color, flex center -->

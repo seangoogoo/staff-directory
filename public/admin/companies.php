@@ -4,7 +4,16 @@
  * Allows administrators to view, add, edit, and delete companies
  * Includes logo upload functionality and description editor
  */
-require_once '../includes/admin_header.php';
+
+// Define constant to indicate this is an admin page (required by admin_head.php)
+define('INCLUDED_FROM_ADMIN_PAGE', true);
+
+// Include admin head for PHP initialization and security checks
+require_once '../includes/admin_head.php';
+
+// Get any flash messages stored in session
+$error_message = get_session_message('error_message');
+$success_message = get_session_message('success_message');
 
 // Process delete request if submitted
 if (isset($_GET['delete']) && !empty($_GET['delete'])) {
@@ -27,14 +36,18 @@ if (isset($_GET['delete']) && !empty($_GET['delete'])) {
             if (!empty($company['logo']) && file_exists(__DIR__ . '/..' . $company['logo'])) {
                 unlink(__DIR__ . '/..' . $company['logo']);
             }
-            $success_message = "Company deleted successfully.";
+            set_session_message('success_message', "Company deleted successfully.");
         } else {
-            $error_message = "Error deleting company: " . $stmt->error;
+            set_session_message('error_message', "Error deleting company: " . $stmt->error);
         }
         $stmt->close();
     } else {
-        $error_message = "Cannot delete company because it is assigned to {$staff_count} staff member(s).";
+        set_session_message('error_message', "Cannot delete company because it is assigned to {$staff_count} staff member(s).");
     }
+
+    // Redirect to prevent form resubmission on refresh
+    header("Location: companies.php");
+    exit;
 }
 
 // Process form submission for Add/Edit
@@ -49,14 +62,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_FILES['logo']) && $_FILES['logo']['error'] !== UPLOAD_ERR_NO_FILE) {
         $logo_path = upload_company_logo($_FILES['logo']);
         if ($logo_path === false) {
-            $error_message = "Error uploading logo. Please check file type and size.";
+            set_session_message('error_message', "Error uploading logo. Please check file type and size.");
+            header("Location: companies.php" . ($company_id ? "?edit={$company_id}" : ""));
+            exit;
         }
     }
 
     // Validate required fields
     if (empty($name)) {
-        $error_message = "Company name is required.";
-    } else if (!isset($error_message)) {
+        set_session_message('error_message', "Company name is required.");
+        header("Location: companies.php" . ($company_id ? "?edit={$company_id}" : ""));
+        exit;
+    } else {
         // Check if this is an edit or add operation
         if ($company_id) {
             // Get current company to check for existing logo
@@ -92,18 +109,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($stmt->execute()) {
-                $success_message = "Company updated successfully.";
-                // Reset form fields
-                unset($name, $description, $company_id);
+                set_session_message('success_message', "Company updated successfully.");
+                $stmt->close();
+                header("Location: companies.php");
+                exit;
             } else {
                 // Check for duplicate entry error
                 if ($stmt->errno == 1062) { // MySQL duplicate entry error code
-                    $error_message = "A company with this name already exists.";
+                    set_session_message('error_message', "A company with this name already exists.");
                 } else {
-                    $error_message = "Error updating company: " . $stmt->error;
+                    set_session_message('error_message', "Error updating company: " . $stmt->error);
                 }
+                $stmt->close();
+                header("Location: companies.php?edit={$company_id}");
+                exit;
             }
-            $stmt->close();
         } else {
             // Add new company
             if (!empty($logo_path)) {
@@ -117,18 +137,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($stmt->execute()) {
-                $success_message = "Company added successfully.";
-                // Reset form fields
-                unset($name, $description);
+                set_session_message('success_message', "Company added successfully.");
+                $stmt->close();
+                header("Location: companies.php");
+                exit;
             } else {
                 // Check for duplicate entry error
                 if ($stmt->errno == 1062) { // MySQL duplicate entry error code
-                    $error_message = "A company with this name already exists.";
+                    set_session_message('error_message', "A company with this name already exists.");
                 } else {
-                    $error_message = "Error adding company: " . $stmt->error;
+                    set_session_message('error_message', "Error adding company: " . $stmt->error);
                 }
+                $stmt->close();
+                header("Location: companies.php");
+                exit;
             }
-            $stmt->close();
         }
     }
 }
@@ -146,7 +169,9 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
         $form_title = "Edit Company";
         $button_text = "Update Company";
     } else {
-        $error_message = "Company not found.";
+        set_session_message('error_message', "Company not found.");
+        header("Location: companies.php");
+        exit;
     }
 } else {
     $form_title = "Add New Company";
@@ -155,6 +180,9 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
 
 // Get all companies
 $companies = get_all_companies($conn);
+
+// Include header - this will output HTML
+require_once '../includes/admin_header.php';
 ?>
 
 <!-- Main content wrapper with flex layout -->
@@ -164,14 +192,14 @@ $companies = get_all_companies($conn);
     <div class="lg:w-1/3">
         <h1 class="text-2xl font-semibold text-gray-900 mb-4"><?php echo $form_title; ?></h1>
 
-        <?php if (isset($error_message)): ?>
-            <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
+        <?php if (!empty($error_message)): ?>
+            <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 border border-red-200 rounded-lg" role="alert">
                 <?php echo $error_message; ?>
             </div>
         <?php endif; ?>
 
-        <?php if (isset($success_message)): ?>
-            <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg" role="alert">
+        <?php if (!empty($success_message)): ?>
+            <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 border border-green-200 rounded-lg" role="alert">
                 <?php echo $success_message; ?>
             </div>
         <?php endif; ?>

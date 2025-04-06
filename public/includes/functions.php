@@ -1,17 +1,6 @@
 <?php
 // Common functions for the application
 
-
-/**
- * Get placeholder settings from database (legacy function for backward compatibility)
- *
- * @return array Associative array of placeholder settings with defaults
- */
-function get_placeholder_settings_from_db() {
-    // Call load_app_settings to ensure we get defaults as well
-    return load_app_settings();
-}
-
 /**
  * Mix a color with black or white, similar to CSS color-mix function
  *
@@ -68,6 +57,70 @@ function color_mix($hex_color, $variant = 'dark', $percentage = 50) {
 }
 
 /**
+ * Convert hex color code to RGB array
+ *
+ * @param string $hex_color Hex color code (e.g. #cccccc or cccccc)
+ * @return array Array with r, g, b values
+ */
+function hex2rgb($hex_color) {
+    // Remove # if present
+    $hex_color = ltrim($hex_color, '#');
+
+    // Parse the hex color
+    if (strlen($hex_color) == 3) {
+        // Convert short hex (e.g. #abc) to full hex (e.g. #aabbcc)
+        $r = hexdec(substr($hex_color, 0, 1) . substr($hex_color, 0, 1));
+        $g = hexdec(substr($hex_color, 1, 1) . substr($hex_color, 1, 1));
+        $b = hexdec(substr($hex_color, 2, 1) . substr($hex_color, 2, 1));
+    } else {
+        // Standard hex color (e.g. #aabbcc)
+        $r = hexdec(substr($hex_color, 0, 2));
+        $g = hexdec(substr($hex_color, 2, 2));
+        $b = hexdec(substr($hex_color, 4, 2));
+    }
+
+    // Return RGB array
+    return array('r' => $r, 'g' => $g, 'b' => $b);
+}
+
+/**
+ * Determine if text should be light or dark based on background color
+ *
+ * @param string $hex_color The hex color code (with or without #)
+ * @param bool $return_class Whether to return the CSS class name or just 'dark'/'light'
+ * @return string Either the CSS class name ('dark-text'/'light-text') or just 'dark'/'light'
+ */
+function get_text_contrast_class($hex_color, $return_class = true) {
+    // Remove # if present
+    $hex = ltrim($hex_color, '#');
+
+    // Handle shorthand hex (e.g., #abc)
+    if (strlen($hex) === 3) {
+        $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+    }
+
+    // Convert hex to RGB
+    $r = hexdec(substr($hex, 0, 2));
+    $g = hexdec(substr($hex, 2, 2));
+    $b = hexdec(substr($hex, 4, 2));
+
+    // Calculate luminance - standard formula for brightness perception
+    $luminance = (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
+    // debug_log("Luminance: " . $luminance);
+
+    // Determine if dark or light based on luminance
+    $is_dark = $luminance > 190;
+
+    if ($return_class) {
+        // Return appropriate class name based on luminance (original behavior)
+        return $is_dark ? 'dark-text' : 'light-text';
+    } else {
+        // Return just 'dark' or 'light' value
+        return $is_dark ? 'dark' : 'light';
+    }
+}
+
+/**
  * Get the URL for a staff member's profile picture or generate a placeholder with initials
  *
  * @param array $staff Staff member data
@@ -88,8 +141,7 @@ function get_staff_image_url($staff, $size = '600x600', $font_weight = null, $bg
     ];
 
     // Load settings with defaults from the database
-    // get_placeholder_settings_from_db() now calls load_app_settings() which provides all defaults
-    $placeholder_settings = get_placeholder_settings_from_db();
+    $placeholder_settings = load_app_settings();
     $default_settings = array_merge($default_settings, $placeholder_settings);
 
     // Use provided parameters if set, otherwise use defaults
@@ -97,40 +149,9 @@ function get_staff_image_url($staff, $size = '600x600', $font_weight = null, $bg
     $bg_color = $bg_color ?: $default_settings['bg_color'];
     $contrast = get_text_contrast_class($bg_color, false);
     // Returns: 'dark' or 'light'
-    // $text_color = $text_color ?: $default_settings['text_color'];
-    // $text_color = color_mix($bg_color, 'dark', 20);
     $text_color = $contrast == 'dark' ? color_mix($bg_color, 'dark', 20) : color_mix($bg_color, 'light', 35);
     $font_size_factor = $font_size_factor ?: $default_settings['font_size_factor'];
 
-    // Make sure we have the hex2rgb function
-    if (!function_exists('hex2rgb')) {
-        /**
-         * Convert hex color code to RGB array
-         *
-         * @param string $hex_color Hex color code (e.g. #cccccc or cccccc)
-         * @return array Array with r, g, b values
-         */
-        function hex2rgb($hex_color) {
-            // Remove # if present
-            $hex_color = ltrim($hex_color, '#');
-
-            // Parse the hex color
-            if (strlen($hex_color) == 3) {
-                // Convert short hex (e.g. #abc) to full hex (e.g. #aabbcc)
-                $r = hexdec(substr($hex_color, 0, 1) . substr($hex_color, 0, 1));
-                $g = hexdec(substr($hex_color, 1, 1) . substr($hex_color, 1, 1));
-                $b = hexdec(substr($hex_color, 2, 1) . substr($hex_color, 2, 1));
-            } else {
-                // Standard hex color (e.g. #aabbcc)
-                $r = hexdec(substr($hex_color, 0, 2));
-                $g = hexdec(substr($hex_color, 2, 2));
-                $b = hexdec(substr($hex_color, 4, 2));
-            }
-
-            // Return RGB array
-            return array('r' => $r, 'g' => $g, 'b' => $b);
-        }
-    }
     // Generate initials for the placeholder image
     $initials = '';
     if (!empty($staff['first_name'])) $initials .= strtoupper(substr($staff['first_name'], 0, 1));
@@ -250,8 +271,10 @@ function get_staff_image_url($staff, $size = '600x600', $font_weight = null, $bg
                 imagewebp($image, $placeholder_path, 85); // 85% quality offers good balance
                 imagedestroy($image);
             } catch (\Exception $e) {
-                // Log error
-                error_log('Failed to generate placeholder image: ' . $e->getMessage());
+                if ($_ENV['DEV_MODE'] == 'true') {
+                    // Log error
+                    debug_log($e->getMessage(), "Failed to generate placeholder image: ");
+                }
 
                 // Create a fallback image with larger text
                 $fallback_image = imagecreatetruecolor($width, $height);
@@ -680,42 +703,6 @@ function get_department_by_name($conn, $name) {
     $stmt->close();
     return null;
 }
-/**
- * Determine if text should be light or dark based on background color
- *
- * @param string $hex_color The hex color code (with or without #)
- * @param bool $return_class Whether to return the CSS class name or just 'dark'/'light'
- * @return string Either the CSS class name ('dark-text'/'light-text') or just 'dark'/'light'
- */
-function get_text_contrast_class($hex_color, $return_class = true) {
-    // Remove # if present
-    $hex = ltrim($hex_color, '#');
-
-    // Handle shorthand hex (e.g., #abc)
-    if (strlen($hex) === 3) {
-        $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
-    }
-
-    // Convert hex to RGB
-    $r = hexdec(substr($hex, 0, 2));
-    $g = hexdec(substr($hex, 2, 2));
-    $b = hexdec(substr($hex, 4, 2));
-
-    // Calculate luminance - standard formula for brightness perception
-    $luminance = (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
-    // debug_log("Luminance: " . $luminance);
-
-    // Determine if dark or light based on luminance
-    $is_dark = $luminance > 190;
-
-    if ($return_class) {
-        // Return appropriate class name based on luminance (original behavior)
-        return $is_dark ? 'dark-text' : 'light-text';
-    } else {
-        // Return just 'dark' or 'light' value
-        return $is_dark ? 'dark' : 'light';
-    }
-}
 
 /**
  * Set a session message
@@ -733,7 +720,9 @@ function set_session_message($key, $message) {
     // Only set message if it's not empty
     if (!empty($message)) {
         $_SESSION[$key] = $message;
-        error_log("Session message set: $key = $message");
+        if ($_ENV['DEV_MODE'] == 'true') {
+            debug_log("Session message set: $key = $message", "Session message set: ");
+        }
         return true;
     }
     return false;
@@ -756,99 +745,15 @@ function get_session_message($key) {
     // Get message if it exists
     if (isset($_SESSION[$key])) {
         $message = $_SESSION[$key];
-        error_log("Retrieved session message: $key = $message");
+        if ($_ENV['DEV_MODE'] == 'true') {
+            debug_log("Retrieved session message: $key = $message", "Session message retrieved: ");
+        }
 
         // Clear message
         unset($_SESSION[$key]);
     }
 
     return $message;
-}
-
-/**
- * Handle redirect after form processing
- *
- * Used in: admin/settings.php, admin/staff_edit.php, admin/departments.php
- * This function sets session messages and performs a redirect
- *
- * @param string $success_key Session key for success message
- * @param string $success_message Success message to store
- * @param string $error_key Session key for error message
- * @param string $error_message Error message to store
- * @param string $redirect_url URL to redirect to (defaults to current page)
- */
-function handle_redirect($success_key, $success_message, $error_key, $error_message, $redirect_url = '') {
-    error_log('handle_redirect function called');
-
-    // Make sure session is started
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
-
-    // Debug output buffer status
-    error_log('Output buffering status: ' . (ob_get_level() ? 'ON (level: ' . ob_get_level() . ')' : 'OFF'));
-    error_log('Headers sent: ' . (headers_sent($file, $line) ? 'YES at ' . $file . ':' . $line : 'NO'));
-
-    // Check if headers have already been sent
-    if (headers_sent($file, $line)) {
-        error_log("Cannot redirect - headers already sent in $file on line $line");
-    }
-
-    // Set messages if they exist
-    if (!empty($success_message)) {
-        $_SESSION[$success_key] = $success_message;
-        error_log("Set success message directly in session: $success_key = $success_message");
-    }
-
-    if (!empty($error_message)) {
-        $_SESSION[$error_key] = $error_message;
-        error_log("Set error message directly in session: $error_key = $error_message");
-    }
-
-    // If no redirect URL provided, use current page
-    if (empty($redirect_url)) {
-        $redirect_url = $_SERVER['PHP_SELF'];
-    }
-
-    error_log('Attempting to redirect to: ' . $redirect_url);
-
-    // Commit session data before redirecting
-    session_write_close();
-
-    // End output buffering if active
-    if (ob_get_level()) {
-        ob_end_clean();
-    }
-
-    // Redirect to prevent form resubmission
-    if (!headers_sent()) {
-        error_log('Performing redirect with header()');
-        header("Location: " . $redirect_url);
-        exit;
-    } else {
-        error_log('Using JavaScript fallback for redirect');
-        echo '<script>window.location.href="' . $redirect_url . '";</script>';
-        exit;
-    }
-}
-
-/**
- * Get default application settings
- *
- * Used in: admin/settings.php, includes/header.php, includes/admin_header.php
- * Provides default values for application settings when none are stored
- *
- * @return array Default application settings
- */
-function get_default_app_settings()
-{
-    return [
-        'font_weight' => 'Regular',
-        'font_size_factor' => 3, // Default font size factor (higher = larger font)
-        'custom_logo_path' => '',
-        'frontend_title' => 'Staff Directory',
-        'admin_title' => 'Staff Directory Admin'
-    ];
 }
 
 /**
@@ -909,7 +814,24 @@ function update_settings_in_db($settings)
     }
 }
 
-
+/**
+ * Get default application settings
+ *
+ * Used in: admin/settings.php, includes/header.php, includes/admin_header.php
+ * Provides default values for application settings when none are stored
+ *
+ * @return array Default application settings
+ */
+function get_default_app_settings()
+{
+    return [
+        'font_weight' => 'Regular',
+        'font_size_factor' => 3, // Default font size factor (higher = larger font)
+        'custom_logo_path' => '',
+        'frontend_title' => 'Staff Directory',
+        'admin_title' => 'Staff Directory Admin'
+    ];
+}
 
 /**
  * Load application settings from database and merge with defaults
@@ -1207,4 +1129,48 @@ function check_staff_duplicate($conn, $first_name, $last_name, $email) {
     $stmt_email->close();
 
     return $result;
+}
+
+/**
+ * Set form data in session
+ *
+ * @param array $data Form data to store in session
+ * @return bool True if form data was set, false otherwise
+ */
+function set_form_data($data) {
+    // Start session if not already started
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    // Only set form data if it's not empty
+    if (!empty($data)) {
+        $_SESSION['form_data'] = $data;
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Get and clear form data from session
+ *
+ * @return array Form data from session or empty array if none
+ */
+function get_form_data() {
+    // Start session if not already started
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    $form_data = [];
+
+    // Get form data if it exists
+    if (isset($_SESSION['form_data'])) {
+        $form_data = $_SESSION['form_data'];
+
+        // Clear form data
+        unset($_SESSION['form_data']);
+    }
+
+    return $form_data;
 }

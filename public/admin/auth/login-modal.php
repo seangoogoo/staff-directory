@@ -14,7 +14,7 @@ if (session_status() === PHP_SESSION_NONE) {
 if (!defined('AUTH_SYSTEM')) {
     define('AUTH_SYSTEM', true);
 }
-require_once __DIR__ . '/auth_config.php';
+require_once __DIR__ . '/../../../config/auth_config.php';
 
 // Check if login is required via URL parameter or session flag
 $login_param = isset($_GET['login']) ? $_GET['login'] : '';

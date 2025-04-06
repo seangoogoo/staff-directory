@@ -12,7 +12,7 @@ if (!defined('AUTH_SYSTEM')) {
 }
 
 // Load centralized authentication configuration
-require_once __DIR__ . '/auth_config.php';
+require_once __DIR__ . '/../../../config/auth_config.php';
 
 // Only set cookie parameters if session hasn't started yet
 if (session_status() === PHP_SESSION_NONE) {
@@ -44,7 +44,7 @@ function is_logged_in() {
     if (!isset($_SESSION) || empty($_SESSION)) {
         return false;
     }
-    
+
     // Check for session expiration
     if (isset($_SESSION['login_time'])) {
         // Session expired after configured lifetime
@@ -52,7 +52,7 @@ function is_logged_in() {
             logout_user();
             return false;
         }
-        
+
         // Update login time occasionally to extend session for active users
         if (time() - $_SESSION['login_time'] > SESSION_UPDATE_INTERVAL) {
             $_SESSION['login_time'] = time();
@@ -61,17 +61,17 @@ function is_logged_in() {
         // No login time set, session is invalid
         return false;
     }
-    
+
     // Check for required login flags
     if (!isset($_SESSION['user_logged_in']) || $_SESSION['user_logged_in'] !== true) {
         return false;
     }
-    
+
     // Check for username
     if (!isset($_SESSION['username']) || empty($_SESSION['username'])) {
         return false;
     }
-    
+
     // Check auth token and user agent for session hijacking prevention
     if (isset($_SESSION['auth_token']) && isset($_SESSION['user_agent'])) {
         // Verify the auth_check cookie matches our expected value
@@ -87,14 +87,14 @@ function is_logged_in() {
             logout_user();
             return false;
         }
-        
+
         // Verify user agent hasn't changed (basic check)
         if ($_SESSION['user_agent'] !== $_SERVER['HTTP_USER_AGENT']) {
             logout_user();
             return false;
         }
     }
-    
+
     return true;
 }
 
@@ -128,7 +128,7 @@ function login_user($username) {
     $_SESSION['user_logged_in'] = true;
     $_SESSION['username'] = $username;
     $_SESSION['login_time'] = time();
-    
+
     // Add additional security information
     $_SESSION['ip_address'] = $_SERVER['REMOTE_ADDR'];
     $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
@@ -141,9 +141,9 @@ function login_user($username) {
     $params = session_get_cookie_params();
     setcookie(session_name(), session_id(), time() + COOKIE_LIFETIME,
         COOKIE_PATH, '', USE_SECURE_COOKIES, true);
-        
+
     // Set a secondary auth cookie for added verification
-    setcookie('auth_check', hash('sha256', $_SESSION['auth_token'] . $_SERVER['HTTP_USER_AGENT']), 
+    setcookie('auth_check', hash('sha256', $_SESSION['auth_token'] . $_SERVER['HTTP_USER_AGENT']),
         time() + COOKIE_LIFETIME, COOKIE_PATH, '', USE_SECURE_COOKIES, true);
 }
 
@@ -157,23 +157,23 @@ function logout_user() {
     // Delete the session cookie with root path to ensure it's removed site-wide
     if (ini_get("session.use_cookies")) {
         $params = session_get_cookie_params();
-        
+
         // Clear the session cookie with explicit path
         setcookie(session_name(), '', time() - 42000, COOKIE_PATH, '', false, true);
-        
+
         // Also clear it with the original parameters
         setcookie(session_name(), '', time() - 42000,
             $params["path"], $params["domain"],
             $params["secure"], $params["httponly"]
         );
-        
+
         // Clear any other potential authentication cookies
         setcookie('auth_check', '', time() - 42000, COOKIE_PATH, '', false, true);
     }
-    
+
     // Destroy the session
     session_destroy();
-    
+
     // Force PHP to use a new session ID for the next session
     if (session_status() !== PHP_SESSION_DISABLED) {
         session_start();
@@ -185,7 +185,7 @@ function logout_user() {
 /**
  * Streamlined login requirement that integrates with the new modal approach
  * This is the main security gate for all admin pages
- * 
+ *
  * @param bool $ajax Whether the request is AJAX (returns JSON instead of redirecting)
  */
 function require_login($ajax = false) {
@@ -193,7 +193,7 @@ function require_login($ajax = false) {
     if (!is_logged_in()) {
         // Clear any potentially invalid sessions
         logout_user();
-        
+
         // For AJAX requests, return JSON
         if ($ajax || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')) {
             header('Content-Type: application/json');
@@ -204,38 +204,28 @@ function require_login($ajax = false) {
             ]);
             exit;
         }
-        
+
         // Add cache control headers to prevent caching
         header("Cache-Control: " . CACHE_CONTROL_HEADER);
         header("Pragma: " . PRAGMA_HEADER);
-        
+
         // Set a session flag to show the login modal
         $_SESSION[LOGIN_MODAL_FLAG] = true;
-        
+
         // Redirect to the homepage with login required flag
         $return_url = urlencode($_SERVER['REQUEST_URI']);
         header("Location: /?" . LOGIN_TRIGGER_PARAM . "&return=" . $return_url);
         exit;
     }
-    
+
     // For added security, add cache control headers if headers haven't been sent yet
     if (!headers_sent()) {
         header("Cache-Control: " . CACHE_CONTROL_HEADER);
         header("Pragma: " . PRAGMA_HEADER);
     }
-    
+
     // Update the authentication timestamp
     if (isset($_SESSION['login_time'])) {
         $_SESSION['last_activity'] = time();
     }
-}
-
-/**
- * Check if user is logged in as admin and redirect to login if not
- * This is a convenience wrapper around require_login
- * 
- * @return bool True if the user is logged in as admin
- */
-function check_admin_login() {
-    return require_login();
 }
