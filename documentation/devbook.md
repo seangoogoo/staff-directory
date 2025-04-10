@@ -620,7 +620,7 @@ The authentication system has been optimized with a centralized configuration ap
 - ~~Check for existing user before submitting the form in add.php form~~
 - ~~List every Php and remove unused functions~~
 - ~~Merge shared Javascript of edit.php and add.php in a dedicated js file~~
-- Set a customizable path and folder name for the public folder in the .env file that could be use everywhere where public path is hardcoded
+- Set a customizable path and folder name to set up the application access to a subdirectory like /public/staffdirectory and could configured on any kind of Apache server with locked configuration
 - Add internationalization support (FR/EN translation files)
 - Create a favicon
 - Improve unused placeholder images management to remove them when not needed either by programming a folder cleanup once a day and/or by using temporary images when editing settings or creating/editing users

@@ -29,8 +29,5 @@ vendor/
 # Uploads directory (optional, uncommenting would exclude user uploads)
 uploads/
 
-# Documentation
-documentation/
-
 # Cached files
 *.cache
