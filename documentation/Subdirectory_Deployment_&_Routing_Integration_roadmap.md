@@ -4,10 +4,41 @@ This document outlines the steps required to restructure the Staff Directory app
 
 **Goal:** Run the application from `https://www.mynewproject.com/staff-directory/`, storing sensitive files outside the web root, while ensuring correct routing and path management.
 
+## PHP 7.4 Compatibility Notes
+
+- Ensure all dependencies specify PHP 7.4 compatible versions in composer.json
+- Use typed properties where appropriate (PHP 7.4 feature)
+- Avoid arrow functions (=>), use traditional closures instead
+- Use null coalescing operator (??) for null checks
+- Utilize array spread operator for array manipulation
+- Remember that union types are NOT available (PHP 8.0 feature)
+
+## Recommended composer.json constraints:
+
+```json
+{
+    "require": {
+        "php": "^7.4",
+        "nikic/fast-route": "^1.3",
+        "php-di/php-di": "^6.4",
+        "monolog/monolog": "^2.9"
+    }
+}
+```
+
 ## Phase 1: Preparation & Restructuring
 
--   [ ] **Backup Project:** Create a full backup of the current project state.
--   [ ] **Verify local test environment (e.g., https://staffdirectory.local) to test changes before deployment.**
+-   [x] **Dependency Analysis:**
+    - [x] Audit existing `composer.json` for routing-related dependencies
+    - [x] Check for conflicts with `nikic/fast-route`
+    - [x] Consider adding complementary packages:
+      ```bash
+      composer require nikic/fast-route
+      composer require php-di/php-di # For proper dependency injection
+      composer require monolog/monolog # For improved logging
+      ```
+-   [x] **Backup Project:** Create a full backup of the current project state.
+-   [x] **Verify local test environment (e.g., https://staffdirectory.local) to test changes before deployment.**
 -   [ ] **Define Server Structure:** Confirm the final directory structure on the target server. Example:
 
 
@@ -32,11 +63,6 @@ This document outlines the steps required to restructure the Staff Directory app
             ...           <-- Other files originally in local `public/`
     ```
 
--   [ ] **Install Router:** Add `nikic/fast-route` to the project dependencies.
-
-    ```bash
-    composer require nikic/fast-route
-    ```
 
 -   [ ] **Move Files (Locally First):** Simulate the server structure locally.
     -   **Note:** In this project, the *project root* is already private (outside the web root) both locally and on the deployment server. Sensitive files and directories like `config/`, `staff_dir_env/`, `vendor/`, `composer.json`, `composer.lock`, and `src/` should remain in the project root.
@@ -79,7 +105,104 @@ This document outlines the steps required to restructure the Staff Directory app
 -   [ ] **Update Path Constants:** Review all code (especially `config/`, `includes/`) for hardcoded paths or constants like `__DIR__` that might break. Ensure they correctly reference files relative to the new structure or use the defined `PRIVATE_PATH` and `PUBLIC_PATH`. Check `env_loader.php`, `database.php`, `auth_config.php`, `functions.php`, etc.
 -   [ ] **Verify Asset Paths:** Ensure CSS, JS, and image links in templates/HTML correctly point to `/staff-directory/assets/...` or use a base URL variable.
 
+## Phase 2.5: Configuration Consolidation
+
+-   [ ] **Create Unified Config:**
+    ```php
+    // config/app.php
+    return [
+        'paths' => [
+            'base' => BASE_PATH,
+            'private' => PRIVATE_PATH,
+            'public' => PUBLIC_PATH,
+            'uploads' => PUBLIC_PATH . '/uploads',
+        ],
+        'urls' => [
+            'base' => APP_BASE_URI,
+            'assets' => APP_BASE_URI . '/assets',
+        ],
+        'routing' => [
+            'cache' => true,
+            'cacheFile' => PRIVATE_PATH . '/cache/routes.cache',
+        ]
+    ];
+    ```
+
+-   [ ] **Implement Asset Manager:** Create a class to handle asset paths and versioning.
+    ```php
+    class AssetManager {
+        private static ?array $manifest = null;
+        private string $manifestPath;
+        private string $publicPath;
+
+        public function __construct(string $publicPath) {
+            $this->publicPath = $publicPath;
+            $this->manifestPath = $publicPath . '/assets/manifest.json';
+        }
+
+        public function asset(string $path): string {
+            if (self::$manifest === null) {
+                self::$manifest = $this->loadManifest();
+            }
+
+            $assetPath = self::$manifest[$path] ?? $path;
+            return $this->baseUrl('/assets/' . $assetPath);
+        }
+
+        private function loadManifest(): array {
+            if (file_exists($this->manifestPath)) {
+                return json_decode(file_get_contents($this->manifestPath), true) ?? [];
+            }
+            return [];
+        }
+
+        private function baseUrl(string $path): string {
+            return APP_BASE_URI . $path;
+        }
+    }
+
+    // Usage in bootstrap:
+    $assetManager = new AssetManager(PUBLIC_PATH);
+    ```
+
+-   [ ] **Create Asset Helper Function:** Add a global helper function for templates.
+    ```php
+    // Add to helpers section
+    function asset($path) {
+        $manifestPath = PUBLIC_PATH . '/assets/manifest.json';
+        static $manifest = null;
+
+        if ($manifest === null && file_exists($manifestPath)) {
+            $manifest = json_decode(file_get_contents($manifestPath), true);
+        }
+
+        $assetPath = isset($manifest[$path]) ? $manifest[$path] : $path;
+        return baseUrl('/assets/' . $assetPath);
+    }
+
+    // Usage in templates
+    <link rel="stylesheet" href="<?= asset('css/app.css') ?>">
+    ```
+
 ## Phase 3: Routing Implementation (`staff-directory/index.php`)
+
+-   [ ] **Implement Middleware Stack:** Create a middleware system to handle request processing.
+    ```php
+    class MiddlewareStack {
+        private $middlewares = [];
+
+        public function add(callable $middleware) {
+            $this->middlewares[] = $middleware;
+        }
+
+        public function handle($request, $next) {
+            foreach ($this->middlewares as $middleware) {
+                $next = fn($req) => $middleware($req, $next);
+            }
+            return $next($request);
+        }
+    }
+    ```
 
 -   [ ] **Integrate FastRoute:** Add routing logic to `staff-directory/index.php` after bootstrapping.
     ```php
@@ -123,45 +246,72 @@ This document outlines the steps required to restructure the Staff Directory app
 
     $routeInfo = $dispatcher->dispatch($httpMethod, $uri);
 
+    class ErrorHandler {
+        public function handle404(array $context): void {
+            http_response_code(404);
+            // Handle 404 error
+        }
+
+        public function handle405(array $context): void {
+            http_response_code(405);
+            header('Allow: ' . implode(', ', $context['allowedMethods']));
+            // Handle 405 error
+        }
+
+        public function handle500(\Throwable $error): void {
+            http_response_code(500);
+            // Handle 500 error
+        }
+    }
+
     switch ($routeInfo[0]) {
         case FastRoute\Dispatcher::NOT_FOUND:
-            // ... 404 Not Found
-            http_response_code(404);
-            echo '404 Not Found'; // Replace with proper error page
+            $errorHandler = new ErrorHandler();
+            $errorHandler->handle404([
+                'requestUri' => $uri,
+                'baseUri' => APP_BASE_URI
+            ]);
             break;
         case FastRoute\Dispatcher::METHOD_NOT_ALLOWED:
             $allowedMethods = $routeInfo[1];
-            // ... 405 Method Not Allowed
-            http_response_code(405);
-            echo '405 Method Not Allowed'; // Replace with proper error page
+            $errorHandler = new ErrorHandler();
+            $errorHandler->handle405([
+                'allowedMethods' => $allowedMethods,
+                'requestMethod' => $httpMethod
+            ]);
             break;
         case FastRoute\Dispatcher::FOUND:
-            $handler = $routeInfo[1];
-            $vars = $routeInfo[2];
+            try {
+                $handler = $routeInfo[1];
+                $vars = $routeInfo[2];
 
-            // --- Execute the handler ---
-            // This part needs adaptation based on your app structure
-            // Option 1: Controller@method string (requires parsing and instantiation)
-            if (is_string($handler) && strpos($handler, '@') !== false) {
-                list($class, $method) = explode('@', $handler);
-                // Need logic to instantiate $class (maybe from a container)
-                // $controller = new $class(/* dependencies */);
-                // call_user_func_array([$controller, $method], $vars);
-                echo "Dispatching to controller {$class}@{$method} with vars: " . print_r($vars, true); // Placeholder
-            }
-            // Option 2: Closure/Function
-            elseif (is_callable($handler)) {
-                 call_user_func_array($handler, $vars);
-            }
-            // Option 3: Include script (less ideal for routing)
-            // elseif (is_string($handler) && file_exists(PUBLIC_PATH . $handler)) {
-            //     // Pass $vars somehow if needed (e.g., global scope, request object)
-            //     require PUBLIC_PATH . $handler;
-            // }
-            else {
-                 // Handle error: Invalid handler
-                 http_response_code(500);
-                 echo '500 Internal Server Error - Invalid Route Handler';
+                // --- Execute the handler ---
+                // This part needs adaptation based on your app structure
+                // Option 1: Controller@method string (requires parsing and instantiation)
+                if (is_string($handler) && strpos($handler, '@') !== false) {
+                    list($class, $method) = explode('@', $handler);
+                    // Need logic to instantiate $class (maybe from a container)
+                    // $controller = new $class(/* dependencies */);
+                    // call_user_func_array([$controller, $method], $vars);
+                    echo "Dispatching to controller {$class}@{$method} with vars: " . print_r($vars, true); // Placeholder
+                }
+                // Option 2: Closure/Function
+                elseif (is_callable($handler)) {
+                     call_user_func_array($handler, $vars);
+                }
+                // Option 3: Include script (less ideal for routing)
+                // elseif (is_string($handler) && file_exists(PUBLIC_PATH . $handler)) {
+                //     // Pass $vars somehow if needed (e.g., global scope, request object)
+                //     require PUBLIC_PATH . $handler;
+                // }
+                else {
+                     // Handle error: Invalid handler
+                     http_response_code(500);
+                     echo '500 Internal Server Error - Invalid Route Handler';
+                }
+            } catch (Exception $e) {
+                $errorHandler = new ErrorHandler();
+                $errorHandler->handle500($e);
             }
             break;
     }
@@ -212,3 +362,5 @@ This document outlines the steps required to restructure the Staff Directory app
     -   Check functionality requiring access to `config/` or `staff_dir_env/`.
     -   Ensure no conflicts with the root WordPress site.
 -   [ ] **Review Logs:** Check PHP error logs and Apache logs on the server for any issues.
+
+

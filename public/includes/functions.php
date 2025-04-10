@@ -876,40 +876,21 @@ function load_app_settings()
 }
 
 /**
- * Log debug information to a file
- *
- * @param mixed $data The data to log
- * @param string $label Optional label for the log entry
- * @param bool $print_r Whether to use print_r (true) or var_export (false)
- * @return void
+ * Enhanced debug_log function using Monolog
  */
 function debug_log($data, $label = '', $print_r = true) {
-    $log_file = __DIR__ . '/../../logs/debug.log';
+    global $logger;
 
-    // Create logs directory if it doesn't exist
-    $log_dir = dirname($log_file);
-    if (!file_exists($log_dir)) {
-        mkdir($log_dir, 0755, true);
-    }
+    $formatted_data = is_array($data) || is_object($data)
+        ? ($print_r ? print_r($data, true) : var_export($data, true))
+        : (string)$data;
 
-    // Format the log entry
-    $log_entry = "[" . date('Y-m-d H:i:s') . "]";
-    if (!empty($label)) {
-        $log_entry .= " [{$label}]";
-    }
+    $message = !empty($label) ? "[$label] $formatted_data" : $formatted_data;
 
-    // Format the data
-    if (is_array($data) || is_object($data)) {
-        $log_entry .= "\n" . ($print_r ? print_r($data, true) : var_export($data, true));
-    } else {
-        $log_entry .= " {$data}";
-    }
-
-    // Add a line break at the end
-    $log_entry .= "\n\n";
-
-    // Write to log file
-    file_put_contents($log_file, $log_entry, FILE_APPEND);
+    $logger->debug($message, [
+        'source' => 'legacy_debug_log',
+        'original_label' => $label
+    ]);
 }
 
 /**

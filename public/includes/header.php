@@ -1,15 +1,5 @@
 <?php
-// Start session first to avoid header warnings
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Include auth system first to setup authentication constants
-require_once __DIR__ . '/../admin/auth/auth.php';
-
-// Include other required files
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/bootstrap.php';
 ?>
 <!DOCTYPE html>
 <html lang="fr">

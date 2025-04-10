@@ -1,103 +1,63 @@
 # Debugging Guide
 
-This guide explains how to use the `debug_log` function for debugging purposes in the Staff Directory project.
+This guide explains logging in the Staff Directory project, which now uses Monolog for enhanced logging capabilities while maintaining backward compatibility with existing code.
 
 ## Overview
 
-The `debug_log` function is a utility function that allows you to log debug information to a file. It's located in `public/includes/functions.php` and provides a flexible way to track variables, objects, and other data during development.
+While the project still supports the legacy `debug_log()` and `error_log()` functions, they now use Monolog internally for improved logging features:
 
-## Usage
+- Log rotation (prevents large log files)
+- Different log levels (DEBUG, INFO, WARNING, ERROR, etc.)
+- Structured logging with context
+- Different handlers for development and production
+- Stack trace information
 
-### Basic Usage
+## Basic Usage (Legacy Style)
+
+The old debug_log function still works as before:
 
 ```php
 debug_log($data);
-```
-
-### With Label
-
-```php
 debug_log($data, 'My Label');
+debug_log($data, 'My Label', false); // Uses var_export
 ```
 
-### With Custom Format
+## Enhanced Usage (Recommended)
+
+For new code, use Monolog directly for better logging:
 
 ```php
-debug_log($data, 'My Label', false); // Uses var_export instead of print_r
+global $logger;
+
+// Different log levels
+$logger->debug('Detailed information for debugging');
+$logger->info('Interesting events');
+$logger->warning('Exceptional occurrences that are not errors');
+$logger->error('Runtime errors that need to be monitored');
+$logger->critical('Critical conditions');
+
+// Logging with context
+$logger->info('User logged in', [
+    'user_id' => $user->id,
+    'ip' => $_SERVER['REMOTE_ADDR']
+]);
 ```
 
-## Parameters
+## Log File Locations
 
-1. `$data` (mixed): The data you want to log. Can be any type (string, array, object, etc.)
-2. `$label` (string, optional): A label to identify the log entry. Defaults to empty string.
-3. `$print_r` (bool, optional): Whether to use `print_r` (true) or `var_export` (false) for formatting. Defaults to true.
+- Development: `logs/debug.log` (all levels)
+- Production: `logs/app.log` (errors only, rotated every 30 days)
 
-## Log File Location
+## Migration Notes
 
-Debug logs are stored in the `logs/debug.log` file in your project root directory. The directory will be created automatically if it doesn't exist.
-
-## Example Usage
-
-### Logging a Simple Variable
-
-```php
-$user_id = 123;
-debug_log($user_id, 'User ID');
-```
-
-### Logging an Array
-
-```php
-$staff_data = [
-    'name' => 'John Doe',
-    'department' => 'IT',
-    'role' => 'Developer'
-];
-debug_log($staff_data, 'Staff Data');
-```
-
-### Logging an Object
-
-```php
-$staff = new StaffMember();
-$staff->setName('Jane Smith');
-debug_log($staff, 'Staff Object');
-```
-
-### Logging with var_export Format
-
-```php
-$config = [
-    'debug' => true,
-    'environment' => 'development'
-];
-debug_log($config, 'Configuration', false);
-```
-
-## Log Output Format
-
-The log entries will look like this:
-
-```
-[2024-03-31 18:00:00] [User ID] 123
-
-[2024-03-31 18:00:01] [Staff Data]
-Array
-(
-    [name] => John Doe
-    [department] => IT
-    [role] => Developer
-)
-
-```
-
-## Best Practices
-
-1. Use descriptive labels to easily identify different log entries
-2. Use `print_r` (default) for better readability of arrays and objects
-3. Use `var_export` when you need PHP code format output
-4. Clean up debug logs before deploying to production
-5. Consider adding log rotation for production environments
+1. Existing `debug_log()` calls will continue to work
+2. Existing `error_log()` calls will continue to work
+3. New code should use the Monolog `$logger` directly
+4. All logs now include:
+   - Timestamp
+   - Log level
+   - File and line number where log was called
+   - Context information
 
 ## Security Considerations
 
