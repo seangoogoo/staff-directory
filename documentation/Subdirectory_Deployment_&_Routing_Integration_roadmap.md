@@ -39,47 +39,65 @@ This document outlines the steps required to restructure the Staff Directory app
       ```
 -   [x] **Backup Project:** Create a full backup of the current project state.
 -   [x] **Verify local test environment (e.g., https://staffdirectory.local) to test changes before deployment.**
--   [ ] **Define Server Structure:** Confirm the final directory structure on the target server. Example:
-
+-   [x] **Define Server Structure:** Understand the deployment flexibility while maintaining the current private files structure:
 
     ```
-    ../private_files/  <-- Outside web root
+    project-root/           <-- Private files remain unchanged
         config/
         staff_dir_env/
         vendor/
-        src/          <-- If applicable
+        src/
         composer.json
         composer.lock
-        ...           <-- Other non-public files
-    public_html/       <-- Web root (e.g., where WordPress lives)
-        .htaccess     <-- WordPress root .htaccess (usually untouched)
-        wp-config.php <-- WordPress files...
         ...
-        staff-directory/  <-- Your application's public-facing files
-            .htaccess     <-- App-specific rewrite rules
-            index.php     <-- App entry point
-            assets/       <-- CSS, JS, Images
-            uploads/      <-- If uploads are public
-            ...           <-- Other files originally in local `public/`
+
+    # Deployment Scenarios for Public Files:
+
+    # Scenario A: Direct in web root
+    /var/www/html/         <-- Web root (public_html, www, etc.)
+        .htaccess
+        index.php
+        assets/
+        uploads/
+        ...
+
+    # Scenario B: In subdirectory
+    /var/www/html/         <-- Web root
+        staff-directory/   <-- Application public files
+            .htaccess
+            index.php
+            assets/
+            uploads/
+            ...
+
+    # Scenario C: In nested subdirectories
+    /var/www/html/         <-- Web root
+        apps/
+            staff-directory/  <-- Application public files
+                .htaccess
+                index.php
+                assets/
+                uploads/
+                ...
     ```
 
+    **Note:** Only the public-facing files (currently in `public/`) need to be deployable to different locations. The private files structure remains unchanged regardless of the deployment scenario.
 
--   [ ] **Move Files (Locally First):** Simulate the server structure locally.
+-   [x] **Move Files (Locally First):** Simulate the server structure locally.
     -   **Note:** In this project, the *project root* is already private (outside the web root) both locally and on the deployment server. Sensitive files and directories like `config/`, `staff_dir_env/`, `vendor/`, `composer.json`, `composer.lock`, and `src/` should remain in the project root.
     -   Create a new `staff-directory` folder inside the existing `public/` (or `public_html/`) folder, which is the web root.
     -   Move all public-facing contents *except* `staff-directory` from `public/` into `public/staff-directory/`. The `public/` folder itself might become redundant or just contain the `staff-directory` folder. *Alternatively, rename `public` to `staff-directory` and adjust paths accordingly.*
 
-## Phase 2: Bootstrap & Configuration Update (`staff-directory/index.php`)
+## Phase 2: Bootstrap & Configuration Update (`includes/bootstrap.php`)
 
--   [ ] **Update `index.php` Location:** Ensure your main entry point is now `staff-directory/index.php` (or the renamed `public/index.php`).
--   [ ] **Define Base Paths:** In `staff-directory/index.php`, establish reliable paths to the `private_files` directory and the application's public root (`staff-directory`).
+-   [ ] **Update Bootstrap Configuration:** Modify `includes/bootstrap.php` as the central configuration point:
     ```php
     <?php
     // Example: Assuming private_files is one level above public_html,
     // and staff-directory is inside public_html.
     define('BASE_PATH', dirname(__DIR__, 2)); // Adjust depth as needed
     define('PRIVATE_PATH', BASE_PATH . '/private_files'); // Or the chosen name
-    define('PUBLIC_PATH', __DIR__); // Path to the current 'staff-directory' folder
+    define('PUBLIC_PATH', dirname(__DIR__)); // Path to the public folder
     define('APP_BASE_URI', '/staff-directory'); // The base URI for routing
 
     // Error reporting, sessions, etc.
@@ -88,22 +106,46 @@ This document outlines the steps required to restructure the Staff Directory app
     // Include Autoloader
     require PRIVATE_PATH . '/vendor/autoload.php';
 
-    // Load Environment Variables (adjust path)
-    // Example using a loader potentially in config/
-    require PRIVATE_PATH . '/config/env_loader.php'; // Ensure env_loader uses PRIVATE_PATH
+    // Load Environment Variables
+    require PRIVATE_PATH . '/config/env_loader.php';
 
-    // Load Configuration (adjust paths)
+    // Load Configuration
     $dbConfig = require PRIVATE_PATH . '/config/database.php';
     $authConfig = require PRIVATE_PATH . '/config/auth_config.php';
-    // ... ensure all config loads use PRIVATE_PATH
-
-    // Dependency Injection Container (if used)
-    // ... setup container, potentially passing paths
-
-    ?>
     ```
--   [ ] **Update Path Constants:** Review all code (especially `config/`, `includes/`) for hardcoded paths or constants like `__DIR__` that might break. Ensure they correctly reference files relative to the new structure or use the defined `PRIVATE_PATH` and `PUBLIC_PATH`. Check `env_loader.php`, `database.php`, `auth_config.php`, `functions.php`, etc.
--   [ ] **Verify Asset Paths:** Ensure CSS, JS, and image links in templates/HTML correctly point to `/staff-directory/assets/...` or use a base URL variable.
+
+-   [ ] **Update Include Paths:** Review and update all includes in:
+    - `includes/header.php`
+    - `includes/admin_header.php`
+    - `includes/footer.php`
+    - `includes/admin_footer.php`
+    to use the new path constants
+
+-   [ ] **Asset Path Management:**
+    - Create helper function in `bootstrap.php` for asset URLs:
+    ```php
+    function asset_url($path) {
+        return APP_BASE_URI . '/assets/' . ltrim($path, '/');
+    }
+    ```
+    - Update all asset references in headers and footers to use this function
+
+-   [ ] **Update Authentication Paths:**
+    - Modify `admin/auth/auth.php` to use new constants
+    - Update login/logout redirect paths
+    - Ensure session handling uses correct paths
+
+-   [ ] **AJAX Endpoints:**
+    - Update `includes/ajax_handlers.php` paths
+    - Modify any JavaScript files that make AJAX calls to use `APP_BASE_URI`
+    - Update `check_duplicate.php` endpoint path
+
+-   [ ] **Image Processing:**
+    - Update upload paths in image handling code
+    - Modify image URL generation to include `APP_BASE_URI`
+    - Ensure `uploads` directory path is correctly referenced
+
+This revised Phase 2 better reflects your current architecture where `bootstrap.php` is the central configuration point, included by the header files. The focus shifts from `index.php` to ensuring all includes and paths are properly configured in `bootstrap.php` and the files that include it.
 
 ## Phase 2.5: Configuration Consolidation
 
@@ -321,46 +363,74 @@ This document outlines the steps required to restructure the Staff Directory app
 -   [ ] **Refactor Handlers:** Adapt existing PHP scripts (`admin/add.php`, `includes/ajax_handlers.php`, etc.) to work with the router. Ideally, move logic into controller classes/methods or functions that the router can call. Avoid direct script includes as handlers if possible.
 -   [ ] **Update Forms & Links:** Ensure HTML forms submit to the correct routed paths (e.g., `/staff-directory/admin/add` instead of `/staff-directory/admin/add.php`) and links use the new routes.
 
-## Phase 4: Server Configuration (`staff-directory/.htaccess`)
+## Phase 3.5: Build Process & Asset Pipeline Adaptation
 
--   [ ] **Create `.htaccess`:** Place the following `.htaccess` file inside the `staff-directory/` folder.
-    ```apache
-    <IfModule mod_rewrite.c>
-      RewriteEngine On
 
-      # Set the base path for rewrite rules
-      RewriteBase /staff-directory/
+## Phase 4: Testing & Initial Deployment
+- [ ] Test all routes
+- [ ] Verify authentication flows
+- [ ] Check all redirects
+- [ ] Validate API endpoints
+- [ ] Deploy and test in production (still in root directory)
 
-      # Redirect Trailing Slashes If Not A Folder...
-      RewriteCond %{REQUEST_FILENAME} !-d
-      RewriteRule ^(.*)/$ /$1 [L,R=301]
+## Phase 5: Subdirectory Structure Implementation
+- [ ] Move files to subdirectory structure
+- [ ] Update .htaccess rules
+- [ ] Adjust base paths and URLs
+- [ ] Test deployment in subdirectory
 
-      # Handle Front Controller...
-      # Do not rewrite if the request is for a valid file or directory
-      RewriteCond %{REQUEST_FILENAME} !-d
-      RewriteCond %{REQUEST_FILENAME} !-f
-      # Rewrite all other requests to index.php
-      RewriteRule ^ index.php [L]
-    </IfModule>
-
-    # Optional: Improve security (prevent directory listing, etc.)
-    <IfModule mod_autoindex.c>
-      Options -Indexes
-    </IfModule>
+## Phase 6: Build Process Adaptation
+-   [ ] **Create Build Configuration System:**
+    ```bash
+    npm install dotenv --save-dev
     ```
--   [ ] **Test `.htaccess`:** Verify that requests like `https://www.mynewproject.com/staff-directory/some/route` are correctly routed to `staff-directory/index.php` and not resulting in 404s from Apache itself (before PHP handles it). Check server error logs if issues arise.
+    - Create `build.config.js` to centralize path management
+    - Ensure it reads from existing `staff_dir_env/.env`
+    - Maintain compatibility with current dev server setup
 
-## Phase 5: Deployment & Testing
+-   [ ] **Update Package Scripts:**
+    - Modify existing `dev` script to use build config while preserving concurrent processes:
+      - PHP built-in server (keep `-t public` for development)
+      - SASS watching (maintain current paths)
+      - Tailwind watching (update output path only)
+      - BrowserSync (update proxy path)
+    - Update `build` script for production deployments
+    - Keep all processes running under `concurrently`
 
--   [ ] **Upload Files:** Upload the restructured files via FTP (or preferred method) to the target server, placing `staff-directory/` in the web root and `private_files/` outside the web root.
--   [ ] **Set Permissions:** Ensure the web server has the necessary read permissions for `private_files/` and write permissions for any required directories (e.g., `uploads/`, `logs/`).
--   [ ] **Test Thoroughly:**
-    -   Access `https://www.mynewproject.com/staff-directory/`.
-    -   Test all application routes (user-facing and admin).
-    -   Test form submissions.
-    -   Verify asset loading (CSS, JS, images).
-    -   Check functionality requiring access to `config/` or `staff_dir_env/`.
-    -   Ensure no conflicts with the root WordPress site.
--   [ ] **Review Logs:** Check PHP error logs and Apache logs on the server for any issues.
+-   [ ] **Development Environment Compatibility:**
+    - Ensure PHP server still serves from `public/` in development
+    - Configure BrowserSync to handle subdirectory path
+    - Maintain live reload functionality for PHP and CSS files
+    - Keep current watch patterns (`public/**/*.php, public/assets/css/styles.css`)
+
+-   [ ] **Production Build Process:**
+    - Create production build script using `build.config.js`
+    - Automate subdirectory asset compilation
+    - Maintain current directory structure:
+      ```
+      public/
+        assets/
+          fonts/
+            Outfit/
+            remixicon/
+          css/
+            styles.css
+      ```
+    - Support moving entire `public/` contents to subdirectory
+
+-   [ ] **Testing & Verification:**
+    - Verify development server works as before
+    - Test production builds in subdirectory
+    - Ensure all concurrent processes function correctly
+    - Validate BrowserSync proxy with subdirectory
+
+This phase now properly accounts for your existing development setup while adding the flexibility to deploy to subdirectories.
+
+
+This organization allows us to:
+1. Validate the routing changes independently
+2. Ensure core functionality works before touching the build system
+3. Handle one major change at a time
+4. Have working fallback points if issues arise
 
 
