@@ -66,6 +66,6 @@ $env_path = dirname(__DIR__) . '/staff_dir_env/.env';
 $env_vars = load_env($env_path);
 
 // Debug line to help diagnose errors
-if ($_ENV['DEV_MODE'] == 'true') {
-    error_log("Trying to load env file from: {$env_path} - File exists: " . (file_exists($env_path) ? 'Yes' : 'No'));
-}
+// if ($_ENV['DEV_MODE'] == 'true') {
+//     error_log("Trying to load env file from: {$env_path} - File exists: " . (file_exists($env_path) ? 'Yes' : 'No'));
+// }

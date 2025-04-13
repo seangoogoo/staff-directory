@@ -55,14 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Process logo form
         $form_result = process_form_submission('logo', $_POST, $_FILES);
     }
-    else if (isset($_POST['remove_logo_submit'])) {
-        // Special case for logo removal via separate button
-        // Create temporary POST data with remove_logo=1
-        $_POST['remove_logo'] = '1';
-
-        // Process logo removal
-        $form_result = process_form_submission('logo', $_POST, $_FILES);
-    }
+    // Logo removal is now handled by the remove-image button and main.js
+    // which sets the remove_logo field to '1'
     else if (isset($_POST['save_title_settings'])) {
         // Process title settings form
         $form_result = process_form_submission('title', $_POST);
@@ -156,18 +150,8 @@ function process_form_submission($form_type, $post_data, $files_data = []) {
                 $result['message'] = "Logo visibility settings saved successfully!";
             }
 
-            // Process logo removal
-            if ($has_removal) {
-                $removal_result = process_logo_removal();
-                $result['success'] = $removal_result['success'];
-                $result['message'] = $removal_result['message'];
-
-                if ($removal_result['success']) {
-                    $result['settings']['custom_logo_path'] = '';
-                }
-            }
-            // Process logo upload
-            else if ($has_upload) {
+            // First check for file upload - this takes precedence over removal
+            if ($has_upload) {
                 $upload_result = process_logo_upload($files_data);
                 $result['success'] = $upload_result['success'];
                 $result['message'] = $upload_result['message'];
@@ -176,8 +160,18 @@ function process_form_submission($form_type, $post_data, $files_data = []) {
                     $result['settings']['custom_logo_path'] = $upload_result['logo_path'];
                 }
             }
+            // Then check for logo removal (only if no upload)
+            else if ($has_removal) {
+                $removal_result = process_logo_removal();
+                $result['success'] = $removal_result['success'];
+                $result['message'] = $removal_result['message'];
+
+                if ($removal_result['success']) {
+                    $result['settings']['custom_logo_path'] = '';
+                }
+            }
             // Handle logo upload errors
-            else if (!$has_removal && isset($files_data['custom_logo']) && $files_data['custom_logo']['error'] !== UPLOAD_ERR_NO_FILE) {
+            else if (isset($files_data['custom_logo']) && $files_data['custom_logo']['error'] !== UPLOAD_ERR_NO_FILE) {
                 $error_message = handle_logo_upload_error($files_data);
                 $result['success'] = false;
                 $result['message'] = $error_message;
@@ -191,7 +185,7 @@ function process_form_submission($form_type, $post_data, $files_data = []) {
             $result['error_key'] = 'title_error_message';
 
             // Process title settings
-            $title_result = process_title_settings($post_data);
+            $title_result = process_title_settings();
             $result['success'] = $title_result['success'];
             $result['message'] = $title_result['message'];
 
@@ -232,7 +226,6 @@ function process_form_submission($form_type, $post_data, $files_data = []) {
  * @return array Updated settings and status messages
  */
 function process_font_settings($post_data) {
-    global $conn;
     $messages = ['success' => '', 'error' => ''];
     $settings = [];
 
@@ -387,22 +380,32 @@ function process_logo_removal() {
 }
 
 /**
+ * Validate image upload
+ *
+ * @param array $file The file to validate
+ * @return bool True if valid, false otherwise
+ */
+function validate_image_upload($file) {
+    $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp'];
+    $max_size = 2 * 1024 * 1024; // 2MB
+
+    return in_array($file['type'], $allowed_types) && $file['size'] <= $max_size;
+}
+
+/**
  * Process logo upload
  *
  * @param array $files Files from form submission
  * @return array Result with status and messages
  */
 function process_logo_upload($files) {
-    global $conn, $app_settings;
+    global $app_settings;
     $result = ['success' => false, 'message' => ''];
 
-    $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp'];
-    $max_size = 2 * 1024 * 1024; // 2MB
-
-    // Validate file type and size
-    if (in_array($files['custom_logo']['type'], $allowed_types) && $files['custom_logo']['size'] <= $max_size) {
+    // Use centralized validation function
+    if (validate_image_upload($files['custom_logo'])) {
         // Create uploads/logos directory if it doesn't exist
-        $upload_dir = __DIR__ . '/../uploads/logos/';
+        $upload_dir = PUBLIC_PATH . '/uploads/logos/';
         if (!is_dir($upload_dir)) {
             mkdir($upload_dir, 0755, true);
         }
@@ -418,10 +421,8 @@ function process_logo_upload($files) {
             $logo_path = '/uploads/logos/' . $filename;
 
             try {
-                $stmt = $conn->prepare("UPDATE app_settings SET setting_value = ?, updated_at = NOW() WHERE setting_key = 'custom_logo_path'");
-                $stmt->bind_param("s", $logo_path);
-                $stmt->execute();
-                $stmt->close();
+                // Use the centralized function to update settings
+                update_settings_in_db(['custom_logo_path' => $logo_path]);
 
                 // Set a success message that we'll display on page refresh
                 $upload_success_message = "Logo uploaded successfully: " . $files['custom_logo']['name'];
@@ -450,6 +451,10 @@ function process_logo_upload($files) {
             $result['message'] = "Error uploading logo. Please try again.";
         }
     } else {
+        // Get validation details from the validate_image_upload function
+        $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp'];
+        $max_size = 2 * 1024 * 1024; // 2MB
+
         // Validation failed, store appropriate error message
         if (!in_array($files['custom_logo']['type'], $allowed_types)) {
             $result['message'] = "Invalid file type. Please upload an image file (JPG, PNG, GIF, SVG, WEBP).";
@@ -499,11 +504,9 @@ function handle_logo_upload_error($files) {
 /**
  * Process title settings
  *
- * @param array $post_data POST data from form submission
  * @return array Result with status and messages
  */
-function process_title_settings($post_data) {
-    global $conn;
+function process_title_settings() {
     $result = ['success' => false, 'message' => ''];
 
     // Update titles - allow empty values
@@ -589,9 +592,9 @@ require_once '../includes/admin_header.php';
                 <h3 class="text-lg font-medium text-gray-900 mb-4">Logo Preview</h3>
                 <div class="relative logo-preview border border-gray-200 p-4 rounded-md flex items-center justify-center bg-gray-50 h-48 w-full">
                         <?php if (!empty($app_settings['custom_logo_path'])): ?>
-                        <img id="image-preview" src="<?php echo htmlspecialchars($app_settings['custom_logo_path']); ?>" alt="Custom Logo" class="max-h-full max-w-full">
+                        <img id="image-preview" src="<?php echo url(htmlspecialchars($app_settings['custom_logo_path'])); ?>" data-default-image="<?php echo asset('images/staff-directory-logo.svg'); ?>" alt="Custom Logo" class="max-h-full max-w-full">
                         <?php else: ?>
-                        <img id="image-preview" src="/assets/images/staff-directory-logo.svg" alt="Default Logo" class="max-h-full max-w-full">
+                        <img id="image-preview" src="<?php echo asset('images/staff-directory-logo.svg'); ?>" data-default-image="<?php echo asset('images/staff-directory-logo.svg'); ?>" alt="Default Logo" class="max-h-full max-w-full">
                         <?php endif; ?>
                     <button type="button" id="remove-image"
                             data-update-field="remove_logo"
@@ -608,8 +611,8 @@ require_once '../includes/admin_header.php';
                 <form method="post" action="" enctype="multipart/form-data" id="logo-form">
                     <div class="mb-3">
                         <label for="custom_logo" class="block text-sm font-medium text-gray-700 mt-4 mb-2">Custom Logo:</label>
-                        <input type="file" name="custom_logo" id="custom_logo" class="hidden" accept="image/*">
-                        <div id="logo-dropzone" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md cursor-pointer hover:border-indigo-500 hover:bg-gray-50 transition-colors duration-150">
+                        <input type="file" name="custom_logo" id="custom_logo" class="hidden dropzone-input" accept="image/*">
+                        <div id="logo-dropzone" class="dropzone mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md cursor-pointer hover:border-indigo-500 hover:bg-gray-50 transition-colors duration-150">
                             <div class="space-y-1 text-center w-full">
                                 <!-- Icon -->
                                 <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
@@ -796,316 +799,145 @@ require_once '../includes/admin_header.php';
 </div>
 
 <script>
-    // Update preview when settings change
-    document.addEventListener('DOMContentLoaded', function() {
-        // Get form elements
-        const fontSizeSlider = document.getElementById('font_size_factor')
-        const fontWeightSelect = document.getElementById('font_weight')
-        const fontSizeDisplay = document.querySelector('.current-value')
-        const previewImage = document.getElementById('preview-image')
+// Update preview when settings change
+document.addEventListener('DOMContentLoaded', function() {
+    // Get form elements
+    const fontSizeSlider = document.getElementById('font_size_factor')
+    const fontWeightSelect = document.getElementById('font_weight')
+    const fontSizeDisplay = document.querySelector('.current-value')
+    const previewImage = document.getElementById('preview-image')
 
-        // Generate placeholder URL with specific parameters
-        function generatePlaceholderUrl(fontWeight, fontSizeFactor) {
-            // Use Admin Buddy as our demo initials
-            const timestamp = new Date().getTime() // Prevent caching
-            // Force clearing out the browser's cache by adding timestamp and random value
-            return `../includes/generate_placeholder.php?name=${encodeURIComponent('Admin Buddy')}&size=200x200&font_weight=${encodeURIComponent(fontWeight)}&font_size_factor=${fontSizeFactor}&nocache=${timestamp}-${Math.random()}`
-        }
-
-        // Update preview image with current settings
-        function updatePreview() {
-            if (!fontWeightSelect || !fontSizeSlider || !previewImage) return
-
-            const fontWeight = fontWeightSelect.value
-            const fontSizeFactor = fontSizeSlider.value
-
-            // Update font size display
-            if (fontSizeDisplay) {
-                const value = parseFloat(fontSizeFactor).toFixed(1)
-                // Remove trailing zero if value is whole number
-                const displayValue = value.endsWith('.0') ? value.slice(0, -2) : value
-                fontSizeDisplay.textContent = displayValue
-            }
-
-            // Force image update by creating a new Image object
-            const newImage = new Image()
-            newImage.onload = function() {
-                previewImage.src = this.src
-            }
-            newImage.src = generatePlaceholderUrl(fontWeight, fontSizeFactor)
-        }
-
-        // Add event listeners
-        if (fontSizeSlider) {
-            // Listen to both input and change events to ensure it works across all browsers
-            fontSizeSlider.addEventListener('input', updatePreview)
-            fontSizeSlider.addEventListener('change', updatePreview)
-            // Manually trigger the update once to ensure initial state is correct
-            updatePreview()
-        }
-
-        if (fontWeightSelect) {
-            fontWeightSelect.addEventListener('change', updatePreview)
-        }
-    })
-</script>
-
-<!-- Logo Dropzone Script -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Get elements
-        const logoDropzone = document.getElementById('logo-dropzone')
-        const fileInput = document.getElementById('custom_logo')
-        const imagePreview = document.getElementById('image-preview')
-        const removeButton = document.getElementById('remove-image')
-        // Use the same path as in the PHP code for consistency
-        const defaultLogo = '/assets/images/staff-directory-logo.svg'
-        const fileInfoElement = document.querySelector('.dropzone-file-info')
-        const removeInput = document.getElementById('remove_logo')
-        console.log('imagePreview.src on page load:', imagePreview.src)
-
-        // Ensure that the remove button is not shown for the default logo on page load
-        if (imagePreview && imagePreview.src.endsWith('staff-directory-logo.svg')) {
-            if (removeButton) {
-                removeButton.style.display = 'none'
-                console.log('removeButton is hidden')
-            }
-        }
-
-        // Initialize dropzone functionality
-        if (logoDropzone && fileInput) {
-            // Handle clicking on the dropzone
-            logoDropzone.addEventListener('click', function() {
-                fileInput.click()
-            })
-
-            // Handle drag and drop events
-            logoDropzone.addEventListener('dragover', function(e) {
-                e.preventDefault()
-                logoDropzone.classList.add('border-indigo-500', 'bg-gray-50')
-            })
-
-            logoDropzone.addEventListener('dragleave', function() {
-                logoDropzone.classList.remove('border-indigo-500', 'bg-gray-50')
-            })
-
-            logoDropzone.addEventListener('drop', function(e) {
-                e.preventDefault()
-                logoDropzone.classList.remove('border-indigo-500', 'bg-gray-50')
-
-                if (e.dataTransfer.files.length) {
-                    fileInput.files = e.dataTransfer.files
-                    handleFileSelection()
-                }
-            })
-
-            // Handle file input change
-            fileInput.addEventListener('change', handleFileSelection)
-        }
-
-        // Function to handle file selection
-        function handleFileSelection() {
-            if (fileInput.files && fileInput.files[0]) {
-                const file = fileInput.files[0]
-
-                // Check if file is an image
-                if (!file.type.match('image.*')) {
-                    alert('Please select an image file (JPG, PNG, GIF, SVG, WEBP)')
-                    fileInput.value = ''
-                    return
-                }
-
-                // Check file size (max 2MB)
-                if (file.size > 2 * 1024 * 1024) {
-                    alert('File size exceeds 2MB limit')
-                    fileInput.value = ''
-                    return
-                }
-
-                // Show file info
-                if (fileInfoElement) {
-                    fileInfoElement.textContent = file.name + ' (' + formatFileSize(file.size) + ')'
-                    fileInfoElement.style.display = 'block'
-                }
-
-                // Update preview
-                const reader = new FileReader()
-                reader.onload = function(e) {
-                    if (imagePreview) {
-                        imagePreview.src = e.target.result
-                    }
-
-                    // Show remove button
-                    if (removeButton) {
-                        removeButton.style.display = 'flex'
-                    }
-
-                    // Reset the remove_logo value to 0
-                    if (removeInput) {
-                        removeInput.value = '0'
-                    }
-                }
-                reader.readAsDataURL(file)
-            }
-        }
-
-        // Format file size to human-readable format
-        function formatFileSize(bytes) {
-            if (bytes < 1024) return bytes + ' bytes'
-            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'
-            else return (bytes / 1048576).toFixed(1) + ' MB'
-        }
-
-        // Note: We don't need a custom remove button handler anymore.
-        // The button will now be handled by main.js through the data-update-field attribute.
-        // This prevents the "Image reset on add page" console message and ensures the logo
-        // is correctly reset to the default when clicking the remove button.
-    })
-</script>
-
-<!-- Add special JavaScript for direct form handling -->
-<script>
-function handleLogoFormSubmit(form) {
-    console.log('handleLogoFormSubmit called with form:', form);
-
-    // Create a formData object
-    const formData = new FormData(form);
-
-    // Log FormData content (can't directly log FormData object)
-    for (let pair of formData.entries()) {
-        console.log('FormData contains:', pair[0], pair[1]);
+    // Generate placeholder URL with specific parameters
+    function generatePlaceholderUrl(fontWeight, fontSizeFactor) {
+        // Use Admin Buddy as our demo initials
+        const timestamp = new Date().getTime() // Prevent caching
+        // Force clearing out the browser's cache by adding timestamp and random value
+        return `../includes/generate_placeholder.php?name=${encodeURIComponent('Admin Buddy')}&size=200x200&font_weight=${encodeURIComponent(fontWeight)}&font_size_factor=${fontSizeFactor}&nocache=${timestamp}-${Math.random()}`
     }
 
+    // Update preview image with current settings
+    function updatePreview() {
+        if (!fontWeightSelect || !fontSizeSlider || !previewImage) return
+
+        const fontWeight = fontWeightSelect.value
+        const fontSizeFactor = fontSizeSlider.value
+
+        // Update font size display
+        if (fontSizeDisplay) {
+            const value = parseFloat(fontSizeFactor).toFixed(1)
+            // Remove trailing zero if value is whole number
+            const displayValue = value.endsWith('.0') ? value.slice(0, -2) : value
+            fontSizeDisplay.textContent = displayValue
+        }
+
+        // Force image update by creating a new Image object
+        const newImage = new Image()
+        newImage.onload = function() {
+            previewImage.src = this.src
+        }
+        newImage.src = generatePlaceholderUrl(fontWeight, fontSizeFactor)
+    }
+
+    // Add event listeners
+    if (fontSizeSlider) {
+        // Listen to both input and change events to ensure it works across all browsers
+        fontSizeSlider.addEventListener('input', updatePreview)
+        fontSizeSlider.addEventListener('change', updatePreview)
+        // Manually trigger the update once to ensure initial state is correct
+        updatePreview()
+    }
+
+    if (fontWeightSelect) {
+        fontWeightSelect.addEventListener('change', updatePreview)
+    }
+})
+
+// Logo handling is now managed by main.js
+// We've removed custom JavaScript for the dropzone and image preview
+// The HTML has been updated with the standard classes that main.js looks for
+// This ensures consistent behavior across all admin pages
+
+// Handle logo form submission via AJAX
+function handleLogoFormSubmit(form) {
+    // Create a formData object
+    const formData = new FormData(form)
+
     // Add a special flag for JavaScript handling
-    formData.append('js_form_submit', '1');
-    console.log('Added js_form_submit flag to FormData');
+    formData.append('js_form_submit', '1')
 
     // Create an AJAX request
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', window.location.href);
-    console.log('XHR request created and opened to:', window.location.href);
-
-    // Track upload progress if desired
-    xhr.upload.onprogress = function(e) {
-        // Optional: Add progress indicator
-        if (e.lengthComputable) {
-            const percentComplete = (e.loaded / e.total) * 100;
-            console.log('Upload progress:', percentComplete.toFixed(2) + '%');
-        }
-    };
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', window.location.href)
 
     // When completed
     xhr.onload = function() {
-        console.log('XHR onload triggered. Status:', xhr.status);
-        console.log('Response text:', xhr.responseText);
-
         // Check if the response was JSON
         try {
-            const response = JSON.parse(xhr.responseText);
-            console.log('Parsed JSON response:', response);
+            const response = JSON.parse(xhr.responseText)
 
             if(response.success) {
                 // Display success message directly
-                console.log('Success! Showing message:', response.message);
-                showMessage('success', response.message);
+                showMessage('success', response.message)
 
-                // Update image preview if needed
-                if (response.logoPath) {
-                    console.log('Updating image preview with new logo path:', response.logoPath);
-                    document.getElementById('image-preview').src = response.logoPath;
-                    document.getElementById('remove-image').style.display = 'flex';
-                }
+                // Image preview is now handled by main.js
+                // The server returns the logo path in the response, but we don't need to manually update the UI
             } else {
                 // Display error message
-                console.log('Error! Showing message:', response.message || 'An error occurred');
-                showMessage('error', response.message || 'An error occurred');
+                showMessage('error', response.message || 'An error occurred')
             }
         } catch(e) {
             // If response wasn't JSON, reload the page
-            console.error('Failed to parse JSON response:', e);
-            console.log('Reloading page...');
-            window.location.reload();
+            window.location.reload()
         }
     };
 
     // Handle errors
-    xhr.onerror = function(e) {
-        console.error('XHR error occurred:', e);
-        showMessage('error', 'Failed to upload logo');
+    xhr.onerror = function() {
+        showMessage('error', 'Failed to upload logo')
     };
 
     // Send the form data
-    console.log('Sending form data via XHR...');
     xhr.send(formData);
-    console.log('Form data sent.');
 
     // Prevent regular form submission
-    console.log('Preventing default form submission');
-    return false;
+    return false
 }
 
 function showMessage(type, message) {
-    console.log('showMessage called with type:', type, 'and message:', message);
-
     // Remove any existing messages
-    const existingMessages = document.querySelectorAll('.logo-section .alert-message');
-    console.log('Removing', existingMessages.length, 'existing messages');
-    existingMessages.forEach(el => el.remove());
+    const existingMessages = document.querySelectorAll('.logo-section .alert-message')
+    existingMessages.forEach(el => el.remove())
 
     // Create a new message element
-    const messageEl = document.createElement('div');
+    const messageEl = document.createElement('div')
     messageEl.className = type === 'success'
         ? 'p-4 mb-4 text-sm text-green-700 bg-green-100 border border-green-200 rounded-lg alert-message'
         : 'p-4 mb-4 text-sm text-red-700 bg-red-100 border border-red-200 rounded-lg alert-message';
-    messageEl.setAttribute('role', 'alert');
+    messageEl.setAttribute('role', 'alert')
     messageEl.textContent = message;
 
     // Insert it at the beginning of the logo section
-    const logoSection = document.querySelector('.logo-section');
-    const heading = logoSection.querySelector('h2');
-    logoSection.insertBefore(messageEl, heading.nextSibling);
-    console.log('Message element inserted into DOM');
+    const logoSection = document.querySelector('.logo-section')
+    const heading = logoSection.querySelector('h2')
+    logoSection.insertBefore(messageEl, heading.nextSibling)
 
     // Scroll to the message
-    messageEl.scrollIntoView({behavior: 'smooth', block: 'center'});
+    messageEl.scrollIntoView({behavior: 'smooth', block: 'center'})
 }
 
 // Add event listener for form submission
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM fully loaded');
-
-    // Get the logo form and submit button
+    // Get the logo form
     const logoForm = document.getElementById('logo-form');
-    const submitButton = document.querySelector('button[name="save_logo_only"]');
-
-    console.log('Form element found:', !!logoForm);
-    console.log('Submit button found:', !!submitButton);
 
     // If form exists, handle its submission
     if (logoForm) {
-        console.log('Adding submit event listener to logo form');
         logoForm.addEventListener('submit', function(e) {
-            console.log('Form submit event triggered');
-            e.preventDefault();
-            console.log('Default form submission prevented');
-            return handleLogoFormSubmit(this);
-        });
-
-        // Optional: Add click handler directly to the button as a fallback
-        if (submitButton) {
-            console.log('Adding click event listener to submit button');
-            submitButton.addEventListener('click', function(e) {
-                console.log('Submit button clicked');
-                // Only handle if not already being handled by form submit
-                if (!e.defaultPrevented) {
-                    e.preventDefault();
-                    console.log('Handling button click - calling handleLogoFormSubmit');
-                    return handleLogoFormSubmit(logoForm);
-                }
-            });
-        }
+            e.preventDefault()
+            return handleLogoFormSubmit(this)
+        })
     }
-});
+})
 </script>
 
 <?php require_once '../includes/footer.php';

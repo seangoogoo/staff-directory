@@ -33,8 +33,8 @@ if (isset($_GET['delete']) && !empty($_GET['delete'])) {
 
         if ($stmt->execute()) {
             // Delete company logo if it exists
-            if (!empty($company['logo']) && file_exists(__DIR__ . '/..' . $company['logo'])) {
-                unlink(__DIR__ . '/..' . $company['logo']);
+            if (!empty($company['logo']) && file_exists(PUBLIC_PATH . $company['logo'])) {
+                unlink(PUBLIC_PATH . $company['logo']);
             }
             set_session_message('success_message', "Company deleted successfully.");
         } else {
@@ -79,8 +79,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Get current company to check for existing logo
             $current_company = get_company_by_id($conn, $company_id);
 
-            // Check if logo should be deleted
-            if (isset($_POST['delete_logo']) && $_POST['delete_logo'] == '1') {
+            // First check if new logo is uploaded - this takes precedence over delete flag
+            if (!empty($logo_path)) {
+                // New logo uploaded, update it and delete old one if exists
+                $sql = "UPDATE companies SET name = ?, description = ?, logo = ? WHERE id = ?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("sssi", $name, $description, $logo_path, $company_id);
+
+                // Delete old logo if it exists
+                if (!empty($current_company['logo']) && file_exists(PUBLIC_PATH . $current_company['logo'])) {
+                    unlink(PUBLIC_PATH . $current_company['logo']);
+                }
+            }
+            // Then check if logo should be deleted (only if no new upload)
+            else if (isset($_POST['delete_logo']) && $_POST['delete_logo'] == '1') {
                 // Delete the logo file if it exists
                 if (!empty($current_company['logo']) && file_exists(__DIR__ . '/..' . $current_company['logo'])) {
                     unlink(__DIR__ . '/..' . $current_company['logo']);
@@ -89,18 +101,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $sql = "UPDATE companies SET name = ?, description = ?, logo = '' WHERE id = ?";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("ssi", $name, $description, $company_id);
-            }
-            // Check if new logo is uploaded
-            else if (!empty($logo_path)) {
-                // New logo uploaded, update it and delete old one if exists
-                $sql = "UPDATE companies SET name = ?, description = ?, logo = ? WHERE id = ?";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("sssi", $name, $description, $logo_path, $company_id);
-
-                // Delete old logo if it exists
-                if (!empty($current_company['logo']) && file_exists(__DIR__ . '/..' . $current_company['logo'])) {
-                    unlink(__DIR__ . '/..' . $current_company['logo']);
-                }
             } else {
                 // No new logo, keep existing one
                 $sql = "UPDATE companies SET name = ?, description = ? WHERE id = ?";
@@ -210,6 +210,7 @@ require_once '../includes/admin_header.php';
                 <?php if (isset($company_id)): ?>
                     <input type="hidden" name="company_id" value="<?php echo $company_id; ?>">
                 <?php endif; ?>
+                <input type="hidden" id="delete_logo" name="delete_logo" value="0">
 
                 <div>
                     <label for="name" class="block text-sm font-medium text-gray-700">Company Name</label>
@@ -227,9 +228,9 @@ require_once '../includes/admin_header.php';
                 <div>
                     <label for="logo" class="block text-sm font-medium text-gray-700">Company Logo</label>
                     <!-- Hidden file input -->
-                    <input type="file" id="logo" name="logo" accept="image/jpeg,image/png,image/gif,image/svg+xml,image/webp" class="hidden">
+                    <input type="file" id="logo" name="logo" accept="image/jpeg,image/png,image/gif,image/svg+xml,image/webp" class="hidden dropzone-input">
                     <!-- Dropzone -->
-                    <div id="logo-dropzone" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md cursor-pointer hover:border-indigo-500 hover:bg-gray-50 transition-colors duration-150">
+                    <div id="logo-dropzone" class="dropzone mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md cursor-pointer hover:border-indigo-500 hover:bg-gray-50 transition-colors duration-150">
                         <div class="space-y-1 text-center w-full">
                             <!-- Icon -->
                             <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
@@ -250,12 +251,17 @@ require_once '../includes/admin_header.php';
                         <div class="relative inline-block logo-preview">
                              <?php
                             // Determine if we have an existing logo or need to show placeholder
-                            $img_src = (isset($logo) && !empty($logo)) ? $logo : '/assets/images/add-picture.svg';
+                            $img_src = (isset($logo) && !empty($logo)) ? url($logo) : asset('images/add-picture.svg');
                             $is_placeholder = !(isset($logo) && !empty($logo));
+                            $logger->debug("Image source: $img_src");
                             ?>
                             <img id="image-preview" src="<?php echo htmlspecialchars($img_src); ?>" alt="Logo Preview" data-is-placeholder="<?php echo $is_placeholder ? 'true' : 'false'; ?>"
+                                 data-default-image="<?php echo asset('images/add-picture.svg'); ?>"
                                  class="h-48 w-48 object-cover rounded-md border border-gray-200">
-                            <button type="button" id="remove-image" style="display: <?php echo $is_placeholder ? 'none' : 'flex'; ?>"
+                            <button type="button" id="remove-image"
+                                    data-update-field="delete_logo"
+                                    data-update-value="1"
+                                    style="display: <?php echo $is_placeholder ? 'none' : 'flex'; ?>"
                                     class="absolute -top-2 -right-2 bg-gray-600 text-white rounded-full h-6 w-6 flex items-center justify-center hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
                                 <span class="sr-only">Remove image</span>
                                 <i class="ri-close-line text-sm"></i> <!-- Using Remix Icon -->
@@ -305,7 +311,7 @@ require_once '../includes/admin_header.php';
                             <tr>
                                 <td class="px-3 py-2 text-center">
                                     <?php if (!empty($company['logo'])): ?>
-                                        <img src="<?php echo htmlspecialchars($company['logo']); ?>" alt="<?php echo htmlspecialchars($company['name']); ?> Logo" class="h-10 w-10 object-cover inline-block rounded-lg">
+                                        <img src="<?php echo url(htmlspecialchars($company['logo'])); ?>" alt="<?php echo htmlspecialchars($company['name']); ?> Logo" class="h-10 w-10 object-cover inline-block rounded-lg">
                                     <?php else: ?>
                                         <div class="h-10 w-10 rounded-lg bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-500 mx-auto">No Logo</div>
                                     <?php endif; ?>
@@ -347,156 +353,89 @@ require_once '../includes/admin_header.php';
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Define default logo path using APP_BASE_URI
+        const defaultLogo = window.APP_BASE_URI + '/assets/images/add-picture.svg'
         // Set up the file input and dropzone
-        const fileInput = document.getElementById('logo');
-        const dropzone = document.getElementById('logo-dropzone');
-        const fileInfo = dropzone.querySelector('.dropzone-file-info');
-        const imagePreview = document.getElementById('image-preview');
-        const removeButton = document.getElementById('remove-image');
-        let deleteInput = document.querySelector('input[name="delete_logo"]');
+        const fileInput = document.getElementById('logo')
+        const dropzone = document.getElementById('logo-dropzone')
+        const fileInfo = dropzone.querySelector('.dropzone-file-info')
+        const imagePreview = document.getElementById('image-preview')
+        const removeButton = document.getElementById('remove-image')
+        let deleteInput = document.querySelector('input[name="delete_logo"]')
 
         // Set the correct placeholder status on page load
-        const isPlaceholder = imagePreview.dataset.isPlaceholder === 'true';
+        const isPlaceholder = imagePreview.dataset.isPlaceholder === 'true'
         if (isPlaceholder) {
-            removeButton.style.display = 'none';
+            removeButton.style.display = 'none'
             // Hide preview container if it's a placeholder initially? No, keep it visible for placeholder.
         } else {
-            removeButton.style.display = 'flex'; // Ensure button shows for actual images
+            removeButton.style.display = 'flex' // Ensure button shows for actual images
         }
 
 
         // Create the delete input if it doesn't exist (should always exist if editing?)
         if (!deleteInput && document.querySelector('input[name="company_id"]')) { // Only create if potentially editing
-            deleteInput = document.createElement('input');
-            deleteInput.type = 'hidden';
-            deleteInput.name = 'delete_logo';
-            deleteInput.value = '0'; // Default to not deleting
-            document.querySelector('form').appendChild(deleteInput);
+            deleteInput = document.createElement('input')
+            deleteInput.type = 'hidden'
+            deleteInput.name = 'delete_logo'
+            deleteInput.id = 'delete_logo' // Add ID for main.js data-update-field to work
+            deleteInput.value = '0' // Default to not deleting
+            document.querySelector('form').appendChild(deleteInput)
         } else if (deleteInput) {
-             deleteInput.value = '0'; // Ensure it's reset on load if it does exist
+            // If it exists but doesn't have an ID, add one
+            if (!deleteInput.id) {
+                deleteInput.id = 'delete_logo'
+            }
+            deleteInput.value = '0' // Ensure it's reset on load if it does exist
         }
 
 
         // Handle file selection via input click
         fileInput.addEventListener('change', function() {
             if (this.files && this.files[0]) {
-                const file = this.files[0];
-                fileInfo.textContent = file.name;
-                fileInfo.style.display = 'block'; // Show file name in dropzone area
+                const file = this.files[0]
+                fileInfo.textContent = file.name
+                fileInfo.style.display = 'block' // Show file name in dropzone area
 
                 // Show preview
-                const reader = new FileReader();
+                const reader = new FileReader()
                 reader.onload = function(e) {
                     if (imagePreview) {
                         imagePreview.src = e.target.result;
-                        imagePreview.dataset.isPlaceholder = 'false'; // Now it's not a placeholder
-                        imagePreview.parentElement.style.display = 'inline-block'; // Ensure container is visible
-                        if(removeButton) removeButton.style.display = 'flex'; // Show remove button
+                        imagePreview.dataset.isPlaceholder = 'false' // Now it's not a placeholder
+                        imagePreview.parentElement.style.display = 'inline-block' // Ensure container is visible
+                        if(removeButton) removeButton.style.display = 'flex' // Show remove button
                     }
-                };
-                reader.readAsDataURL(file);
+                }
+                reader.readAsDataURL(file)
 
                 // Reset delete flag if a new file is chosen
-                if(deleteInput) deleteInput.value = '0';
+                if(deleteInput) deleteInput.value = '0'
             } else {
                 // No file selected (e.g., user cancelled)
                 // If it was showing a real image before, don't change it unless remove is clicked
                 // If it was showing a placeholder, keep showing placeholder
-                fileInfo.style.display = 'none';
+                fileInfo.style.display = 'none'
             }
-        });
+        })
 
-        // Handle drag and drop
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropzone.addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropzone.addEventListener(eventName, highlight, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropzone.addEventListener(eventName, unhighlight, false);
-        });
-
-        function highlight() {
-            dropzone.classList.add('border-indigo-500', 'bg-gray-50'); // Use Tailwind classes for highlighting
-        }
-
-        function unhighlight() {
-            dropzone.classList.remove('border-indigo-500', 'bg-gray-50');
-        }
-
-        dropzone.addEventListener('drop', handleDrop, false);
-
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-
-            // Basic validation (can enhance)
-             if (files.length > 0) {
-                 const file = files[0];
-                 const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp'];
-                 if (allowedTypes.includes(file.type) && file.size <= 5 * 1024 * 1024) { // Max 5MB
-                     fileInput.files = files; // Assign dropped files to the hidden input
-                     // Trigger change event manually to update preview etc.
-                     const event = new Event('change', { bubbles: true });
-                     fileInput.dispatchEvent(event);
-                 } else {
-                     // Optional: Show an error message to the user
-                     console.warn('Invalid file type or size dropped.');
-                     alert('Invalid file type or size. Please use JPG, PNG, GIF, SVG or WEBP, max 5MB.');
-                 }
-             }
-        }
-
-        // Handle click on dropzone to trigger file input
-        dropzone.addEventListener('click', function(e) {
-            // Prevent triggering if clicking on the link text itself maybe? No, let it trigger.
-             if (e.target.tagName !== 'A' && e.target.tagName !== 'BUTTON') { // Avoid triggering if clicking interactive elements within
-                fileInput.click();
-             }
-        });
+        // Let main.js handle the dropzone functionality
+        // We only need to keep the file input change handler
 
 
-        // Handle removal of image
-        if (removeButton) {
-            removeButton.addEventListener('click', function() {
-                if (imagePreview) {
-                    // Set source to placeholder SVG
-                    imagePreview.src = '/assets/images/add-picture.svg'; // Make sure this path is correct
-                    imagePreview.dataset.isPlaceholder = 'true'; // Mark as placeholder
-                }
-                // Hide remove button
-                removeButton.style.display = 'none';
-
-                // Reset file input & file info display
-                fileInput.value = ''; // Clears the selected file
-                fileInfo.textContent = '';
-                fileInfo.style.display = 'none';
-
-                // Set delete flag for form submission *if* a hidden input exists
-                if (deleteInput) {
-                    deleteInput.value = '1';
-                }
-            });
-        }
+        // Let main.js handle the remove button functionality
+        // We only need to ensure the delete_logo input exists with an ID
 
         // Add confirmation for delete buttons
         document.querySelectorAll('.js-confirm').forEach(element => {
             element.addEventListener('click', (e) => {
                 const message = e.currentTarget.getAttribute('data-confirm');
                 if (!confirm(message || "Are you sure?")) { // Provide default confirm message
-                    e.preventDefault(); // Prevent the link from being followed if confirmation is cancelled
+                    e.preventDefault() // Prevent the link from being followed if confirmation is cancelled
                 }
-            });
-        });
-    });
+            })
+        })
+    })
 </script>
 
 <?php require_once '../includes/admin_footer.php'; ?>

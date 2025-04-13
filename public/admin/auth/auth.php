@@ -6,13 +6,16 @@
  * It uses centralized configuration from auth_config.php for all settings.
  */
 
+// Include bootstrap to ensure constants are defined
+require_once __DIR__ . '/../../includes/bootstrap.php';
+
 // Define constants to prevent direct access to configuration file
 if (!defined('AUTH_SYSTEM')) {
     define('AUTH_SYSTEM', true);
 }
 
 // Load centralized authentication configuration
-require_once __DIR__ . '/../../../config/auth_config.php';
+require_once PRIVATE_PATH . '/config/auth_config.php';
 
 // Only set cookie parameters if session hasn't started yet
 if (session_status() === PHP_SESSION_NONE) {
@@ -98,6 +101,8 @@ function is_logged_in() {
     return true;
 }
 
+// No custom logging function needed - using Monolog
+
 /**
  * Verify login credentials with improved security
  *
@@ -106,11 +111,22 @@ function is_logged_in() {
  * @return bool True if credentials are valid, false otherwise
  */
 function verify_login($username, $password) {
+    global $logger;
+    $logger->debug("verify_login called", ["username" => $username]);
+    $logger->debug("ADMIN_USERNAME: " . (defined('ADMIN_USERNAME') ? ADMIN_USERNAME : 'Not defined'));
+    $logger->debug("ADMIN_PASSWORD_HASH: " . (defined('ADMIN_PASSWORD_HASH') ? 'Hash exists' : 'Not defined'));
+
     // Check credentials against configured values from auth_config.php
     if ($username === ADMIN_USERNAME) {
+        $logger->debug("Username matches ADMIN_USERNAME");
         if (password_verify($password, ADMIN_PASSWORD_HASH)) {
+            $logger->debug("Password verified successfully");
             return true;
+        } else {
+            $logger->debug("Password verification failed");
         }
+    } else {
+        $logger->debug("Username does not match ADMIN_USERNAME");
     }
     return false;
 }
@@ -200,7 +216,7 @@ function require_login($ajax = false) {
             echo json_encode([
                 'success' => false,
                 'logged_in' => false,
-                'redirect' => '/?' . LOGIN_TRIGGER_PARAM . '&return=' . urlencode($_SERVER['REQUEST_URI'])
+                'redirect' => url('') . '?' . LOGIN_TRIGGER_PARAM . '&return=' . urlencode($_SERVER['REQUEST_URI'])
             ]);
             exit;
         }
@@ -214,7 +230,7 @@ function require_login($ajax = false) {
 
         // Redirect to the homepage with login required flag
         $return_url = urlencode($_SERVER['REQUEST_URI']);
-        header("Location: /?" . LOGIN_TRIGGER_PARAM . "&return=" . $return_url);
+        header("Location: " . url('') . "?" . LOGIN_TRIGGER_PARAM . "&return=" . $return_url);
         exit;
     }
 

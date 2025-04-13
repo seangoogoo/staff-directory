@@ -54,7 +54,8 @@ function getPlaceholderImageUrl(firstName, lastName, departmentSelect, defaultIm
 
     const nameParam = `${fName.trim()} ${lName.trim()}`
     const timestamp = new Date().getTime()
-    return `../includes/generate_placeholder.php?name=${encodeURIComponent(nameParam)}&size=${size}&bg_color=${encodeURIComponent(color)}&t=${timestamp}`
+    // Use relative path without APP_BASE_URI prefix since the router will handle it
+    return window.APP_BASE_URI + `/includes/generate_placeholder.php?name=${encodeURIComponent(nameParam)}&size=${size}&bg_color=${encodeURIComponent(color)}&t=${timestamp}`
 }
 
 /**

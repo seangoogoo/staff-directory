@@ -11,7 +11,7 @@
  * @param {string} basePath - Base path for AJAX handler ('../' or '../../')
  * @returns {Promise} Promise that resolves when the update is complete
  */
-function updateDepartmentOptions(companyName, departmentSelect, originalOptions, maintainSelection = '', basePath = '../') {
+function updateDepartmentOptions(companyName, departmentSelect, originalOptions, maintainSelection = '') {
     // If no company is selected, restore all original options but maintain current selection if specified
     if (!companyName) {
         resetDepartmentOptions(departmentSelect, originalOptions, maintainSelection)
@@ -23,8 +23,10 @@ function updateDepartmentOptions(companyName, departmentSelect, originalOptions,
 
     // Return a promise that resolves when the department options are updated
     return new Promise((resolve, reject) => {
+        // Use APP_BASE_URI prefix since we're in a subdirectory
         // Fetch departments for this company via AJAX
-        fetch(`${basePath}includes/ajax_handlers.php?action=get_departments_by_company&company=${encodeURIComponent(companyName)}`)
+        const baseUri = window.APP_BASE_URI || '';
+        fetch(`${baseUri}/includes/ajax_handlers.php?action=get_departments_by_company&company=${encodeURIComponent(companyName)}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`)
@@ -126,7 +128,7 @@ function resetDepartmentOptions(departmentSelect, originalOptions, maintainSelec
  * @param {string} basePath - Base path for AJAX handler ('../' or '../../')
  * @returns {Promise} Promise that resolves when the update is complete
  */
-function updateCompanyOptions(departmentName, companySelect, originalOptions, maintainSelection = '', basePath = '../') {
+function updateCompanyOptions(departmentName, companySelect, originalOptions, maintainSelection = '') {
     // If no department is selected, use the reset helper function
     if (!departmentName) {
         resetCompanyOptions(companySelect, originalOptions, maintainSelection)
@@ -138,8 +140,10 @@ function updateCompanyOptions(departmentName, companySelect, originalOptions, ma
 
     // Return a promise that resolves when the company options are updated
     return new Promise((resolve, reject) => {
+        // Use APP_BASE_URI prefix since we're in a subdirectory
         // Fetch companies for this department via AJAX
-        fetch(`${basePath}includes/ajax_handlers.php?action=get_companies_by_department&department=${encodeURIComponent(departmentName)}`)
+        const baseUri = window.APP_BASE_URI || '';
+        fetch(`${baseUri}/includes/ajax_handlers.php?action=get_companies_by_department&department=${encodeURIComponent(departmentName)}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`)

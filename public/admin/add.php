@@ -201,7 +201,8 @@ require_once '../includes/admin_header.php';
             <div class="mt-4 flex justify-center">
                 <div class="relative">
                     <img id="image-preview"
-                         src="../assets/images/add-picture.svg"
+                         src="<?php echo asset('images/add-picture.svg'); ?>"
+                         data-default-image="<?php echo asset('images/add-picture.svg'); ?>"
                          alt="Preview"
                          class="w-[200px] h-[200px] rounded-lg bg-gray-100 object-cover">
                     <button type="button"

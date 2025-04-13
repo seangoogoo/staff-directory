@@ -78,7 +78,7 @@ require_once '../includes/admin_header.php';
                 <div class="company-stat-card bg-white p-4 rounded shadow">
                     <div class="company-info flex items-center gap-3 mb-2">
                         <?php if (!empty($company['logo'])): ?>
-                            <img src="<?php echo $company['logo']; ?>" alt="<?php echo $company['name']; ?> logo" class="h-6 w-auto">
+                            <img src="<?php echo url($company['logo']); ?>" alt="<?php echo $company['name']; ?> logo" class="h-6 w-auto">
                         <?php else: ?>
                             <div class="company-icon text-xl text-gray-400"><i class="ri-building-line"></i></div>
                         <?php endif; ?>
@@ -169,7 +169,7 @@ require_once '../includes/admin_header.php';
                         <td class="px-4 py-2">
                             <?php if (!empty($staff['company_logo'])): ?>
                                 <div class="flex items-center gap-2">
-                                    <img src="<?php echo $staff['company_logo']; ?>"
+                                    <img src="<?php echo url($staff['company_logo']); ?>"
                                          alt="<?php echo $staff['company']; ?> logo"
                                          class="h-4 w-auto">
                                     <span><?php echo $staff['company']; ?></span>
@@ -213,8 +213,8 @@ require_once '../includes/admin_header.php';
 </div>
 
 <!-- Core filter module shared between frontend and admin -->
-<script src="/assets/js/filter-core.js"></script>
+<script src="<?php echo asset('js/filter-core.js'); ?>"></script>
 <!-- Include admin-specific filter script -->
-<script src="../assets/js/admin-filters.js"></script>
+<script src="<?php echo asset('js/admin-filters.js'); ?>"></script>
 
 <?php require_once '../includes/admin_footer.php'; ?>

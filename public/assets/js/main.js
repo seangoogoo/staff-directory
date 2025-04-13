@@ -1,5 +1,4 @@
 'use strict'
-
 // Dropzone functionality for image uploads
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize dropzone and remove button
@@ -18,14 +17,22 @@ document.addEventListener('DOMContentLoaded', function() {
 /**
  * Initialize dropzone and remove button functionality
  * Sets up all event handlers for image uploads and removals
+ * @param {Element} [customDropzone] - Optional custom dropzone element
+ * @param {Element} [customFileInput] - Optional custom file input element
+ * @param {Element} [customImagePreview] - Optional custom image preview element
+ * @param {Element} [customRemoveButton] - Optional custom remove button element
  */
-function initializeDropzoneAndRemoveButton() {
+function initializeDropzoneAndRemoveButton(customDropzone, customFileInput, customImagePreview, customRemoveButton) {
     // Set up dropzone if it exists on the page
-    const dropzone = document.querySelector('.dropzone')
-    const fileInput = document.querySelector('.dropzone-input')
-    const imagePreview = document.getElementById('image-preview')
-    const removeButton = document.getElementById('remove-image')
-    const defaultImage = imagePreview ? imagePreview.src : ''
+    const dropzone = customDropzone || document.querySelector('.dropzone')
+    const fileInput = customFileInput || document.querySelector('.dropzone-input')
+    const imagePreview = customImagePreview || document.getElementById('image-preview')
+    const removeButton = customRemoveButton || document.getElementById('remove-image')
+
+    // Store the default image path as a data attribute if not already set
+    if (imagePreview && !imagePreview.dataset.defaultImage) {
+        imagePreview.dataset.defaultImage = imagePreview.src
+    }
 
     // Set the initial state for the remove button based on whether this is a placeholder image
     if (removeButton && imagePreview) {
@@ -122,15 +129,12 @@ function initializeDropzoneAndRemoveButton() {
             }
         }
 
-        // Check if we already have a non-default image and show the remove button
-        if (imagePreview && !imagePreview.src.includes('placehold.co') &&
-            !imagePreview.src.includes('default.jpg')) {
-            showRemoveButton()
-        }
+        // The remove button visibility is now handled by the isPlaceholderImage function
+        // which checks for default images and placeholders
     }
 
     // Setup remove button outside of dropzone logic
-    setupRemoveButton(removeButton, imagePreview, fileInput, defaultImage)
+    setupRemoveButton(removeButton, imagePreview, fileInput)
 }
 
 /**
@@ -138,9 +142,8 @@ function initializeDropzoneAndRemoveButton() {
  * @param {Element} removeButton - The remove button element
  * @param {Element} imagePreview - The image preview element
  * @param {Element} fileInput - The file input element
- * @param {string} defaultImage - URL of the default image
  */
-function setupRemoveButton(removeButton, imagePreview, fileInput, defaultImage) {
+function setupRemoveButton(removeButton, imagePreview, fileInput) {
     if (!removeButton || !imagePreview) return
 
     // First remove any existing listeners to avoid duplicates
@@ -175,11 +178,15 @@ function setupRemoveButton(removeButton, imagePreview, fileInput, defaultImage) 
         }
         else if (pageName === 'settings.php' || currentPath.includes('settings.php')) {
             // Special case for settings page
-            handleSettingsPageImageRemoval(imagePreview, fileInput, freshButton, defaultImage)
+            handleSettingsPageImageRemoval(imagePreview, fileInput, freshButton)
+        }
+        else if (pageName === 'companies.php' || currentPath.includes('companies.php')) {
+            // Special case for companies page
+            handleCompaniesPageImageRemoval(imagePreview, fileInput, freshButton)
         }
         else {
             // Default case (add.php and others)
-            handleAddPageImageRemoval(imagePreview, fileInput, freshButton, defaultImage)
+            handleAddPageImageRemoval(imagePreview, fileInput, freshButton)
         }
 
         // Handle any custom fields specified via data attributes
@@ -187,17 +194,20 @@ function setupRemoveButton(removeButton, imagePreview, fileInput, defaultImage) 
             const customField = document.getElementById(customFieldName)
             if (customField) {
                 customField.value = freshButton.dataset.updateValue || '1'
-                console.log(`Updated ${customFieldName} with value ${customField.value}`)
+                if (window?.DEV_MODE === true) console.log(`Updated ${customFieldName} with value ${customField.value}`)
             }
         }
     }, true) // Use capturing phase to ensure this runs first
 }
 
 // Handle image removal on add.php
-function handleAddPageImageRemoval(imagePreview, fileInput, removeButton, defaultImage) {
-    // Reset image to placeholder
+function handleAddPageImageRemoval(imagePreview, fileInput, removeButton) {
+    // Reset image to the original default image stored in the data attribute
     if (imagePreview) {
-        imagePreview.src = defaultImage
+        // Use the data attribute if available
+        const defaultSrc = imagePreview.dataset.defaultImage || '../assets/images/add-picture.svg'
+        imagePreview.src = defaultSrc
+        imagePreview.dataset.isPlaceholder = 'true'
     }
 
     // Clear file input
@@ -214,7 +224,7 @@ function handleAddPageImageRemoval(imagePreview, fileInput, removeButton, defaul
         fileInfoEl.style.display = 'none'
     }
 
-    console.log('Image reset on add page')
+    if (window?.DEV_MODE === true) console.log('Image reset on add page')
 }
 
 /**
@@ -222,31 +232,56 @@ function handleAddPageImageRemoval(imagePreview, fileInput, removeButton, defaul
  * @param {Element} imagePreview - The image preview element
  * @param {Element} fileInput - The file input element
  * @param {Element} removeButton - The remove button element
- * @param {string} defaultImage - URL of the default image
  */
-function handleSettingsPageImageRemoval(imagePreview, fileInput, removeButton, defaultImage) {
-    // Reset image to default logo
+function handleSettingsPageImageRemoval(imagePreview, fileInput, removeButton) {
+    // Reset image to the original default image stored in the data attribute
     if (imagePreview) {
+        // Use the data attribute if available
+        const defaultSrc = imagePreview.dataset.defaultImage || '../assets/images/staff-directory-logo.svg'
         // Force the browser to update the image
-        imagePreview.src = defaultImage
+        imagePreview.src = defaultSrc
+        imagePreview.dataset.isPlaceholder = 'true'
 
         // In case the browser caches the image and doesn't trigger a refresh,
         // recreate the image element
         try {
             const currentParent = imagePreview.parentNode
             const newImage = document.createElement('img')
+
+            // Copy all attributes from the original image
             newImage.id = 'image-preview'
             newImage.className = imagePreview.className
             newImage.alt = 'Default Logo'
-            newImage.src = defaultImage
+            newImage.src = defaultSrc
+
+            // Copy all data attributes from the original image
+            for (const key in imagePreview.dataset) {
+                newImage.dataset[key] = imagePreview.dataset[key]
+            }
+
+            // Ensure critical data attributes are set correctly
+            newImage.dataset.defaultImage = defaultSrc
+            newImage.dataset.isPlaceholder = 'true'
+
+            // Preserve originalSrc if it exists
+            if (imagePreview.dataset.originalSrc) {
+                newImage.dataset.originalSrc = imagePreview.dataset.originalSrc
+            }
 
             // Replace the old image with the new one
             if (currentParent) {
                 currentParent.replaceChild(newImage, imagePreview)
-                console.log('Replaced image element with new one using default logo')
+                if (window?.DEV_MODE === true) console.log('Replaced image element with new one using default logo')
+
+                // After replacing, reinitialize the dropzone and remove button
+                // This ensures all event listeners are properly attached to the new element
+                setTimeout(() => {
+                    initializeDropzoneAndRemoveButton()
+                    if (window?.DEV_MODE === true) console.log('Reinitialized dropzone and remove button after image replacement')
+                }, 0)
             }
         } catch (error) {
-            console.error('Error replacing image:', error)
+            if (window?.DEV_MODE === true) console.error('Error replacing image:', error)
         }
     }
 
@@ -264,14 +299,58 @@ function handleSettingsPageImageRemoval(imagePreview, fileInput, removeButton, d
         fileInfoEl.style.display = 'none'
     }
 
-    // Find remove_logo input and set it to 1 (for compatibility with existing code)
-    const removeLogoInput = document.getElementById('remove_logo')
+    // Set remove_logo to 1 (using the field specified in data-update-field)
+    const updateField = removeButton.dataset.updateField || 'remove_logo'
+    const updateValue = removeButton.dataset.updateValue || '1'
+    const removeLogoInput = document.getElementById(updateField)
     if (removeLogoInput) {
-        removeLogoInput.value = '1'
-        console.log('remove_logo value set to 1')
+        removeLogoInput.value = updateValue
+        if (window?.DEV_MODE === true) console.log(`${updateField} value set to ${updateValue}`)
     }
 
-    console.log('Image reset on settings page')
+    if (window?.DEV_MODE === true) console.log('Image reset on settings page')
+}
+
+/**
+ * Handle image removal on companies.php
+ * @param {Element} imagePreview - The image preview element
+ * @param {Element} fileInput - The file input element
+ * @param {Element} removeButton - The remove button element
+ */
+function handleCompaniesPageImageRemoval(imagePreview, fileInput, removeButton) {
+    // Reset image to the original default image stored in the data attribute
+    if (imagePreview) {
+        // Use the data attribute if available
+        const defaultSrc = imagePreview.dataset.defaultImage || '../assets/images/add-picture.svg'
+        imagePreview.src = defaultSrc
+        imagePreview.dataset.isPlaceholder = 'true'
+    }
+
+    // Clear file input
+    if (fileInput) {
+        fileInput.value = ''
+    }
+
+    // Set delete_logo to 1 (using the field specified in data-update-field)
+    const updateField = removeButton.dataset.updateField || 'delete_logo'
+    const updateValue = removeButton.dataset.updateValue || '1'
+    const deleteLogoInput = document.getElementById(updateField)
+    if (deleteLogoInput) {
+        deleteLogoInput.value = updateValue
+        if (window?.DEV_MODE === true) console.log(`${updateField} value set to ${updateValue}`)
+    }
+
+    // Hide remove button
+    removeButton.style.display = 'none'
+
+    // Hide file info
+    const fileInfoEl = document.querySelector('.dropzone-file-info')
+    if (fileInfoEl) {
+        fileInfoEl.style.display = 'none'
+        fileInfoEl.textContent = ''
+    }
+
+    if (window?.DEV_MODE === true) console.log('Image reset on companies page')
 }
 
 /**
@@ -285,6 +364,8 @@ function isPlaceholderImage(imageElement) {
     const imageSrc = imageElement.src || ''
     return imageSrc.includes('generate_placeholder.php') ||
            imageSrc.includes('placeholder') ||
+           imageSrc.includes('staff-directory-logo.svg') ||
+           imageSrc.includes('add-picture.svg') ||
            imageElement.dataset.isPlaceholder === 'true'
 }
 
@@ -310,8 +391,10 @@ function handleEditPageImageRemoval(imagePreview, fileInput, removeButton) {
         }
 
         // Reset preview to original image
-        if (imagePreview && imagePreview.dataset.originalSrc) {
-            imagePreview.src = imagePreview.dataset.originalSrc
+        if (imagePreview) {
+            // First try originalSrc, then data-default-image, then current src
+            const originalSrc = imagePreview.dataset.originalSrc || imagePreview.dataset.defaultImage || imagePreview.src
+            imagePreview.src = originalSrc
         }
 
         // Hide the remove button
@@ -323,7 +406,7 @@ function handleEditPageImageRemoval(imagePreview, fileInput, removeButton) {
             fileInfoEl.style.display = 'none'
         }
 
-        console.log('New upload reset on edit page')
+        if (window?.DEV_MODE === true) console.log('New upload reset on edit page')
     } else {
         // For existing images, just mark it for deletion by adding a hidden input
         const form = document.querySelector('form')
@@ -369,7 +452,7 @@ function handleEditPageImageRemoval(imagePreview, fileInput, removeButton) {
 
             // Use our custom placeholder generator with department color
             const timestamp = new Date().getTime() // Prevent caching
-            imagePreview.src = `../includes/generate_placeholder.php?name=${firstName}+${lastName}&size=200x200&bg_color=${encodeURIComponent(departmentColor)}&t=${timestamp}`
+            imagePreview.src = `${window.APP_BASE_URI}/includes/generate_placeholder.php?name=${firstName}+${lastName}&size=200x200&bg_color=${encodeURIComponent(departmentColor)}&t=${timestamp}`
 
             // Mark as placeholder
             imagePreview.dataset.isPlaceholder = 'true'
@@ -378,7 +461,7 @@ function handleEditPageImageRemoval(imagePreview, fileInput, removeButton) {
         // Hide the remove button since there's no image to remove anymore
         removeButton.style.display = 'none'
 
-        console.log('Image marked for deletion on form submit')
+        if (window?.DEV_MODE === true) console.log('Image marked for deletion on form submit')
     }
 }
 
@@ -405,8 +488,7 @@ function formatFileSize(bytes) {
  */
 function previewImage(input) {
     let file
-    const preview = document.getElementById('image-preview')
-    const removeButton = document.getElementById('remove-image')
+    // We'll get a fresh reference in the onload callback
 
     // Extract the file from the input
     if (input instanceof File) {
@@ -420,23 +502,35 @@ function previewImage(input) {
     const reader = new FileReader()
 
     reader.onload = function(e) {
-        if (preview) {
+        // Get a fresh reference to the image preview element
+        // This ensures we're using the current DOM element even if it was replaced
+        const currentPreview = document.getElementById('image-preview')
+        const currentRemoveButton = document.getElementById('remove-image')
+
+        if (currentPreview) {
             // Store original src for potential reset (if not already stored)
-            if (!preview.dataset.originalSrc) {
-                preview.dataset.originalSrc = preview.src
+            if (!currentPreview.dataset.originalSrc) {
+                currentPreview.dataset.originalSrc = currentPreview.src
             }
 
             // Update the image with the new file
-            preview.src = e.target.result
+            currentPreview.src = e.target.result
 
             // Mark this as not a placeholder image since user uploaded it
-            preview.dataset.isPlaceholder = 'false'
+            currentPreview.dataset.isPlaceholder = 'false'
         }
 
         // Show remove button since this is a user upload
-        if (removeButton) {
+        if (currentRemoveButton) {
             // Make remove button visible for uploaded images
-            removeButton.style.display = 'flex'
+            currentRemoveButton.style.display = 'flex'
+        }
+
+        // Reset remove_logo flag when a new image is selected
+        const removeLogoInput = document.getElementById('remove_logo')
+        if (removeLogoInput) {
+            removeLogoInput.value = '0'
+            if (window?.DEV_MODE === true) console.log('remove_logo reset to 0 because new image was selected')
         }
 
         // Show file info if present
@@ -450,49 +544,4 @@ function previewImage(input) {
     reader.readAsDataURL(file)
 }
 
-// TEMPORARY FIX: Override the remove button click handler for settings page
-document.addEventListener('DOMContentLoaded', function() {
-    const removeButton = document.getElementById('remove-image')
-    if (removeButton) {
-        removeButton.addEventListener('click', function(e) {
-            console.log('Settings page custom handler for remove button')
-
-            // Stop event propagation to prevent other handlers from executing
-            e.stopPropagation()
-            e.preventDefault()
-
-            // Get the image preview and set it to the default logo
-            const imagePreview = document.getElementById('image-preview')
-            const defaultLogo = '/assets/images/staff-directory-logo.svg'
-
-            // Always use the default logo path, not the current image
-            if (imagePreview) {
-                console.log('Setting image to default logo:', defaultLogo)
-                imagePreview.src = defaultLogo
-            }
-
-            // Set remove_logo to 1
-            const removeInput = document.getElementById('remove_logo')
-            if (removeInput) {
-                removeInput.value = '1'
-                console.log('remove_logo value set to 1')
-            }
-
-            // Hide the button
-            this.style.display = 'none'
-
-            // Clear file input if it exists
-            const fileInput = document.getElementById('custom_logo')
-            if (fileInput) {
-                fileInput.value = ''
-            }
-
-            // Hide file info
-            const fileInfoEl = document.querySelector('.dropzone-file-info')
-            if (fileInfoEl) {
-                fileInfoEl.style.display = 'none'
-                fileInfoEl.textContent = ''
-            }
-        }, true) // Use capture phase to ensure this runs before main.js handler
-    }
-})
+// The temporary fix that was here has been replaced by the structured handler functions above

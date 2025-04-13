@@ -13,9 +13,16 @@ require_once __DIR__ . '/bootstrap.php';
     $frontend_title = $app_settings['frontend_title']; // Default is already provided by load_app_settings
     ?>
     <title><?php echo htmlspecialchars($frontend_title); ?></title>
-    <link href="/assets/css/styles.css" rel="stylesheet">
+    <link href="<?php echo asset('css/styles.css'); ?>" rel="stylesheet">
+    <!-- Make APP_BASE_URI available to JavaScript -->
+    <script>
+        window.APP_BASE_URI = "<?php echo APP_BASE_URI; ?>"
+        <?php if ($_ENV['DEV_MODE'] == 'true') { ?>
+        window.DEV_MODE = true
+        <?php } ?>
+    </script>
     <!-- Core filter module shared between frontend and admin -->
-    <script src="/assets/js/filter-core.js"></script>
+    <script src="<?php echo asset('js/filter-core.js'); ?>"></script>
 </head>
 <!-- Added flex for sticky footer -->
 <body class="antialiased font-sans bg-gray-50 text-gray-800 flex flex-col min-h-screen">
@@ -27,7 +34,7 @@ require_once __DIR__ . '/bootstrap.php';
             <div class="site-branding flex items-center gap-4">
                 <?php
                 // Use the app settings we already loaded above
-                $logo_path = !empty($app_settings['custom_logo_path']) ? $app_settings['custom_logo_path'] : '/assets/images/staff-directory-logo.svg';
+                $logo_path = !empty($app_settings['custom_logo_path']) ? $app_settings['custom_logo_path'] : url('assets/images/staff-directory-logo.svg');
                 $show_logo = isset($app_settings['show_logo']) ? $app_settings['show_logo'] : '1';
 
                 // Only show the logo if the setting is enabled

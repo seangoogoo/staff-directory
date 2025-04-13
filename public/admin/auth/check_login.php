@@ -4,6 +4,9 @@
  * Uses centralized configuration from auth_config.php
  */
 
+// Include bootstrap to ensure constants are defined
+require_once __DIR__ . '/../../includes/bootstrap.php';
+
 // Start session first to ensure consistency
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

@@ -2,6 +2,66 @@
 // Common functions for the application
 
 /**
+ * Generate a URL with the correct base path
+ *
+ * @param string $path The path relative to the application base
+ * @return string The full URL with the correct base path
+ */
+function url($path = '') {
+    // Remove leading slash if present
+    $path = ltrim($path, '/');
+    return APP_BASE_URI . ($path ? '/' . $path : '');
+}
+
+/**
+ * Load application configuration
+ *
+ * @return array The application configuration
+ */
+function load_app_config() {
+    static $config = null;
+
+    if ($config === null) {
+        // Check both possible locations for the config file
+        $configPath = PRIVATE_PATH . '/config/app.php';
+        if (!file_exists($configPath)) {
+            $configPath = BASE_PATH . '/config/app.php';
+        }
+
+        if (file_exists($configPath)) {
+            $config = require $configPath;
+        } else {
+            // Fallback to empty config if file not found
+            $config = [];
+            // Log error if logger is available
+            global $logger;
+            if (isset($logger)) {
+                $logger->error('Config file not found at: ' . $configPath);
+            }
+        }
+    }
+
+    return $config;
+}
+
+/**
+ * Get the URL for an asset using the AssetManager
+ *
+ * @param string $path Path to the asset relative to the assets directory
+ * @return string Full URL to the asset
+ */
+function asset($path) {
+    global $assetManager;
+
+    if (!isset($assetManager)) {
+        // Fallback if AssetManager is not available
+        return url('assets/' . $path);
+    }
+
+    return $assetManager->asset($path);
+}
+
+/**
  * Mix a color with black or white, similar to CSS color-mix function
  *
  * This function simulates the CSS color-mix functionality by mixing a color
@@ -121,7 +181,7 @@ function get_text_contrast_class($hex_color, $return_class = true) {
 }
 
 /**
- * Get the URL for a staff member's profile picture or generate a placeholder with initials
+ * Get the URL and/or filesystem path for a staff member's profile picture or generate a placeholder with initials
  *
  * @param array $staff Staff member data
  * @param string $size Size of the image in format 'widthxheight'
@@ -129,9 +189,10 @@ function get_text_contrast_class($hex_color, $return_class = true) {
  * @param string $bg_color Background color for the placeholder image (hex format)
  * @param string $text_color Text color for the placeholder image (hex format)
  * @param float $font_size_factor Font size factor (1-6, higher means larger font)
- * @return string The image URL
+ * @param bool $return_both Whether to return both URL and filesystem path (default: false)
+ * @return string|array The image URL or an array with 'url' and 'path' keys
  */
-function get_staff_image_url($staff, $size = '600x600', $font_weight = null, $bg_color = null, $text_color = null, $font_size_factor = null) {
+function get_staff_image_url($staff, $size = '600x600', $font_weight = null, $bg_color = null, $text_color = null, $font_size_factor = null, $return_both = false) {
     // Default settings
     $default_settings = [
         'font_weight' => 'Regular',
@@ -172,15 +233,15 @@ function get_staff_image_url($staff, $size = '600x600', $font_weight = null, $bg
     // Generate a settings hash to automatically detect changes
     $settings_hash = md5($font_weight . $bg_color . $text_color . $font_size_factor);
     $placeholder_filename = 'placeholder_' . $initials . '_' . $width . 'x' . $height . '_' . $settings_hash . '.webp';
-    $placeholder_path = __DIR__ . '/../uploads/placeholders/' . $placeholder_filename;
-    $placeholder_url = '/uploads/placeholders/' . $placeholder_filename;
+    $placeholder_path = PUBLIC_PATH . '/uploads/placeholders/' . $placeholder_filename;
+    $placeholder_url = url('uploads/placeholders/' . $placeholder_filename);
 
     // If no profile picture is set, generate or return the placeholder
     if (empty($staff['profile_picture'])) {
         // Check if placeholder already exists
         if (!file_exists($placeholder_path)) {
             // Clean up old placeholder images with the same initials and dimensions but different settings
-            $placeholder_dir = __DIR__ . '/../uploads/placeholders/';
+            $placeholder_dir = PUBLIC_PATH . '/uploads/placeholders/';
             if (is_dir($placeholder_dir)) {
                 $pattern = 'placeholder_' . $initials . '_' . $width . 'x' . $height . '_*.png';
                 $old_files = glob($placeholder_dir . $pattern);
@@ -218,11 +279,11 @@ function get_staff_image_url($staff, $size = '600x600', $font_weight = null, $bg
                 $staff_placeholder_font_weight = $font_weight;
 
                 // Path to the Outfit font with specified weight
-                $font_path = __DIR__ . '/../assets/fonts/Outfit/static/Outfit-' . $font_weight . '.ttf';
+                $font_path = PUBLIC_PATH . '/assets/fonts/Outfit/static/Outfit-' . $font_weight . '.ttf';
 
                 // Fallback to variable font if the specified weight is not available
                 if (!file_exists($font_path)) {
-                    $font_path = __DIR__ . '/../assets/fonts/Outfit/Outfit-VariableFont_wght.ttf';
+                    $font_path = PUBLIC_PATH . '/assets/fonts/Outfit/Outfit-VariableFont_wght.ttf';
                 }
 
                 // Check if the font file exists
@@ -296,13 +357,33 @@ function get_staff_image_url($staff, $size = '600x600', $font_weight = null, $bg
             }
         }
 
+        // Return both URL and path if requested
+        if ($return_both) {
+            return [
+                'url' => $placeholder_url,
+                'path' => $placeholder_path
+            ];
+        }
+
+        // Otherwise just return the URL
         return $placeholder_url;
     }
 
     // Check if the file exists in the uploads directory
-    $file_path = __DIR__ . "/../uploads/" . $staff['profile_picture'];
+    $file_path = PUBLIC_PATH . "/uploads/" . $staff['profile_picture'];
     if (file_exists($file_path)) {
-        return '/uploads/' . $staff['profile_picture'];
+        $profile_url = url('uploads/' . $staff['profile_picture']);
+
+        // Return both URL and path if requested
+        if ($return_both) {
+            return [
+                'url' => $profile_url,
+                'path' => $file_path
+            ];
+        }
+
+        // Otherwise just return the URL
+        return $profile_url;
     } else {
         // If the file doesn't exist, log the missing image
         // Add to a global array that will be output at the end of the page
@@ -313,6 +394,15 @@ function get_staff_image_url($staff, $size = '600x600', $font_weight = null, $bg
         $full_name = $staff['first_name'] . ' ' . $staff['last_name'];
         $missing_images[] = "Profile image missing for {$full_name}: {$staff['profile_picture']}";
 
+        // Return both URL and path if requested
+        if ($return_both) {
+            return [
+                'url' => $placeholder_url,
+                'path' => $placeholder_path
+            ];
+        }
+
+        // Otherwise just return the URL
         return $placeholder_url;
     }
 }
@@ -331,7 +421,7 @@ function sanitize_input($data) {
  * Upload profile picture
  */
 function upload_profile_picture($file) {
-    $target_dir = __DIR__ . "/../uploads/";
+    $target_dir = PUBLIC_PATH . "/uploads/";
     $file_extension = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
     $new_filename = uniqid() . '.' . $file_extension;
     $target_file = $target_dir . $new_filename;
@@ -953,7 +1043,7 @@ function upload_company_logo($file) {
 
     // Move the uploaded file
     if (move_uploaded_file($file['tmp_name'], $upload_path)) {
-        // Return the relative path
+        // Return the relative path without APP_BASE_URI prefix
         return '/uploads/companies/' . $filename;
     }
 

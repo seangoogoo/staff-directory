@@ -14,8 +14,15 @@ $admin_title = $app_settings['admin_title']; // Default is already provided by l
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($admin_title); ?></title>
-    <link href="/assets/css/styles.css" rel="stylesheet">
-    <script src="/assets/js/main.js"></script>
+    <link href="<?php echo asset('css/styles.css'); ?>" rel="stylesheet">
+    <!-- Make APP_BASE_URI available to JavaScript -->
+    <script>
+        window.APP_BASE_URI = "<?php echo APP_BASE_URI; ?>"
+        <?php if ($_ENV['DEV_MODE'] == 'true') { ?>
+        window.DEV_MODE = true
+        <?php } ?>
+    </script>
+    <script src="<?php echo asset('js/main.js'); ?>"></script>
 </head>
 <body class="antialiased font-sans bg-gray-100 text-gray-900 flex flex-col min-h-screen">
     <!-- Admin Header: White background, padding, border, flex layout -->
@@ -26,7 +33,7 @@ $admin_title = $app_settings['admin_title']; // Default is already provided by l
             <div class="site-branding flex items-center gap-3">
                 <?php
                 // Use the app settings we already loaded above
-                $logo_path = !empty($app_settings['custom_logo_path']) ? $app_settings['custom_logo_path'] : '/assets/images/staff-directory-logo.svg';
+                $logo_path = !empty($app_settings['custom_logo_path']) ? url($app_settings['custom_logo_path']) : url('assets/images/staff-directory-logo.svg');
                 // admin_title is already set above
                 $show_logo = isset($app_settings['show_logo']) ? $app_settings['show_logo'] : '1';
 
@@ -48,32 +55,32 @@ $admin_title = $app_settings['admin_title']; // Default is already provided by l
                 <!-- Link styling: flex, gap, text size -->
                 <ul class="flex flex-col nav:flex-row gap-1 md:gap-2 list-none p-2 nav:p-0 m-0 text-sm">
                     <li class="w-full nav:w-auto">
-                        <a href="/admin/index.php" class="icon-link flex items-center h-10 px-3 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200 w-full nav:w-auto justify-start nav:justify-center">
+                        <a href="<?php echo url('admin/index.php'); ?>" class="icon-link flex items-center h-10 px-3 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200 w-full nav:w-auto justify-start nav:justify-center">
                             <i class="ri-id-card-line mr-2 nav:mr-1"></i> <span class="nav:hidden inline">Manage Staff</span><span class="hidden nav:inline">Manage Staff</span>
                         </a>
                     </li>
                     <li class="w-full nav:w-auto">
-                        <a href="/admin/departments.php" class="icon-link flex items-center h-10 px-3 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200 w-full nav:w-auto justify-start nav:justify-center">
+                        <a href="<?php echo url('admin/departments.php'); ?>" class="icon-link flex items-center h-10 px-3 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200 w-full nav:w-auto justify-start nav:justify-center">
                             <i class="ri-group-2-line mr-2 nav:mr-1"></i> <span class="nav:hidden inline">Departments</span><span class="hidden nav:inline">Departments</span>
                         </a>
                     </li>
                     <li class="w-full nav:w-auto">
-                        <a href="/admin/companies.php" class="icon-link flex items-center h-10 px-3 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200 w-full nav:w-auto justify-start nav:justify-center">
+                        <a href="<?php echo url('admin/companies.php'); ?>" class="icon-link flex items-center h-10 px-3 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200 w-full nav:w-auto justify-start nav:justify-center">
                             <i class="ri-building-line mr-2 nav:mr-1"></i> <span class="nav:hidden inline">Companies</span><span class="hidden nav:inline">Companies</span>
                         </a>
                     </li>
                     <li class="w-full nav:w-auto">
-                        <a href="/admin/settings.php" class="icon-link flex items-center h-10 px-3 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200 w-full nav:w-auto justify-start nav:justify-center">
+                        <a href="<?php echo url('admin/settings.php'); ?>" class="icon-link flex items-center h-10 px-3 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200 w-full nav:w-auto justify-start nav:justify-center">
                             <i class="ri-equalizer-2-line mr-2 nav:mr-1"></i> <span class="nav:hidden inline">Settings</span><span class="hidden nav:inline">Settings</span>
                         </a>
                     </li>
                     <li class="w-full nav:w-auto">
-                        <a href="/" target="_blank" class="icon-link flex items-center h-10 px-3 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200 w-full nav:w-auto justify-start nav:justify-center">
+                        <a href="<?php echo url(''); ?>" target="_blank" class="icon-link flex items-center h-10 px-3 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200 w-full nav:w-auto justify-start nav:justify-center">
                             <i class="ri-eye-2-line mr-2 nav:mr-1"></i> <span class="nav:hidden inline">View Site</span><span class="hidden nav:inline">View Site</span>
                         </a>
                     </li>
                     <li class="w-full nav:w-auto">
-                        <a href="/admin/auth/logout.php" class="icon-link flex items-center h-10 px-3 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200 w-full nav:w-auto justify-start nav:justify-center">
+                        <a href="<?php echo url('admin/auth/logout.php'); ?>" class="icon-link flex items-center h-10 px-3 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200 w-full nav:w-auto justify-start nav:justify-center">
                             <i class="ri-logout-box-line mr-2 nav:mr-1"></i> <span class="nav:hidden inline">Logout</span><span class="hidden nav:inline">Logout</span>
                         </a>
                     </li>

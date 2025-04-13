@@ -7,13 +7,16 @@
  * @version 1.0
  */
 
+// Include bootstrap to ensure constants are defined
+require_once __DIR__ . '/bootstrap.php';
+
 // Allow access only within the application
 if (!defined('APP_PATH')) {
     define('APP_PATH', dirname(__DIR__));
 }
 
-// Include required function
-require_once 'functions.php';
+// functions.php is already included by bootstrap.php
+// require_once 'functions.php';
 
 // Get parameters
 $name = isset($_GET['name']) ? $_GET['name'] : 'Unknown User';
@@ -30,11 +33,14 @@ $staff = [
     'last_name' => isset($name_parts[1]) ? $name_parts[1] : 'User'
 ];
 
-// Generate the placeholder image and get URL
-$image_url = get_staff_image_url($staff, $size, $font_weight, $bg_color, $text_color, $font_size_factor);
+// Generate the placeholder image and get both URL and path
+$image_data = get_staff_image_url($staff, $size, $font_weight, $bg_color, $text_color, $font_size_factor, true);
+$image_url = $image_data['url'];
+$image_path = $image_data['path'];
 
-// Get the physical path of the image
-$image_path = __DIR__ . '/..' . $image_url;
+// $logger->info('Image url', ['path' => $image_url]);
+// $logger->info('Image path', ['path' => $image_path]);
+
 
 // Send the image with appropriate headers
 if (file_exists($image_path)) {

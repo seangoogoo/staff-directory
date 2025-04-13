@@ -5,6 +5,9 @@
  * This file contains handlers for AJAX requests from the frontend
  */
 
+// Include bootstrap to ensure constants are defined
+require_once __DIR__ . '/bootstrap.php';
+
 // Prevent errors from appearing in output
 if ($_ENV['DEV_MODE'] == 'true') {
     error_reporting(E_ALL);
@@ -15,9 +18,6 @@ if ($_ENV['DEV_MODE'] == 'true') {
 header('Content-Type: application/json');
 
 try {
-    // Include required files
-    require_once __DIR__ . '/functions.php';
-    require_once __DIR__ . '/../../config/database.php';
 
     // Check if we have a valid database connection
     if (!isset($conn) || $conn->connect_error) {

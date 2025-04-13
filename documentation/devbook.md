@@ -4,6 +4,62 @@
 
 ### Version 1.2 (March 2025)
 
+#### April 13, 2025
+*JavaScript Conditional Logging and Image Upload Fixes*
+
+- Implemented conditional console logging in JavaScript
+  - Added window.DEVMODE flag that's only injected in development mode
+  - Used environment variable $_ENV['DEV_MODE'] to control JavaScript logging
+  - Ensured no debug flags are exposed in production DOM
+  - Created consistent debug logging pattern across all JavaScript files
+  - Improved code maintainability by centralizing debug configuration
+
+- Fixed image upload and removal issues
+  - Resolved bug where remove button wouldn't appear when uploading an image to a profile with no existing image
+  - Modified edit.php to always render the remove button in the DOM but control visibility with CSS
+  - Ensured consistent behavior across all admin pages (edit.php, add.php, settings.php, companies.php)
+  - Improved user experience by making image management more intuitive
+  - Fixed edge cases in image handling for better reliability
+
+- Cleaned up orphan and duplicate code in settings.php
+  - Created a centralized image validation function for consistent file validation
+  - Removed redundant database connection code in favor of centralized functions
+  - Fixed error handling in process_logo_upload with specific error messages
+  - Eliminated duplicate logo removal button logic
+  - Simplified form submission handling for better maintainability
+
+#### April 13, 2025
+*Subdirectory Deployment and Routing Implementation*
+
+- Implemented comprehensive subdirectory deployment support
+  - Created a flexible routing system that works in both root and subdirectory deployments
+  - Added centralized path handling with APP_BASE_URI constant
+  - Implemented proper URL and asset path generation with helper functions
+  - Created a dedicated 404 handler with proper redirection
+  - Fixed all hardcoded paths throughout the application
+
+- Enhanced application architecture with modern routing patterns
+  - Implemented Front Controller pattern for centralized request handling
+  - Created a Router class using FastRoute for efficient URL routing
+  - Added middleware support for request/response processing
+  - Implemented proper separation between URL paths and filesystem paths
+  - Fixed path construction in image generation and file uploads
+
+- Improved path handling across the application
+  - Updated JavaScript to use window.APP_BASE_URI for all dynamic URLs
+  - Modified database storage to use relative paths without the subdirectory prefix
+  - Updated all file operations to use PUBLIC_PATH constant
+  - Fixed placeholder image generation to work correctly in subdirectory deployments
+  - Ensured proper URL construction for all links and forms
+
+- Created comprehensive documentation for subdirectory deployment
+  - Added detailed Subdirectory_Deployment_Configuration_Checklist.md
+  - Documented all required configuration steps for Apache and Nginx
+  - Provided troubleshooting guidance for common deployment issues
+  - Included examples of correct and incorrect path handling approaches
+  - Created step-by-step instructions for server setup and configuration
+
+
 #### April 5, 2025
 *Config Directory Relocation for Enhanced Security*
 
@@ -600,6 +656,13 @@ The authentication system has been optimized with a centralized configuration ap
   - Implemented Tailwind forms plugin for improved form styling
   - Streamlined build process with optimized CSS output
 - ✅ Merge shared Javascript of edit.php and add.php in a dedicated js file
+- ✅ Subdirectory Deployment and Routing Implementation (April 13, 2025)
+  - Implemented comprehensive subdirectory deployment support
+  - Enhanced application architecture with modern routing patterns
+  - Improved path handling across the application
+  - Created a dedicated 404 handler with proper redirection
+  - Fixed all hardcoded paths throughout the application
+  - Created comprehensive documentation for subdirectory deployment
 
 ### Planned Improvements
 
@@ -620,7 +683,7 @@ The authentication system has been optimized with a centralized configuration ap
 - ~~Check for existing user before submitting the form in add.php form~~
 - ~~List every Php and remove unused functions~~
 - ~~Merge shared Javascript of edit.php and add.php in a dedicated js file~~
-- Set a customizable path and folder name to set up the application access to a subdirectory like /public/staffdirectory and could configured on any kind of Apache server with locked configuration
+- ~~Set a customizable path and folder name to set up the application access to a subdirectory like /public/staffdirectory and could configured on any kind of Apache server with locked configuration~~
 - Add internationalization support (FR/EN translation files)
 - Create a favicon
 - Improve unused placeholder images management to remove them when not needed either by programming a folder cleanup once a day and/or by using temporary images when editing settings or creating/editing users

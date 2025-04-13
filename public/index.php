@@ -18,6 +18,22 @@ $departments = get_active_department_names($conn);
 $companies = get_active_company_names($conn);
 ?>
 
+<?php if (isset($_GET['not_found']) && $_GET['not_found'] == '1'): ?>
+    <!-- 404 Message for redirected not found pages -->
+    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="ri-error-warning-line text-yellow-400 text-xl"></i>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-yellow-700">
+                    The page you were looking for could not be found. You have been redirected to the Staff Directory.
+                </p>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
+
 <!-- Page Title Styling: mb-6, text-gray-700, font-thin -->
 <h1 class="page-title mb-6 text-gray-700 font-thin text-4xl">Staff Directory</h1>
 
@@ -100,7 +116,7 @@ $companies = get_active_company_names($conn);
                     <?php if (!empty($staff['company'])): ?>
                     <div class="staff-company flex items-center mb-1">
                         <?php if (!empty($staff['company_logo'])): ?>
-                            <img src="<?php echo htmlspecialchars($staff['company_logo']); ?>" alt="<?php echo htmlspecialchars($staff['company']); ?> logo" class="company-logo max-h-6 max-w-12 mr-2 object-contain">
+                            <img src="<?php echo url(htmlspecialchars($staff['company_logo'])); ?>" alt="<?php echo htmlspecialchars($staff['company']); ?> logo" class="company-logo max-h-6 max-w-12 mr-2 object-contain">
                         <?php endif; ?>
                         <span class="company-name text-sm text-gray-500 font-light"><?php echo htmlspecialchars($staff['company']); ?></span>
                     </div>

@@ -67,7 +67,8 @@ define('ADMIN_PASSWORD_HASH', password_hash($admin_password, PASSWORD_ALGO));
 // =============================================
 
 // Default return URL after login
-define('DEFAULT_RETURN_URL', '/admin/index.php');
+// Include APP_BASE_URI if it's defined, otherwise use a relative path
+define('DEFAULT_RETURN_URL', defined('APP_BASE_URI') ? APP_BASE_URI . '/admin/index.php' : '/staff-directory/admin/index.php');
 
 // URL param to trigger login modal
 define('LOGIN_TRIGGER_PARAM', 'login=required');

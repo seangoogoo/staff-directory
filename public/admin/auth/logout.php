@@ -3,6 +3,9 @@
  * Logout handler
  */
 
+// Include bootstrap to ensure constants are defined
+require_once __DIR__ . '/../../includes/bootstrap.php';
+
 // Send cache control headers to prevent caching
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
@@ -30,5 +33,5 @@ ob_clean();
 usleep(10000); // 10ms pause
 
 // Redirect to the homepage with a logout message
-header("Location: /?logout=success&t=" . time());
+header("Location: " . url('') . "?logout=success&t=" . time());
 exit;

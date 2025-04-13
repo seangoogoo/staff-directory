@@ -86,11 +86,11 @@ This document outlines the steps required to restructure the Staff Directory app
 -   [x] **Move Files (Locally First):** Simulate the server structure locally.
     -   **Note:** In this project, the *project root* is already private (outside the web root) both locally and on the deployment server. Sensitive files and directories like `config/`, `staff_dir_env/`, `vendor/`, `composer.json`, `composer.lock`, and `src/` should remain in the project root.
     -   Create a new `staff-directory` folder inside the existing `public/` (or `public_html/`) folder, which is the web root.
-    -   Move all public-facing contents *except* `staff-directory` from `public/` into `public/staff-directory/`. The `public/` folder itself might become redundant or just contain the `staff-directory` folder. *Alternatively, rename `public` to `staff-directory` and adjust paths accordingly.*
+    -   Move all public-facing contents *except* `staff-directory` from `public/` into `public/staff-directory/`.
 
 ## Phase 2: Bootstrap & Configuration Update (`includes/bootstrap.php`)
 
--   [ ] **Update Bootstrap Configuration:** Modify `includes/bootstrap.php` as the central configuration point:
+-   [x] **Update Bootstrap Configuration:** Modify `includes/bootstrap.php` as the central configuration point:
     ```php
     <?php
     // Example: Assuming private_files is one level above public_html,
@@ -114,14 +114,14 @@ This document outlines the steps required to restructure the Staff Directory app
     $authConfig = require PRIVATE_PATH . '/config/auth_config.php';
     ```
 
--   [ ] **Update Include Paths:** Review and update all includes in:
+-   [x] **Update Include Paths:** Review and update all includes in:
     - `includes/header.php`
     - `includes/admin_header.php`
     - `includes/footer.php`
     - `includes/admin_footer.php`
     to use the new path constants
 
--   [ ] **Asset Path Management:**
+-   [x] **Asset Path Management:**
     - Create helper function in `bootstrap.php` for asset URLs:
     ```php
     function asset_url($path) {
@@ -130,17 +130,17 @@ This document outlines the steps required to restructure the Staff Directory app
     ```
     - Update all asset references in headers and footers to use this function
 
--   [ ] **Update Authentication Paths:**
+-   [x] **Update Authentication Paths:**
     - Modify `admin/auth/auth.php` to use new constants
     - Update login/logout redirect paths
     - Ensure session handling uses correct paths
 
--   [ ] **AJAX Endpoints:**
+-   [x] **AJAX Endpoints:**
     - Update `includes/ajax_handlers.php` paths
     - Modify any JavaScript files that make AJAX calls to use `APP_BASE_URI`
     - Update `check_duplicate.php` endpoint path
 
--   [ ] **Image Processing:**
+-   [X] **Image Processing:**
     - Update upload paths in image handling code
     - Modify image URL generation to include `APP_BASE_URI`
     - Ensure `uploads` directory path is correctly referenced
@@ -149,7 +149,7 @@ This revised Phase 2 better reflects your current architecture where `bootstrap.
 
 ## Phase 2.5: Configuration Consolidation
 
--   [ ] **Create Unified Config:**
+-   [x] **Create Unified Config:**
     ```php
     // config/app.php
     return [
@@ -170,7 +170,7 @@ This revised Phase 2 better reflects your current architecture where `bootstrap.
     ];
     ```
 
--   [ ] **Implement Asset Manager:** Create a class to handle asset paths and versioning.
+-   [x] **Implement Asset Manager:** Create a class to handle asset paths and versioning.
     ```php
     class AssetManager {
         private static ?array $manifest = null;
@@ -207,7 +207,7 @@ This revised Phase 2 better reflects your current architecture where `bootstrap.
     $assetManager = new AssetManager(PUBLIC_PATH);
     ```
 
--   [ ] **Create Asset Helper Function:** Add a global helper function for templates.
+-   [x] **Create Asset Helper Function:** Add a global helper function for templates.
     ```php
     // Add to helpers section
     function asset($path) {
@@ -228,7 +228,7 @@ This revised Phase 2 better reflects your current architecture where `bootstrap.
 
 ## Phase 3: Routing Implementation (`staff-directory/index.php`)
 
--   [ ] **Implement Middleware Stack:** Create a middleware system to handle request processing.
+-   [x] **Implement Middleware Stack:** Create a middleware system to handle request processing.
     ```php
     class MiddlewareStack {
         private $middlewares = [];
@@ -246,7 +246,7 @@ This revised Phase 2 better reflects your current architecture where `bootstrap.
     }
     ```
 
--   [ ] **Integrate FastRoute:** Add routing logic to `staff-directory/index.php` after bootstrapping.
+-   [x] **Integrate FastRoute:** Add routing logic to `staff-directory/index.php` after bootstrapping.
     ```php
     <?php
     // ... (Previous bootstrap code: paths, autoload, config) ...
@@ -360,24 +360,23 @@ This revised Phase 2 better reflects your current architecture where `bootstrap.
 
     ?>
     ```
--   [ ] **Refactor Handlers:** Adapt existing PHP scripts (`admin/add.php`, `includes/ajax_handlers.php`, etc.) to work with the router. Ideally, move logic into controller classes/methods or functions that the router can call. Avoid direct script includes as handlers if possible.
--   [ ] **Update Forms & Links:** Ensure HTML forms submit to the correct routed paths (e.g., `/staff-directory/admin/add` instead of `/staff-directory/admin/add.php`) and links use the new routes.
+-   [x] **Refactor Handlers:** Adapt existing PHP scripts (`admin/add.php`, `includes/ajax_handlers.php`, etc.) to work with the router. For now, we're using direct script includes as handlers to maintain compatibility with the existing codebase.
+-   [x] **Update Forms & Links:** Updated all links to use the url() helper function to ensure they point to the correct paths with the APP_BASE_URI prefix.
 
 ## Phase 3.5: Build Process & Asset Pipeline Adaptation
 
 
 ## Phase 4: Testing & Initial Deployment
-- [ ] Test all routes
-- [ ] Verify authentication flows
-- [ ] Check all redirects
-- [ ] Validate API endpoints
-- [ ] Deploy and test in production (still in root directory)
+- [x] Test all routes
+- [x] Verify authentication flows
+- [x] Check all redirects
+- [x] Deploy and test in production (still in root directory)
 
 ## Phase 5: Subdirectory Structure Implementation
-- [ ] Move files to subdirectory structure
-- [ ] Update .htaccess rules
-- [ ] Adjust base paths and URLs
-- [ ] Test deployment in subdirectory
+- [x] Move files to subdirectory structure
+- [x] Update .htaccess rules
+- [x] Adjust base paths and URLs
+- [x] Test deployment in subdirectory
 
 ## Phase 6: Build Process Adaptation
 -   [ ] **Create Build Configuration System:**

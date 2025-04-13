@@ -4,22 +4,26 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Require autoloader
-require_once __DIR__ . '/../../vendor/autoload.php';
+// Define base paths first, before using them
+if (!defined('BASE_PATH')) {
+    // Project root is two levels up from the includes directory
+    // /project-root/public/staff-directory/includes -> /project-root
+    define('BASE_PATH', dirname(__DIR__, 2)); // Project root
+    define('PRIVATE_PATH', BASE_PATH); // Private files directory (same as BASE_PATH in this setup)
+    // define('PUBLIC_PATH', __DIR__ . '/../'); // Path to the current 'staff-directory' folder
+    define('PUBLIC_PATH', BASE_PATH . '/public');
+    // define('APP_BASE_URI', '/staff-directory'); // The base URI for routing
+    define('APP_BASE_URI', ''); // The base URI for routing
+}
+
+// Require autoloader - now PRIVATE_PATH is defined
+require_once PRIVATE_PATH . '/vendor/autoload.php';
 
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Processor\IntrospectionProcessor;
 use Monolog\Formatter\LineFormatter;
-
-// Define base paths if not already defined
-if (!defined('BASE_PATH')) {
-    define('BASE_PATH', dirname(__DIR__, 2)); // Project root
-    define('PRIVATE_PATH', BASE_PATH); // Currently same as BASE_PATH
-    define('PUBLIC_PATH', __DIR__ . '/../'); // Current public directory
-    define('APP_BASE_URI', ''); // Empty for now, will be '/staff-directory' later
-}
 
 // Include auth system first to setup authentication constants
 require_once PUBLIC_PATH . '/admin/auth/auth.php';
@@ -57,6 +61,10 @@ if ($_ENV['DEV_MODE'] === 'true') {
 // Load core dependencies
 require_once PRIVATE_PATH . '/config/database.php';
 require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/AssetManager.php';
+
+// Initialize AssetManager
+$assetManager = new AssetManager(PUBLIC_PATH);
 
 // Make logger available globally
 global $logger;

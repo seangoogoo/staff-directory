@@ -24,6 +24,15 @@ AddDefaultCharset UTF-8
   ExpiresDefault "access plus 2 days"
 </IfModule>
 
+
+# Route all requests through the front controller
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ front-controller.php [L,QSA]
+
+# Set 404 error document - make sure to include the full path with subdirectory
+ErrorDocument 404 /front-controller.php
+
 # Protect against directory listing
 Options -Indexes
 
@@ -32,6 +41,3 @@ Options -Indexes
   Order Allow,Deny
   Deny from all
 </Files>
-
-# Handle 404 errors
-ErrorDocument 404 /index.php

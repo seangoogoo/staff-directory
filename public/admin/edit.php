@@ -47,18 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $profile_picture = $current_staff['profile_picture']; // Keep existing by default
 
-        // Check if image should be deleted
-        if (isset($_POST['delete_image']) && $_POST['delete_image'] == '1') {
-            if ($profile_picture) { // Only delete if there is a picture
-                // --- Revert to inline unlink logic from backup ---
-                $old_picture_path = __DIR__ . "/../uploads/" . basename($profile_picture); // Use basename for security
-                if (file_exists($old_picture_path)) {
-                    @unlink($old_picture_path); // Use @ to suppress errors if unlink fails, though logging might be better
-                }
-                // --- End revert ---
-            }
-            $profile_picture = NULL; // Set to NULL in DB
-        } else if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['size'] > 0) {
+        // First check if new profile picture is uploaded - this takes precedence over delete flag
+        if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['size'] > 0) {
             // Handle new picture upload
             $upload_result = upload_profile_picture($_FILES['profile_picture']);
 
@@ -66,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Delete old picture if it exists before assigning new one
                 if ($profile_picture) {
                      // --- Revert to inline unlink logic from backup ---
-                    $old_picture_path = __DIR__ . "/../uploads/" . basename($profile_picture); // Use basename for security
+                    $old_picture_path = PUBLIC_PATH . "/uploads/" . basename($profile_picture); // Use basename for security
                     if (file_exists($old_picture_path)) {
                         @unlink($old_picture_path);
                     }
@@ -79,6 +69,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header("Location: edit.php?id=" . $id);
                 exit;
             }
+        }
+        // Then check if image should be deleted (only if no new upload)
+        else if (isset($_POST['delete_image']) && $_POST['delete_image'] == '1') {
+            if ($profile_picture) { // Only delete if there is a picture
+                // --- Revert to inline unlink logic from backup ---
+                $old_picture_path = PUBLIC_PATH . "/uploads/" . basename($profile_picture); // Use basename for security
+                if (file_exists($old_picture_path)) {
+                    @unlink($old_picture_path); // Use @ to suppress errors if unlink fails, though logging might be better
+                }
+                // --- End revert ---
+            }
+            $profile_picture = NULL; // Set to NULL in DB
         }
         // If no new file and delete not checked, $profile_picture remains the current one
 
@@ -103,8 +105,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (isset($_SESSION['form_data'])) {
                  unset($_SESSION['form_data']);
             }
-            // Clear placeholder images if relevant settings changed (optional but good practice)
-            // clear_placeholder_images(); // Consider if needed
             set_session_message('success_message', "Staff member updated successfully.");
             header("Location: index.php?updated=1"); // Keep param for now, but session msg is better
             exit;
@@ -217,7 +217,7 @@ require_once '../includes/admin_header.php';
             <label class="block text-sm font-medium text-gray-700 mb-1">Profile Picture</label>
 
             <!-- Visually hidden file input -->
-            <input type="file" id="profile_picture" name="profile_picture" accept="image/*" class="sr-only">
+            <input type="file" id="profile_picture" name="profile_picture" accept="image/*" class="sr-only dropzone-input">
 
             <!-- Hidden input to signal deletion -->
             <input type="hidden" name="delete_image" id="delete_image_flag" value="0">
@@ -256,19 +256,21 @@ require_once '../includes/admin_header.php';
                  <div class="relative">
                      <img id="image-preview"
                           src="<?php echo $current_image_url; ?>"
+                          data-default-image="<?php echo asset('images/add-picture.svg'); ?>"
                           alt="Current Picture"
                           class="w-[150px] h-[150px] rounded-lg bg-gray-100 object-cover">
 
-                     <?php if ($has_real_picture): // Only show delete BUTTON if there was a real picture originally ?>
-                         <button type="button"
-                                 id="remove-image-button"
-                                 class="absolute -top-2 -right-2 bg-gray-800 text-white rounded-full p-1.5 shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                                 title="Remove current picture">
-                             <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                             </svg>
-                         </button>
-                     <?php endif; ?>
+                     <button type="button"
+                             id="remove-image"
+                             class="absolute -top-2 -right-2 bg-gray-800 text-white rounded-full p-1.5 shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                             data-update-field="delete_image"
+                             data-update-value="1"
+                             style="display: <?php echo $has_real_picture ? 'flex' : 'none'; ?>"
+                             title="Remove current picture">
+                         <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                         </svg>
+                     </button>
                  </div>
              </div>
 
@@ -287,26 +289,12 @@ require_once '../includes/admin_header.php';
 <!-- Include shared JavaScript utilities -->
 <script src="../assets/js/staff-form-utils.js"></script>
 
-<!-- Add JavaScript for image preview and department color -->
+<!-- JavaScript for department color preview -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Get DOM elements
     const departmentSelect = document.getElementById('department_id')
     const colorPreview = document.getElementById('department-color-preview')
-    const imagePreview = document.getElementById('image-preview')
-    const firstName = document.getElementById('first_name')
-    const lastName = document.getElementById('last_name')
-    const fileInput = document.getElementById('profile_picture')
-    const dropzone = document.getElementById('dropzone')
-    const removeImageButton = document.getElementById('remove-image-button')
-    const deleteImageFlagInput = document.getElementById('delete_image_flag')
-
-    // Default image when no user image is available
-    const defaultImagePath = '../assets/images/add-picture.svg'
-
-    // --- Constants for initial state ---
-    const initialHasRealPicture = <?php echo $has_real_picture ? 'true' : 'false'; ?> // If the staff member *originally* had a picture
-    const initialImageUrl = "<?php echo get_staff_image_url($staff, '150x150'); ?>" // Original image/placeholder URL
 
     // Set initial department color preview if a department is selected
     const initialDeptId = "<?php echo isset($form_data['department_id']) ? $form_data['department_id'] : ''; ?>"
@@ -317,83 +305,13 @@ document.addEventListener('DOMContentLoaded', function() {
         updateDepartmentColorPreview(departmentSelect, colorPreview)
     }
 
-    // Initial image src is already set correctly by PHP
-    // Ensure delete checkbox state is correct if form was repopulated
-    const initialDeleteFlagValue = "<?php echo isset($form_data['delete_image']) && $form_data['delete_image'] == '1' ? '1' : '0'; ?>"
-    deleteImageFlagInput.value = initialDeleteFlagValue
-    if (initialDeleteFlagValue === '1') {
-        // If delete was checked on error, ensure placeholder is shown
-        // and hide the remove button if it exists
-        updateImagePreviewDisplay(getPlaceholderImageUrl(firstName, lastName, departmentSelect, defaultImagePath))
-        if (removeImageButton) {
-            removeImageButton.style.display = 'none'
-        }
-    }
-
-    // --- Event Listeners ---
+    // Update color preview when department changes
     departmentSelect.addEventListener('change', function() {
         updateDepartmentColorPreview(departmentSelect, colorPreview)
-        // If showing placeholder (no initial real pic OR delete checked), update placeholder color
-        const deleteFlagIsSet = deleteImageFlagInput.value === '1'
-        const isShowingPlaceholder = !initialHasRealPicture || deleteFlagIsSet
-        if (isShowingPlaceholder && fileInput.files.length === 0) {
-            updateImagePreviewDisplay(getPlaceholderImageUrl(firstName, lastName, departmentSelect, defaultImagePath))
-        }
     })
 
-    function updatePlaceholderOnNameChange() {
-        const deleteFlagIsSet = deleteImageFlagInput.value === '1'
-        const isShowingPlaceholder = !initialHasRealPicture || deleteFlagIsSet
-        if (isShowingPlaceholder && fileInput.files.length === 0) {
-            updateImagePreviewDisplay(getPlaceholderImageUrl(firstName, lastName, departmentSelect, defaultImagePath))
-        }
-    }
-
-    firstName.addEventListener('input', updatePlaceholderOnNameChange)
-    lastName.addEventListener('input', updatePlaceholderOnNameChange)
-
-    fileInput.addEventListener('change', function(e) {
-        const file = e.target.files[0]
-        if (!handleFileSelection(file, imagePreview)) {
-             // If file selection was cleared or invalid...
-            const deleteFlagIsSet = deleteImageFlagInput.value === '1'
-            if (deleteFlagIsSet) {
-                 // If delete IS checked, ensure placeholder is shown
-                 updateImagePreviewDisplay(getPlaceholderImageUrl(firstName, lastName, departmentSelect, defaultImagePath))
-            } else {
-                 // Otherwise, show original image if it existed, otherwise placeholder
-                 updateImagePreviewDisplay(initialHasRealPicture ? initialImageUrl : getPlaceholderImageUrl(firstName, lastName, departmentSelect, defaultImagePath))
-                 // Make sure remove button is visible again if applicable
-                 if (initialHasRealPicture && removeImageButton) {
-                     removeImageButton.style.display = 'block'
-                 }
-            }
-        } else {
-            // If file selection succeeded, show remove button if it exists
-            if (removeImageButton) {
-                removeImageButton.style.display = 'block'
-            }
-        }
-    })
-
-    // Listener for the remove image button
-    if (removeImageButton) {
-        removeImageButton.addEventListener('click', function(e) {
-            e.preventDefault() // Prevent any default button action
-            deleteImageFlagInput.value = '1' // Set flag to signal deletion
-            updateImagePreviewDisplay(getPlaceholderImageUrl(firstName, lastName, departmentSelect, defaultImagePath)) // Show placeholder
-            fileInput.value = '' // Clear any selected file in the hidden input
-            removeImageButton.style.display = 'none' // Hide the button itself
-        })
-    }
-
-    // Helper function for updating image display
-    function updateImagePreviewDisplay(imageUrl) {
-        imagePreview.src = imageUrl
-    }
-
-    // Set up drag and drop
-    setupDragAndDrop(dropzone, fileInput, imagePreview)
+    // Note: All image preview, dropzone, and remove button functionality is now handled by main.js
+    // The remove button has been updated to use the standard ID and data attributes
 })
 </script>
 

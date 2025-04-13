@@ -14,7 +14,7 @@ if (session_status() === PHP_SESSION_NONE) {
 if (!defined('AUTH_SYSTEM')) {
     define('AUTH_SYSTEM', true);
 }
-require_once __DIR__ . '/../../../config/auth_config.php';
+require_once PRIVATE_PATH . '/config/auth_config.php';
 
 // Check if login is required via URL parameter or session flag
 $login_param = isset($_GET['login']) ? $_GET['login'] : '';
@@ -126,7 +126,8 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault()
 
             // First check if the user is already logged in
-            fetch('/admin/auth/check_login.php', {
+            // Use APP_BASE_URI prefix since we're in a subdirectory
+            fetch(window.APP_BASE_URI + '/admin/auth/check_login.php', {
                 method: 'GET',
                 credentials: 'same-origin',
                 cache: 'no-store',
@@ -138,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.logged_in) {
                     // User is already logged in, redirect to admin area
-                    window.location.href = '/admin/index.php'
+                    window.location.href = window.APP_BASE_URI + '/admin/index.php'
                 } else {
                     // User is not logged in, show the login modal
                     openLoginModal()
@@ -181,8 +182,9 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('password', password)
             formData.append('returnUrl', returnUrl)
 
-            // Send login request
-            fetch('/admin/auth/login.php', {
+            // Send login request directly to login.php
+            // Use APP_BASE_URI prefix since we're in a subdirectory
+            fetch(window.APP_BASE_URI + '/admin/auth/login.php', {
                 method: 'POST',
                 body: formData,
                 credentials: 'same-origin',
@@ -192,7 +194,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     // Redirect directly to admin area or return URL
-                    window.location.href = returnUrl || '/admin/index.php'
+                    // The returnUrl should already have the APP_BASE_URI prefix from the server
+                    window.location.href = data.returnUrl || (window.APP_BASE_URI + '/admin/index.php')
                 } else {
                     // Show error message
                     loginAlert.textContent = data.message || 'Login failed. Please try again.'
