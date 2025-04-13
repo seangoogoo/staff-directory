@@ -13,6 +13,7 @@ require_once __DIR__ . '/bootstrap.php';
     $frontend_title = $app_settings['frontend_title']; // Default is already provided by load_app_settings
     ?>
     <title><?php echo htmlspecialchars($frontend_title); ?></title>
+    <link rel="icon" href="<?php echo asset('favicon.ico'); ?>">
     <link href="<?php echo asset('css/styles.css'); ?>" rel="stylesheet">
     <!-- Make APP_BASE_URI available to JavaScript -->
     <script>

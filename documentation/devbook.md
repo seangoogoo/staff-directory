@@ -684,8 +684,8 @@ The authentication system has been optimized with a centralized configuration ap
 - ~~List every Php and remove unused functions~~
 - ~~Merge shared Javascript of edit.php and add.php in a dedicated js file~~
 - ~~Set a customizable path and folder name to set up the application access to a subdirectory like /public/staffdirectory and could configured on any kind of Apache server with locked configuration~~
+- ~~Create a favicon~~
 - Add internationalization support (FR/EN translation files)
-- Create a favicon
 - Improve unused placeholder images management to remove them when not needed either by programming a folder cleanup once a day and/or by using temporary images when editing settings or creating/editing users
 - Install example app. on staffdirectory.jensen-siu.net
 
