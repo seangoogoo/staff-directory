@@ -39,6 +39,7 @@ $admin_title = $app_settings['admin_title']; // Default is already provided by l
         };
     </script>
     <script src="<?php echo asset('js/i18n.js'); ?>"></script>
+    <script src="<?php echo asset('js/breakpoints.js'); ?>"></script>
     <script src="<?php echo asset('js/main.js'); ?>"></script>
 </head>
 <body class="antialiased font-sans bg-gray-100 text-gray-900 flex flex-col min-h-screen">
@@ -115,7 +116,8 @@ $admin_title = $app_settings['admin_title']; // Default is already provided by l
 
         // Function to check screen size and set appropriate menu state
         function checkScreenSize() {
-            if (window.innerWidth < 1180) {
+            // Use the Breakpoints utility to get the nav breakpoint value from CSS
+            if (Breakpoints.below('nav')) {
                 // When below nav breakpoint, hide the menu
                 adminNav.classList.add('hidden')
             } else {
@@ -139,7 +141,7 @@ $admin_title = $app_settings['admin_title']; // Default is already provided by l
             const isClickInsideNav = adminNav.contains(event.target)
             const isClickOnButton = mobileMenuButton.contains(event.target)
 
-            if (!isClickInsideNav && !isClickOnButton && !adminNav.classList.contains('hidden') && window.innerWidth < 1180) {
+            if (!isClickInsideNav && !isClickOnButton && !adminNav.classList.contains('hidden') && Breakpoints.below('nav')) {
                 adminNav.classList.add('hidden')
             }
         })

@@ -32,14 +32,23 @@ A web-based staff directory application that allows administrators to manage sta
 - Image Storage: Local upload folder
 - Logging: Monolog for structured logging
 - Internationalization: Custom i18n system with language files
+- Development Tools: BrowserSync for live reloading, Concurrently for parallel task execution
 
 ## Installation
+
+### Local Development
 1. Clone the repository
 2. Import the database schema from `database/staff_dir.sql`
 3. Configure database connection in `config/database.php`
 4. Set up .env file for the authentication of the admin area
 5. Ensure the uploads directory is writable by the web server
 6. For subdirectory deployment, follow the detailed instructions in `documentation/Subdirectory_Deployment_Configuration_Checklist.md`
+
+### Remote Server Deployment (FTP)
+For deploying to a remote server with only FTP and phpMyAdmin access:
+1. Use the clean database schema in `database/staff_dir_clean.sql` (no example data)
+2. Follow the detailed instructions in `documentation/FTP_Deployment_Guide.md`
+3. Use the checklist in `documentation/Minimal_Directory_Structure.md` to ensure all required files are uploaded
 
 ## Directory structure
 The application follows a secure directory structure:
@@ -68,8 +77,10 @@ The application follows a secure directory structure:
 │   │   │   ├── `images/`           # Image assets
 │   │   │   ├── `js/`               # JavaScript files
 │   │   │   │   ├── `admin-filters.js` # Admin-specific filtering functionality
+│   │   │   │   ├── `breakpoints.js` # Utility for accessing Tailwind breakpoints in JavaScript
 │   │   │   │   ├── `filter-core.js` # Core filtering logic shared between admin/frontend
 │   │   │   │   ├── `frontend-filters.js` # Frontend-specific filtering functionality
+│   │   │   │   ├── `i18n.js`       # Internationalization utilities
 │   │   │   │   ├── `staff-form-utils.js` # Shared utilities for staff add/edit forms
 │   │   │   │   └── `main.js`       # Main application JavaScript
 │   │   │   └── `vendor/`           # Third-party libraries
@@ -107,6 +118,8 @@ The application follows a secure directory structure:
 │   ├── `env_loader.php`            # Environment variables loader
 │   └── `languages.php`             # Language configuration
 ├── `src/`                          # Source files for development
+│   ├── `build-tools/`              # Build process utilities
+│   │   └── `postcss-tailwind-to-css-vars.js` # PostCSS plugin to convert Tailwind breakpoints to CSS variables
 │   ├── `fonts/`                    # Original font files
 │   │   ├── `Outfit/`               # Outfit variable font
 │   │   └── `remixicon/`            # Remix icon font files
@@ -142,6 +155,7 @@ The application follows a secure directory structure:
 ├── `package-lock.json`             # NPM package lock file
 ├── `composer.json`                 # Composer configuration
 ├── `composer.lock`                 # Composer lock file
+├── `postcss.config.js`             # PostCSS configuration
 ├── `tailwind.config.js`            # Tailwind CSS configuration
 └── `.gitignore`                    # Git ignore rules
 ```
@@ -224,4 +238,118 @@ The application supports multiple languages through a comprehensive internationa
 - **Supported Languages**: Currently supports English (en) and French (fr), with the ability to add more languages
 
 For more details about the internationalization system, see the documentation in `documentation/internationalization.md`.
+
+## Tailwind CSS Integration
+
+This application uses Tailwind CSS for styling, integrated with SCSS for additional custom styles.
+
+### Setup and Installation
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. The project uses the following Tailwind-related packages:
+   - `tailwindcss`: Core Tailwind CSS framework
+   - `@tailwindcss/forms`: Plugin for form element styling
+   - `autoprefixer`: For adding vendor prefixes to CSS
+
+### Build Process
+
+The build process combines SCSS and Tailwind CSS:
+
+1. SCSS files are compiled from `src/input.scss` to an intermediate CSS file
+2. Tailwind processes the intermediate file to generate the final CSS
+3. Font files are copied from source to the public directory
+
+```bash
+# Development mode with hot reloading
+npm run dev
+
+# Production build
+npm run build
+```
+
+### Development Tools
+
+The project uses several tools to enhance the development experience:
+
+- **browser-sync**: Automatically refreshes the browser when files change, providing real-time feedback during development. It's configured to proxy the PHP development server and watch for changes in PHP files and CSS.
+
+- **concurrently**: Allows running multiple commands simultaneously in a single terminal window. In this project, it's used to run the PHP server, SCSS compiler, Tailwind watcher, and browser-sync in parallel during development.
+
+These tools are configured in the `dev` script in `package.json` and work together to create a seamless development experience:
+
+```json
+"dev": "concurrently \"mkdir -p public/assets/fonts/Outfit && cp src/fonts/Outfit/Outfit-VariableFont_wght.ttf public/assets/fonts/Outfit/ && mkdir -p public/assets/fonts/remixicon && cp -r src/fonts/remixicon/* public/assets/fonts/remixicon/\" \"php -S localhost:8000 -t public\" \"sass --watch src/input.scss:src/intermediate.css\" \"npx tailwindcss -i ./src/intermediate.css -o ./public/assets/css/styles.css --watch\" \"browser-sync start --proxy localhost:8000 --files 'public/**/*.php, public/assets/css/styles.css' --no-notify\""
+```
+
+This script performs the following tasks in parallel:
+1. Copies font files to the public directory
+2. Starts a PHP development server on port 8000
+3. Watches for changes in SCSS files and compiles them to the intermediate CSS
+4. Watches for changes in the intermediate CSS and processes it with Tailwind
+5. Starts browser-sync to automatically refresh the browser when files change
+
+### Configuration
+
+- **Tailwind Config**: `tailwind.config.js` contains custom configuration:
+  - Content paths: Scans PHP files for class usage
+  - Custom fonts: Outfit (sans-serif) and Remixicon
+  - Custom breakpoints: Including a special 'nav' breakpoint
+  - Plugins: @tailwindcss/forms for enhanced form styling
+
+- **SCSS Integration**: `src/input.scss` includes:
+  - Tailwind directives (@tailwind base, components, utilities)
+  - Custom font declarations
+  - Additional custom styles that extend Tailwind
+
+### Usage in Templates
+
+Tailwind utility classes are used directly in HTML/PHP templates:
+
+```html
+<div class="flex items-center justify-between p-4 bg-white rounded-lg shadow">
+  <!-- Content here -->
+</div>
+```
+
+### Customization
+
+To customize the Tailwind configuration:
+
+1. Edit `tailwind.config.js` to add custom colors, fonts, or extend existing themes
+2. Add custom styles in `src/input.scss` for styles that can't be achieved with utility classes
+3. Run the build process to apply changes
+
+### Best Practices
+
+- Use Tailwind utility classes for most styling needs
+- Create custom components using @apply in SCSS for reusable patterns
+- Keep the build process running during development for immediate feedback
+- Use the browser inspector to explore available Tailwind classes
+
+### Troubleshooting
+
+#### Common Issues
+
+1. **CSS changes not appearing:**
+   - Ensure the development server is running (`npm run dev`)
+   - Check browser console for errors
+   - Verify that browser-sync is connected and watching the correct files
+   - Try clearing your browser cache
+
+2. **Tailwind classes not being generated:**
+   - Make sure the class is used in one of the PHP files scanned by Tailwind
+   - Check the `content` path in `tailwind.config.js` to ensure it includes all necessary files
+   - Run a production build (`npm run build`) to see if the issue persists
+
+3. **Development server conflicts:**
+   - If port 8000 is already in use, modify the port in the `dev` script in `package.json`
+   - If browser-sync doesn't connect, check if another instance is already running
+
+4. **Font issues:**
+   - Ensure the font files are correctly copied to the public directory
+   - Check the font paths in `src/input.scss` to make sure they match the actual file locations
 

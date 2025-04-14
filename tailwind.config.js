@@ -19,7 +19,7 @@ module.exports = {
     },
     extend: {
       screens: {
-        'nav': '1180px', // Custom breakpoint for navigation text visibility
+        'nav': '1300px', // Custom breakpoint for navigation text visibility
       },
     },
   },

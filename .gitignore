@@ -26,8 +26,38 @@ npm-debug.log*
 node_modules/
 vendor/
 
-# Uploads directory (optional, uncommenting would exclude user uploads)
-uploads/
+# Uploads directory - exclude all files except specific ones we want to keep
+# Exclude all files in uploads directory
+public/uploads/*
+public/uploads/**/*
+
+# But keep these directories
+!public/uploads/
+!public/uploads/companies/
+!public/uploads/logos/
+!public/uploads/placeholders/
+
+# Keep default company SVG files
+!public/uploads/companies/environmental-company.svg
+!public/uploads/companies/healthcare-company.svg
+!public/uploads/companies/software-company.svg
+
+# Keep specific WebP images in the root of uploads
+!public/uploads/67e04c375208b.webp
+!public/uploads/67e04c5e081ac.webp
+!public/uploads/67e04d1f1f9e3.webp
+!public/uploads/67e06a48163fb.webp
+!public/uploads/67e04d5641b3f.webp
+!public/uploads/67e04c779f6e4.webp
+!public/uploads/67e04d3ab4ec5.webp
+!public/uploads/67e04d0e6a627.webp
+!public/uploads/67e06a33be855.webp
+!public/uploads/67e04cfc20a2f.webp
+!public/uploads/67e04c8ba6606.webp
+!public/uploads/67e04cd753f92.webp
+
+# Exclude macOS system files
+**/.DS_Store
 
 # Cached files
 *.cache

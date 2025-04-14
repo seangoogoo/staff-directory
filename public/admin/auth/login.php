@@ -49,9 +49,9 @@ try {
     $returnUrl = isset($_POST['returnUrl']) ? $_POST['returnUrl'] : DEFAULT_RETURN_URL;
 
     // Ensure the return URL has the APP_BASE_URI prefix if it's a relative URL
-    if (!empty($returnUrl) && $returnUrl[0] === '/' && strpos($returnUrl, APP_BASE_URI) !== 0) {
-        // Only add APP_BASE_URI if it's not already there and the URL is relative
-        if (strpos($returnUrl, 'http') !== 0) {
+    if (!empty($returnUrl) && $returnUrl[0] === '/' && !empty(APP_BASE_URI)) {
+        // Only add APP_BASE_URI if it's not empty and the URL is relative
+        if (strpos($returnUrl, 'http') !== 0 && strpos($returnUrl, APP_BASE_URI) !== 0) {
             $returnUrl = APP_BASE_URI . $returnUrl;
         }
     }

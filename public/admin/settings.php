@@ -330,7 +330,7 @@ function process_logo_visibility($post_data) {
 /**
  * Delete logo file
  *
- * @param string $logo_path Path to the logo file
+ * @param string $logo_path Path to the application custom logo file
  */
 function delete_logo_file($logo_path) {
     // Get absolute paths
@@ -795,18 +795,6 @@ require_once '../includes/admin_header.php';
 
 <!-- Placeholder Image Settings Section -->
 <div class="mb-10">
-
-    <?php if (!empty($success_message)): ?>
-        <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 border border-green-200 rounded-lg" role="alert">
-            <?php echo $success_message; ?>
-        </div>
-    <?php endif; ?>
-
-    <?php if (!empty($error_message)): ?>
-        <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 border border-red-200 rounded-lg" role="alert">
-            <?php echo $error_message; ?>
-        </div>
-    <?php endif; ?>
 
     <div class="bg-white p-6 rounded-lg shadow-sm">
         <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200"><?php echo __("placeholder_image_settings"); ?></h2>

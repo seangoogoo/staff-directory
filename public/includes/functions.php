@@ -10,6 +10,12 @@
 function url($path = '') {
     // Remove leading slash if present
     $path = ltrim($path, '/');
+
+    // When APP_BASE_URI is empty and no path is provided, return '/' instead of empty string
+    if (empty(APP_BASE_URI) && empty($path)) {
+        return '/';
+    }
+
     return APP_BASE_URI . ($path ? '/' . $path : '');
 }
 
