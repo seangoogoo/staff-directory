@@ -19,5 +19,11 @@ return [
     'routing' => [
         'cache' => false, // Caching disabled as it's not needed for this simple app
         'redirectUnmatchedToIndex' => true, // Preserve behavior of redirecting unexisting requests to index.php
+    ],
+    'i18n' => [
+        'enabled' => true,
+        'default_language' => 'en',
+        'available_languages' => ['en', 'fr'],
+        'auto_detect' => true,
     ]
 ];

@@ -63,8 +63,14 @@ require_once PRIVATE_PATH . '/config/database.php';
 require_once __DIR__ . '/functions.php';
 require_once __DIR__ . '/AssetManager.php';
 
+// Load language manager
+require_once __DIR__ . '/LanguageManager.php';
+
+// Initialize language manager (this will detect and set the current language)
+$languageManager = LanguageManager::getInstance();
+
 // Initialize AssetManager
 $assetManager = new AssetManager(PUBLIC_PATH);
 
-// Make logger available globally
-global $logger;
+// Make logger and language manager available globally
+global $logger, $languageManager;

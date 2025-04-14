@@ -47,7 +47,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form_result = null;
 
     // Determine which form was submitted and process it
-    if (isset($_POST['save_settings'])) {
+    if (isset($_POST['save_language_settings'])) {
+        // Process language settings form
+        $language = isset($_POST['app_language']) ? $_POST['app_language'] : 'en';
+
+        // Validate language
+        $supported_languages = supported_languages();
+        if (!isset($supported_languages[$language])) {
+            $language = 'en'; // Default to English if invalid
+        }
+
+        // Update app settings
+        $app_settings['app_language'] = $language;
+        update_settings_in_db(['app_language' => $language]);
+
+        // Set the language in the session
+        $_SESSION['app_language'] = $language;
+
+        // Set the language in a cookie for persistence
+        setcookie(
+            'app_language',
+            $language,
+            time() + (30 * 24 * 60 * 60), // 30 days
+            '/'
+        );
+
+        // Update the language manager
+        LanguageManager::getInstance()->setLanguage($language);
+
+        // Set session message
+        set_session_message('success_message', __("settings_saved"));
+
+        // Redirect to refresh page with new language
+        header('Location: settings.php');
+        exit;
+    } elseif (isset($_POST['save_settings'])) {
         // Process font settings form
         $form_result = process_form_submission('font', $_POST);
     }
@@ -65,6 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Process title reset form
         $form_result = process_form_submission('title_reset', $_POST);
     }
+    // Language settings are handled at the top of this if-else chain
 
     // Update app settings with form results if processing was successful
     if ($form_result && !empty($form_result['settings'])) {
@@ -147,7 +182,7 @@ function process_form_submission($form_type, $post_data, $files_data = []) {
             if (!$has_upload && !$has_removal) {
                 // Set initial success for visibility change if there's no other operation
                 $result['success'] = $visibility_result['success'];
-                $result['message'] = "Logo visibility settings saved successfully!";
+                $result['message'] = __("logo_visibility_saved");
             }
 
             // First check for file upload - this takes precedence over removal
@@ -563,6 +598,8 @@ function reset_title_settings() {
     return $result;
 }
 
+// Language settings processing has been moved to the main if-else block at the top of the file
+
 // Include the HTML header after all processing is done
 require_once '../includes/admin_header.php';
 
@@ -571,7 +608,7 @@ require_once '../includes/admin_header.php';
 <!-- Logo Settings Section -->
 <div class="mb-10 logo-section">
 
-    <h1 class="text-2xl font-semibold text-gray-900 mb-4">Settings</h1>
+    <h1 class="text-2xl font-semibold text-gray-900 mb-4"><?php echo __("settings"); ?></h1>
     <?php if (!empty($logo_success_message)): ?>
         <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 border border-green-200 rounded-lg" role="alert">
             <?php echo htmlspecialchars($logo_success_message); ?>
@@ -585,11 +622,11 @@ require_once '../includes/admin_header.php';
     <?php endif; ?>
 
     <div class="bg-white p-6 rounded-lg shadow-sm">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Logo Settings</h2>
+        <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200"><?php echo __("logo_settings"); ?></h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             <div>
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Logo Preview</h3>
+                <h3 class="text-lg font-medium text-gray-900 mb-4"><?php echo __("logo_preview"); ?></h3>
                 <div class="relative logo-preview border border-gray-200 p-4 rounded-md flex items-center justify-center bg-gray-50 h-48 w-full">
                         <?php if (!empty($app_settings['custom_logo_path'])): ?>
                         <img id="image-preview" src="<?php echo url(htmlspecialchars($app_settings['custom_logo_path'])); ?>" data-default-image="<?php echo asset('images/staff-directory-logo.svg'); ?>" alt="Custom Logo" class="max-h-full max-w-full">
@@ -601,7 +638,7 @@ require_once '../includes/admin_header.php';
                             data-update-value="1"
                             style="display: <?php echo !empty($app_settings['custom_logo_path']) ? 'flex' : 'none'; ?>"
                             class="absolute -top-2 -right-2 bg-gray-600 text-white rounded-full h-6 w-6 flex items-center justify-center hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                        <span class="sr-only">Remove logo</span>
+                        <span class="sr-only"><?php echo __("remove_logo"); ?></span>
                         <i class="ri-close-line text-sm"></i>
                     </button>
                 </div>
@@ -610,7 +647,7 @@ require_once '../includes/admin_header.php';
             <div>
                 <form method="post" action="" enctype="multipart/form-data" id="logo-form">
                     <div class="mb-3">
-                        <label for="custom_logo" class="block text-sm font-medium text-gray-700 mt-4 mb-2">Custom Logo:</label>
+                        <label for="custom_logo" class="block text-sm font-medium text-gray-700 mt-4 mb-2"><?php echo __("custom_logo"); ?>:</label>
                         <input type="file" name="custom_logo" id="custom_logo" class="hidden dropzone-input" accept="image/*">
                         <div id="logo-dropzone" class="dropzone mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md cursor-pointer hover:border-indigo-500 hover:bg-gray-50 transition-colors duration-150">
                             <div class="space-y-1 text-center w-full">
@@ -620,14 +657,14 @@ require_once '../includes/admin_header.php';
                                 </svg>
                                 <div class="flex text-sm text-gray-600 justify-center">
                                     <span class="relative rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
-                                        Drag & drop your logo here
+                                        <?php echo __("drag_drop_logo"); ?>
                                     </span>
                                 </div>
-                                <p class="text-xs text-gray-500">or click to browse files (JPG, PNG, GIF, SVG, WEBP only)</p>
+                                <p class="text-xs text-gray-500"><?php echo __("logo_file_types"); ?></p>
                                 <div class="dropzone-file-info text-xs text-gray-500 font-medium mt-1" style="display: none;"></div>
                             </div>
                         </div>
-                        <p class="mt-2 text-xs text-gray-500">Recommended size: 50x50px. Max size: 2MB.</p>
+                        <p class="mt-2 text-xs text-gray-500"><?php echo __("logo_size_recommendation"); ?></p>
                     </div>
 
                     <!-- Hide logo option -->
@@ -639,8 +676,8 @@ require_once '../includes/admin_header.php';
                                        <?php echo (isset($app_settings['show_logo']) && $app_settings['show_logo'] === '1') ? 'checked' : ''; ?>>
                             </div>
                             <div class="ml-3 text-sm">
-                                <label for="show_logo" class="font-medium text-gray-700">Show logo in header</label>
-                                <p class="text-gray-500">Uncheck to hide both custom and default logo</p>
+                                <label for="show_logo" class="font-medium text-gray-700"><?php echo __("show_logo_in_header"); ?></label>
+                                <p class="text-gray-500"><?php echo __("hide_logo_help"); ?></p>
                             </div>
                         </div>
                     </div>
@@ -656,11 +693,52 @@ require_once '../includes/admin_header.php';
             <div class="flex space-x-4">
 
                 <button type="submit" form="logo-form" name="save_logo_only" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Save Logo Settings
+                    <?php echo __("save_logo_settings"); ?>
                 </button>
 
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Language Settings Section -->
+<div class="mb-10">
+    <?php if (!empty($success_message)): ?>
+        <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 border border-green-200 rounded-lg" role="alert">
+            <?php echo $success_message; ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if (!empty($error_message)): ?>
+        <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 border border-red-200 rounded-lg" role="alert">
+            <?php echo $error_message; ?>
+        </div>
+    <?php endif; ?>
+
+    <div class="bg-white p-6 rounded-lg shadow-sm">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200"><?php echo __('language_settings'); ?></h2>
+
+        <form method="post" action="" id="language-form">
+            <div class="mb-4">
+                <label for="app_language" class="block text-sm font-medium text-gray-700 mb-2"><?php echo __('language'); ?>:</label>
+                <div class="relative">
+                    <select name="app_language" id="app_language" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                        <?php foreach (supported_languages() as $code => $lang): ?>
+                            <option value="<?php echo $code; ?>" <?php echo current_language() === $code ? 'selected' : ''; ?>>
+                                <?php echo $lang['name']; ?> <?php echo $lang['default'] ? '(' . __('default') . ')' : ''; ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <p class="mt-2 text-sm text-gray-500"><?php echo __('language_selection_help'); ?></p>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-6">
+                <button type="submit" name="save_language_settings" class="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <?php echo __('save_language_settings'); ?>
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -680,17 +758,17 @@ require_once '../includes/admin_header.php';
         <?php endif; ?>
 
     <div class="bg-white p-6 rounded-lg shadow-sm">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Title Settings</h2>
+        <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200"><?php echo __("title_settings"); ?></h2>
         <form method="post" action="" class="space-y-6" id="title-form">
             <div>
-                <label for="frontend_title" class="block text-sm font-medium text-gray-700">Frontend Title:</label>
+                <label for="frontend_title" class="block text-sm font-medium text-gray-700"><?php echo __("frontend_title"); ?>:</label>
                 <input type="text" name="frontend_title" id="frontend_title"
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         value="<?php echo htmlspecialchars($app_settings['frontend_title']); ?>">
                 </div>
 
             <div>
-                <label for="admin_title" class="block text-sm font-medium text-gray-700">Admin Area Title:</label>
+                <label for="admin_title" class="block text-sm font-medium text-gray-700"><?php echo __("admin_area_title"); ?>:</label>
                 <input type="text" name="admin_title" id="admin_title"
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         value="<?php echo htmlspecialchars($app_settings['admin_title']); ?>">
@@ -702,16 +780,18 @@ require_once '../includes/admin_header.php';
             <div class="flex space-x-4">
                 <button type="submit" form="title-form" name="reset_title_settings"
                         class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Reset to Defaults
+                    <?php echo __("reset_to_defaults"); ?>
                 </button>
                 <button type="submit" form="title-form" name="save_title_settings"
                         class="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Save Title Settings
+                    <?php echo __("save_title_settings"); ?>
                 </button>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Language Settings Section moved above -->
 
 <!-- Placeholder Image Settings Section -->
 <div class="mb-10">
@@ -729,23 +809,23 @@ require_once '../includes/admin_header.php';
     <?php endif; ?>
 
     <div class="bg-white p-6 rounded-lg shadow-sm">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Placeholder Image Settings</h2>
+        <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200"><?php echo __("placeholder_image_settings"); ?></h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             <div>
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Preview</h3>
+                <h3 class="text-lg font-medium text-gray-900 mb-4"><?php echo __("preview"); ?></h3>
                 <div class="border border-gray-200 p-4 rounded-md flex items-center justify-center bg-gray-50">
-                    <img id="preview-image" src="" alt="Sample Placeholder" class="h-48 w-48 rounded-lg object-cover">
+                    <img id="preview-image" src="" alt="<?php echo __("sample_placeholder"); ?>" class="h-48 w-48 rounded-lg object-cover">
                 </div>
                 <p class="mt-3 text-xs text-gray-500 italic">
-                    Note: Changes are shown in the preview but only applied to all placeholder images when you click Save.
+                    <?php echo __("placeholder_preview_note"); ?>
                 </p>
             </div>
 
             <div>
                 <form method="post" action="" class="space-y-6" id="placeholder-form">
                     <div>
-                        <label for="font_weight" class="block text-sm font-medium text-gray-700 mt-4 mb-2">Font Weight:</label>
+                        <label for="font_weight" class="block text-sm font-medium text-gray-700 mt-4 mb-2"><?php echo __("font_weight"); ?>:</label>
                         <select name="font_weight" id="font_weight"
                                 class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                             <?php
@@ -765,22 +845,22 @@ require_once '../includes/admin_header.php';
                             </div>
                             <div class="flex items-center ml-3">
                                 <p class="text-sm text-blue-700">
-                                    Placeholder backgrounds now use department colors automatically.
+                                    <?php echo __("placeholder_colors_note"); ?>
                                 </p>
                             </div>
                         </div>
                     </div>
 
                     <div>
-                        <label for="font_size_factor" class="block text-sm font-medium text-gray-700">Font Size:</label>
+                        <label for="font_size_factor" class="block text-sm font-medium text-gray-700"><?php echo __("font_size"); ?>:</label>
                         <input type="range" name="font_size_factor" id="font_size_factor"
                             class="mt-1 w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                             min="1" max="6" step="0.5"
                             value="<?php echo isset($app_settings['font_size_factor']) ? $app_settings['font_size_factor'] : 3; ?>">
                         <div class="flex justify-between px-2 text-xs text-gray-600">
-                            <span>Small</span>
+                            <span><?php echo __("small"); ?></span>
                             <span class="current-value font-medium"><?php echo isset($app_settings['font_size_factor']) ? $app_settings['font_size_factor'] : 3; ?></span>
-                            <span>Large</span>
+                            <span><?php echo __("large"); ?></span>
                         </div>
                     </div>
                 </form>
@@ -792,7 +872,7 @@ require_once '../includes/admin_header.php';
         <div class="flex justify-end pt-4">
             <button type="submit" form="placeholder-form" name="save_settings"
                     class="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                Save Settings
+                <?php echo __("save_settings"); ?>
             </button>
         </div>
     </div>

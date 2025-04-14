@@ -9,20 +9,36 @@ if (!isset($app_settings)) {
 $admin_title = $app_settings['admin_title']; // Default is already provided by load_app_settings
 ?>
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="<?php echo current_language(); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($admin_title); ?></title>
     <link rel="icon" href="<?php echo asset('favicon.ico'); ?>">
     <link href="<?php echo asset('css/styles.css'); ?>" rel="stylesheet">
-    <!-- Make APP_BASE_URI available to JavaScript -->
+    <!-- Make APP_BASE_URI and translations available to JavaScript -->
     <script>
         window.APP_BASE_URI = "<?php echo APP_BASE_URI; ?>"
+        window.currentLanguage = "<?php echo current_language(); ?>"
         <?php if ($_ENV['DEV_MODE'] == 'true') { ?>
         window.DEV_MODE = true
         <?php } ?>
+
+        // Add translations for JavaScript
+        window.translations = {
+            // Common translations
+            'all_departments': "<?php echo __('all_departments'); ?>",
+            'all_companies': "<?php echo __('all_companies'); ?>",
+            'no_staff_found': "<?php echo __('no_staff_found'); ?>",
+            'search': "<?php echo __('search'); ?>",
+            'filter': "<?php echo __('filter'); ?>",
+            'sort': "<?php echo __('sort'); ?>",
+            'loading': "<?php echo __('loading'); ?>",
+            'error': "<?php echo __('error'); ?>",
+            'success': "<?php echo __('success'); ?>"
+        };
     </script>
+    <script src="<?php echo asset('js/i18n.js'); ?>"></script>
     <script src="<?php echo asset('js/main.js'); ?>"></script>
 </head>
 <body class="antialiased font-sans bg-gray-100 text-gray-900 flex flex-col min-h-screen">
@@ -57,32 +73,32 @@ $admin_title = $app_settings['admin_title']; // Default is already provided by l
                 <ul class="flex flex-col nav:flex-row gap-1 md:gap-2 list-none p-2 nav:p-0 m-0 text-sm">
                     <li class="w-full nav:w-auto">
                         <a href="<?php echo url('admin/index.php'); ?>" class="icon-link flex items-center h-10 px-3 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200 w-full nav:w-auto justify-start nav:justify-center">
-                            <i class="ri-id-card-line mr-2 nav:mr-1"></i> <span class="nav:hidden inline">Manage Staff</span><span class="hidden nav:inline">Manage Staff</span>
+                            <i class="ri-id-card-line mr-2 nav:mr-1"></i> <span class="nav:hidden inline"><?php echo __('staff_management'); ?></span><span class="hidden nav:inline"><?php echo __('staff_management'); ?></span>
                         </a>
                     </li>
                     <li class="w-full nav:w-auto">
                         <a href="<?php echo url('admin/departments.php'); ?>" class="icon-link flex items-center h-10 px-3 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200 w-full nav:w-auto justify-start nav:justify-center">
-                            <i class="ri-group-2-line mr-2 nav:mr-1"></i> <span class="nav:hidden inline">Departments</span><span class="hidden nav:inline">Departments</span>
+                            <i class="ri-group-2-line mr-2 nav:mr-1"></i> <span class="nav:hidden inline"><?php echo __('department_management'); ?></span><span class="hidden nav:inline"><?php echo __('department_management'); ?></span>
                         </a>
                     </li>
                     <li class="w-full nav:w-auto">
                         <a href="<?php echo url('admin/companies.php'); ?>" class="icon-link flex items-center h-10 px-3 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200 w-full nav:w-auto justify-start nav:justify-center">
-                            <i class="ri-building-line mr-2 nav:mr-1"></i> <span class="nav:hidden inline">Companies</span><span class="hidden nav:inline">Companies</span>
+                            <i class="ri-building-line mr-2 nav:mr-1"></i> <span class="nav:hidden inline"><?php echo __('company_management'); ?></span><span class="hidden nav:inline"><?php echo __('company_management'); ?></span>
                         </a>
                     </li>
                     <li class="w-full nav:w-auto">
                         <a href="<?php echo url('admin/settings.php'); ?>" class="icon-link flex items-center h-10 px-3 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200 w-full nav:w-auto justify-start nav:justify-center">
-                            <i class="ri-equalizer-2-line mr-2 nav:mr-1"></i> <span class="nav:hidden inline">Settings</span><span class="hidden nav:inline">Settings</span>
+                            <i class="ri-equalizer-2-line mr-2 nav:mr-1"></i> <span class="nav:hidden inline"><?php echo __('settings'); ?></span><span class="hidden nav:inline"><?php echo __('settings'); ?></span>
                         </a>
                     </li>
                     <li class="w-full nav:w-auto">
                         <a href="<?php echo url(''); ?>" target="_blank" class="icon-link flex items-center h-10 px-3 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200 w-full nav:w-auto justify-start nav:justify-center">
-                            <i class="ri-eye-2-line mr-2 nav:mr-1"></i> <span class="nav:hidden inline">View Site</span><span class="hidden nav:inline">View Site</span>
+                            <i class="ri-eye-2-line mr-2 nav:mr-1"></i> <span class="nav:hidden inline"><?php echo __('home'); ?></span><span class="hidden nav:inline"><?php echo __('home'); ?></span>
                         </a>
                     </li>
                     <li class="w-full nav:w-auto">
                         <a href="<?php echo url('admin/auth/logout.php'); ?>" class="icon-link flex items-center h-10 px-3 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200 w-full nav:w-auto justify-start nav:justify-center">
-                            <i class="ri-logout-box-line mr-2 nav:mr-1"></i> <span class="nav:hidden inline">Logout</span><span class="hidden nav:inline">Logout</span>
+                            <i class="ri-logout-box-line mr-2 nav:mr-1"></i> <span class="nav:hidden inline"><?php echo __('logout'); ?></span><span class="hidden nav:inline"><?php echo __('logout'); ?></span>
                         </a>
                     </li>
                 </ul>

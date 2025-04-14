@@ -1,4 +1,4 @@
-# Staff Directory Application -- Version 1.2.7
+# Staff Directory Application -- Version 1.2.8
 
 A web-based staff directory application that allows administrators to manage staff members and provides a user-friendly interface for employees to browse the directory.
 
@@ -14,6 +14,7 @@ A web-based staff directory application that allows administrators to manage sta
 - View company statistics and staff distribution
 - Filter and search functionality for staff list
 - Customizable application settings (logo, default placeholder image for staff members, and title)
+- Multilingual support with English and French translations
 - Protected by authentication system
 - Flexible deployment options (root or subdirectory installation)
 
@@ -30,6 +31,7 @@ A web-based staff directory application that allows administrators to manage sta
 - Image Processing: Intervention Image 2.7 (WebP support)
 - Image Storage: Local upload folder
 - Logging: Monolog for structured logging
+- Internationalization: Custom i18n system with language files
 
 ## Installation
 1. Clone the repository
@@ -89,6 +91,7 @@ The application follows a secure directory structure:
 │   │   │   ├── `functions.php`     # Utility functions
 │   │   │   ├── `generate_placeholder.php` # Placeholder image generator
 │   │   │   ├── `header.php`        # Frontend page header
+│   │   │   ├── `LanguageManager.php` # Internationalization system
 │   │   │   ├── `MiddlewareStack.php` # Middleware implementation
 │   │   │   └── `Router.php`        # URL routing system
 │   │   ├── `uploads/`              # User uploaded content
@@ -101,7 +104,8 @@ The application follows a secure directory structure:
 ├── `config/`                       # Configuration files (moved outside web root for security)
 │   ├── `auth_config.php`           # Centralized authentication configuration
 │   ├── `database.php`              # Database connection configuration
-│   └── `env_loader.php`            # Environment variables loader
+│   ├── `env_loader.php`            # Environment variables loader
+│   └── `languages.php`             # Language configuration
 ├── `src/`                          # Source files for development
 │   ├── `fonts/`                    # Original font files
 │   │   ├── `Outfit/`               # Outfit variable font
@@ -115,7 +119,17 @@ The application follows a secure directory structure:
 ├── `documentation/`                # Project documentation
 │   ├── `devbook.md`                # Developer documentation
 │   ├── `Subdirectory_Deployment_Configuration_Checklist.md` # Subdirectory deployment guide
-│   └── `debugging.md`              # Debugging guide
+│   ├── `debugging.md`              # Debugging guide
+│   └── `internationalization.md`   # Internationalization documentation
+├── `languages/`                    # Translation files
+│   ├── `en/`                       # English translations
+│   │   ├── `common.php`            # Common translations
+│   │   ├── `frontend.php`          # Frontend translations
+│   │   └── `admin.php`             # Admin translations
+│   └── `fr/`                       # French translations
+│       ├── `common.php`            # Common translations
+│       ├── `frontend.php`          # Frontend translations
+│       └── `admin.php`             # Admin translations
 ├── `logs/`                         # Application logs
 ├── `vendor/`                       # Composer dependencies
 ├── `node_modules/`                 # NPM dependencies
@@ -166,6 +180,9 @@ ADMIN_PASSWORD=your_secure_password
 # Application Settings
 DEV_MODE=false
 
+# Language Configuration
+DEFAULT_LANGUAGE=en
+
 # Session and Cookie Configuration
 USE_SECURE_COOKIES=true
 SESSION_LIFETIME=86400
@@ -195,4 +212,16 @@ The application uses several path-related constants and helper functions:
 - `asset()`: Helper function to generate asset URLs
 
 For subdirectory deployment configuration, see the detailed guide in `documentation/Subdirectory_Deployment_Configuration_Checklist.md`.
+
+## Internationalization System
+
+The application supports multiple languages through a comprehensive internationalization system:
+
+- **Language Files**: Organized by language and context in the `languages` directory
+- **Translation Function**: The `__()` function is used throughout the application for text translation
+- **Language Selection**: Users can select their preferred language in the admin settings page
+- **Language Detection**: The system automatically detects the user's language based on browser settings, cookies, and session
+- **Supported Languages**: Currently supports English (en) and French (fr), with the ability to add more languages
+
+For more details about the internationalization system, see the documentation in `documentation/internationalization.md`.
 

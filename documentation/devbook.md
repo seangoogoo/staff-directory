@@ -4,6 +4,34 @@
 
 ### Version 1.2 (March 2025)
 
+#### April 14, 2025
+*Internationalization Implementation (FR/EN)*
+
+- Implemented comprehensive internationalization system with English and French support
+  - Created a structured language file system with separate files for different contexts:
+    - `common.php` - Shared translations across the application
+    - `frontend.php` - Frontend-specific translations
+    - `admin.php` - Admin-specific translations
+  - Added language selection in the admin settings page
+  - Implemented language switching with session and cookie persistence
+  - Used the `__()` function for all text strings throughout the application
+- Enhanced user experience with multilingual support
+  - Added language selection dropdown in settings page
+  - Implemented proper language detection from browser, session, and cookies
+  - Created consistent translation patterns across all pages
+  - Ensured proper fallback to default language when translations are missing
+- Technical implementation details
+  - Created `LanguageManager` class to handle language detection and translation
+  - Implemented language configuration in `config/languages.php`
+  - Added helper functions for language switching and detection
+  - Used database storage for user language preference
+  - Ensured proper language persistence across sessions
+- Comprehensive translation coverage
+  - Translated all user-facing text in the application
+  - Added translations for error messages, success notifications, and UI elements
+  - Created language-specific formatting for dates and numbers
+  - Implemented proper pluralization support for count-based messages
+
 #### April 13, 2025
 *JavaScript Conditional Logging and Image Upload Fixes*
 
@@ -663,6 +691,13 @@ The authentication system has been optimized with a centralized configuration ap
   - Created a dedicated 404 handler with proper redirection
   - Fixed all hardcoded paths throughout the application
   - Created comprehensive documentation for subdirectory deployment
+- ✅ Internationalization Implementation (April 14, 2025)
+  - Added comprehensive multilingual support with English and French translations
+  - Created structured language files for common, frontend, and admin contexts
+  - Implemented language selection in admin settings with session/cookie persistence
+  - Used the `__()` function for all text strings throughout the application
+  - Added proper language detection from browser, session, and cookies
+  - Created consistent translation patterns across all pages
 
 ### Planned Improvements
 
@@ -685,7 +720,7 @@ The authentication system has been optimized with a centralized configuration ap
 - ~~Merge shared Javascript of edit.php and add.php in a dedicated js file~~
 - ~~Set a customizable path and folder name to set up the application access to a subdirectory like /public/staffdirectory and could configured on any kind of Apache server with locked configuration~~
 - ~~Create a favicon~~
-- Add internationalization support (FR/EN translation files)
+- ~~Add internationalization support (FR/EN translation files)~~
 - Improve unused placeholder images management to remove them when not needed either by programming a folder cleanup once a day and/or by using temporary images when editing settings or creating/editing users
 - Install example app. on staffdirectory.jensen-siu.net
 

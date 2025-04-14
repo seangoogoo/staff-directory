@@ -18,11 +18,11 @@ $success_message = get_session_message('success_message');
 if (isset($_GET['delete']) && !empty($_GET['delete'])) {
     $id = sanitize_input($_GET['delete']);
     if (delete_staff_member($conn, $id)) {
-        set_session_message('success_message', "Staff member deleted successfully.");
+        set_session_message('success_message', __("staff_deleted"));
         header("Location: index.php");
         exit;
     } else {
-        set_session_message('error_message', "Error deleting staff member.");
+        set_session_message('error_message', __("error_deleting_staff"));
         header("Location: index.php");
         exit;
     }
@@ -38,7 +38,7 @@ $company_stats = get_all_company_statistics($conn);
 require_once '../includes/admin_header.php';
 ?>
 
-<h1 class="text-2xl font-semibold mb-4 text-gray-700">Staff Members Management</h1>
+<h1 class="text-2xl font-semibold mb-4 text-gray-700"><?php echo __('staff_members_management'); ?></h1>
 
 <?php if (!empty($success_message)): ?>
     <div class="bg-green-100 border border-green-200 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
@@ -54,13 +54,13 @@ require_once '../includes/admin_header.php';
 
 <div class="admin-actions mb-4">
     <a href="add.php" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition duration-150 ease-in-out text-sm font-medium">
-        <i class="ri-user-add-line mr-1"></i> Add New Staff Member
+        <i class="ri-user-add-line mr-1"></i> <?php echo __('add_new_staff_member'); ?>
     </a>
 </div>
 
 <!-- Company Statistics Dashboard -->
 <div class="stats-dashboard mb-6">
-    <h2 class="text-xl font-semibold mb-3 text-gray-700">Company Statistics</h2>
+    <h2 class="text-xl font-semibold mb-3 text-gray-700"><?php echo __('company_statistics'); ?></h2>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <!-- Total Staff Card -->
         <div class="stat-card bg-white p-4 rounded shadow flex items-center gap-4">
@@ -68,7 +68,7 @@ require_once '../includes/admin_header.php';
                 <i class="ri-group-line text-2xl"></i>
             </div>
             <div class="stat-info">
-                <h3 class="text-sm font-medium text-gray-500">Total Staff</h3>
+                <h3 class="text-sm font-medium text-gray-500"><?php echo __('total_staff'); ?></h3>
                 <div class="stat-number text-2xl font-bold text-gray-800"><?php echo $company_stats['total_staff']; ?></div>
             </div>
         </div>
@@ -86,11 +86,11 @@ require_once '../includes/admin_header.php';
                     </div>
                     <div class="company-metrics flex justify-between text-sm mb-1">
                         <div class="metric">
-                            <span class="text-gray-500">Staff Count</span>
+                            <span class="text-gray-500"><?php echo __('staff_count'); ?></span>
                             <span class="font-medium text-gray-800 ml-1"><?php echo $company['staff_count']; ?></span>
                         </div>
                         <div class="metric">
-                            <span class="text-gray-500">Percentage</span>
+                            <span class="text-gray-500"><?php echo __('percentage'); ?></span>
                             <span class="font-medium text-gray-800 ml-1"><?php echo $company['percentage']; ?>%</span>
                         </div>
                     </div>
@@ -100,7 +100,7 @@ require_once '../includes/admin_header.php';
                 </div>
             <?php endforeach; ?>
         <?php else: ?>
-            <p class="text-gray-500">No company data available.</p>
+            <p class="text-gray-500"><?php echo __('no_company_data'); ?></p>
         <?php endif; ?>
     </div>
 </div>
@@ -109,13 +109,13 @@ require_once '../includes/admin_header.php';
 <div class="p-4 border-b border-gray-200 bg-gray-50 mb-0 rounded-t-lg">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="filter-control">
-            <label for="admin-search" class="block text-xs font-medium text-gray-500 mb-1">Search</label>
-            <input type="text" id="admin-search" placeholder="Search by name or job title" class="w-full rounded px-4 py-2 border border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm">
+            <label for="admin-search" class="block text-xs font-medium text-gray-500 mb-1"><?php echo __('search'); ?></label>
+            <input type="text" id="admin-search" placeholder="<?php echo __('search_admin_placeholder'); ?>" class="w-full rounded px-4 py-2 border border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm">
         </div>
         <div class="filter-control">
-            <label for="admin-department-filter" class="block text-xs font-medium text-gray-500 mb-1">Department</label>
+            <label for="admin-department-filter" class="block text-xs font-medium text-gray-500 mb-1"><?php echo __('department'); ?></label>
             <select id="admin-department-filter" class="w-full rounded px-4 py-2 border border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm bg-white">
-                <option value="">All Departments</option>
+                <option value=""><?php echo __('all_departments'); ?></option>
                 <?php
                 // Use active departments only
                 $departments = get_active_department_names($conn);
@@ -126,9 +126,9 @@ require_once '../includes/admin_header.php';
             </select>
         </div>
         <div class="filter-control">
-            <label for="admin-company-filter" class="block text-xs font-medium text-gray-500 mb-1">Company</label>
+            <label for="admin-company-filter" class="block text-xs font-medium text-gray-500 mb-1"><?php echo __('company'); ?></label>
             <select id="admin-company-filter" class="w-full rounded px-4 py-2 border border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm bg-white">
-                <option value="">All Companies</option>
+                <option value=""><?php echo __('all_companies'); ?></option>
                 <?php
                 // Use active companies only
                 $companies = get_active_company_names($conn);
@@ -145,13 +145,13 @@ require_once '../includes/admin_header.php';
     <table class="staff-table w-full text-sm text-left text-gray-500">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50">
             <tr>
-                <th scope="col" class="px-4 py-3">Photo</th>
-                <th scope="col" class="px-4 py-3">Name</th>
-                <th scope="col" class="px-4 py-3">Company</th>
-                <th scope="col" class="px-4 py-3">Department</th>
-                <th scope="col" class="px-4 py-3">Job Title</th>
-                <th scope="col" class="px-4 py-3">Email</th>
-                <th scope="col" class="px-4 py-3">Actions</th>
+                <th scope="col" class="px-4 py-3"><?php echo __('photo'); ?></th>
+                <th scope="col" class="px-4 py-3"><?php echo __('name'); ?></th>
+                <th scope="col" class="px-4 py-3"><?php echo __('company'); ?></th>
+                <th scope="col" class="px-4 py-3"><?php echo __('department'); ?></th>
+                <th scope="col" class="px-4 py-3"><?php echo __('job_title'); ?></th>
+                <th scope="col" class="px-4 py-3"><?php echo __('email'); ?></th>
+                <th scope="col" class="px-4 py-3"><?php echo __('actions'); ?></th>
             </tr>
         </thead>
         <tbody id="admin-staff-table-body">
@@ -197,7 +197,7 @@ require_once '../includes/admin_header.php';
                             </a>
                             <a href="index.php?delete=<?php echo $staff['id']; ?>"
                                class="icon-link inline-flex justify-center items-center h-8 w-8 rounded-lg border border-red-200 text-red-400 hover:text-red-600 hover:border-red-300 transition-colors duration-200"
-                               onclick="return confirm('Are you sure you want to delete this staff member?');">
+                               onclick="return confirm('<?php echo __('confirm_delete_staff'); ?>');">
                                 <i class="ri-delete-bin-line"></i>
                             </a>
                         </td>
@@ -205,7 +205,7 @@ require_once '../includes/admin_header.php';
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="7" class="px-4 py-3 text-center text-gray-500">No staff members found.</td>
+                    <td colspan="7" class="px-4 py-3 text-center text-gray-500"><?php echo __('no_staff_found'); ?></td>
                 </tr>
             <?php endif; ?>
         </tbody>

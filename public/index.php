@@ -27,7 +27,7 @@ $companies = get_active_company_names($conn);
             </div>
             <div class="ml-3">
                 <p class="text-sm text-yellow-700">
-                    The page you were looking for could not be found. You have been redirected to the Staff Directory.
+                    <?php echo __('page_not_found_message'); ?>
                 </p>
             </div>
         </div>
@@ -35,14 +35,14 @@ $companies = get_active_company_names($conn);
 <?php endif; ?>
 
 <!-- Page Title Styling: mb-6, text-gray-700, font-thin -->
-<h1 class="page-title mb-6 text-gray-700 font-thin text-4xl">Staff Directory</h1>
+<h1 class="page-title mb-6 text-gray-700 font-thin text-4xl"><?php echo __('staff_directory'); ?></h1>
 
 <!-- Controls Styling: flex, wrap, gap-4, mb-6, items-center -->
 <div class="controls flex flex-wrap gap-4 mb-6 items-center">
     <!-- Search Box Styling: flex-1, min-w -->
     <div class="search-box flex-grow min-w-[250px]">
         <!-- Input styling: rounded-full, border, padding, shadow -->
-        <input class="w-full rounded-full px-4 py-2 border border-gray-200 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" type="text" id="search" placeholder="Search by name or job title..." value="<?php echo htmlspecialchars($search); ?>">
+        <input class="w-full rounded-full px-4 py-2 border border-gray-200 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" type="text" id="search" placeholder="<?php echo __('search_placeholder'); ?>" value="<?php echo htmlspecialchars($search); ?>">
     </div>
 
     <!-- Filter/Sort container -->
@@ -51,7 +51,7 @@ $companies = get_active_company_names($conn);
         <div class="filter-box min-w-[180px]">
             <!-- Select styling: rounded-full, border, padding, shadow, bg -->
             <select id="company-filter" class="w-full rounded-full pl-4 pr-10 py-2 border border-gray-200 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 bg-white">
-                <option value="">All Companies</option>
+                <option value=""><?php echo __('all_companies'); ?></option>
                 <?php foreach ($companies as $comp): ?>
                     <option value="<?php echo htmlspecialchars($comp); ?>" <?php echo ($company == $comp) ? 'selected' : ''; ?>>
                         <?php echo htmlspecialchars($comp); ?>
@@ -63,7 +63,7 @@ $companies = get_active_company_names($conn);
         <div class="filter-box min-w-[180px]">
              <!-- Select styling: rounded-full, border, padding, shadow, bg -->
             <select id="department-filter" class="w-full rounded-full pl-4 pr-10 py-2 border border-gray-200 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 bg-white">
-                <option value="">All Departments</option>
+                <option value=""><?php echo __('all_departments'); ?></option>
                 <?php foreach ($departments as $dept): ?>
                     <option value="<?php echo htmlspecialchars($dept); ?>" <?php echo ($department == $dept) ? 'selected' : ''; ?>>
                         <?php echo htmlspecialchars($dept); ?>
@@ -76,12 +76,12 @@ $companies = get_active_company_names($conn);
              <!-- Select styling: rounded-full, border, padding, shadow, bg -->
              <!-- Note: Values combine sort_by and sort_order for JS handling -->
             <select id="sort" class="w-full rounded-full pl-4 pr-10 py-2 border border-gray-200 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 bg-white">
-                <option value="name-asc" <?php echo ($sort_by == 'last_name' && $sort_order == 'ASC') ? 'selected' : ''; ?>>Name (A-Z)</option>
-                <option value="name-desc" <?php echo ($sort_by == 'last_name' && $sort_order == 'DESC') ? 'selected' : ''; ?>>Name (Z-A)</option>
-                <option value="department-asc" <?php echo ($sort_by == 'department' && $sort_order == 'ASC') ? 'selected' : ''; ?>>Department (A-Z)</option>
-                <option value="department-desc" <?php echo ($sort_by == 'department' && $sort_order == 'DESC') ? 'selected' : ''; ?>>Department (Z-A)</option>
-                <option value="company-asc" <?php echo ($sort_by == 'company' && $sort_order == 'ASC') ? 'selected' : ''; ?>>Company (A-Z)</option>
-                <option value="company-desc" <?php echo ($sort_by == 'company' && $sort_order == 'DESC') ? 'selected' : ''; ?>>Company (Z-A)</option>
+                <option value="name-asc" <?php echo ($sort_by == 'last_name' && $sort_order == 'ASC') ? 'selected' : ''; ?>><?php echo __('name_asc'); ?></option>
+                <option value="name-desc" <?php echo ($sort_by == 'last_name' && $sort_order == 'DESC') ? 'selected' : ''; ?>><?php echo __('name_desc'); ?></option>
+                <option value="department-asc" <?php echo ($sort_by == 'department' && $sort_order == 'ASC') ? 'selected' : ''; ?>><?php echo __('department_asc'); ?></option>
+                <option value="department-desc" <?php echo ($sort_by == 'department' && $sort_order == 'DESC') ? 'selected' : ''; ?>><?php echo __('department_desc'); ?></option>
+                <option value="company-asc" <?php echo ($sort_by == 'company' && $sort_order == 'ASC') ? 'selected' : ''; ?>><?php echo __('company_asc'); ?></option>
+                <option value="company-desc" <?php echo ($sort_by == 'company' && $sort_order == 'DESC') ? 'selected' : ''; ?>><?php echo __('company_desc'); ?></option>
             </select>
         </div>
     </div>
@@ -146,7 +146,7 @@ $companies = get_active_company_names($conn);
             </div>
         <?php endforeach; ?>
     <?php else: ?>
-        <p class="col-span-full text-center text-gray-500">No staff members found.</p> <?php // Added styling for no results ?>
+        <p class="col-span-full text-center text-gray-500"><?php echo __('no_staff_found'); ?></p> <?php // Added styling for no results ?>
     <?php endif; ?>
 </div>
 <script src="assets/js/frontend-filters.js"></script>

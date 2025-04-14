@@ -919,7 +919,8 @@ function get_default_app_settings()
         'font_size_factor' => 3, // Default font size factor (higher = larger font)
         'custom_logo_path' => '',
         'frontend_title' => 'Staff Directory',
-        'admin_title' => 'Staff Directory Admin'
+        'admin_title' => 'Staff Directory Admin',
+        'app_language' => 'en' // Default language
     ];
 }
 

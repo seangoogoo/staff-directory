@@ -2,7 +2,7 @@
 require_once __DIR__ . '/bootstrap.php';
 ?>
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="<?php echo current_language(); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,19 +10,35 @@ require_once __DIR__ . '/bootstrap.php';
     // Get application settings with defaults - make them globally accessible
     global $app_settings;
     $app_settings = load_app_settings();
-    $frontend_title = $app_settings['frontend_title']; // Default is already provided by load_app_settings
+    $frontend_title = $app_settings['frontend_title'] ?? __('app_name'); // Use translation as fallback
     ?>
     <title><?php echo htmlspecialchars($frontend_title); ?></title>
     <link rel="icon" href="<?php echo asset('favicon.ico'); ?>">
     <link href="<?php echo asset('css/styles.css'); ?>" rel="stylesheet">
-    <!-- Make APP_BASE_URI available to JavaScript -->
+    <!-- Make APP_BASE_URI and translations available to JavaScript -->
     <script>
         window.APP_BASE_URI = "<?php echo APP_BASE_URI; ?>"
+        window.currentLanguage = "<?php echo current_language(); ?>"
         <?php if ($_ENV['DEV_MODE'] == 'true') { ?>
         window.DEV_MODE = true
         <?php } ?>
+
+        // Add translations for JavaScript
+        window.translations = {
+            // Common translations
+            'all_departments': "<?php echo __('all_departments'); ?>",
+            'all_companies': "<?php echo __('all_companies'); ?>",
+            'no_staff_found': "<?php echo __('no_staff_found'); ?>",
+            'search': "<?php echo __('search'); ?>",
+            'filter': "<?php echo __('filter'); ?>",
+            'sort': "<?php echo __('sort'); ?>",
+            'loading': "<?php echo __('loading'); ?>",
+            'error': "<?php echo __('error'); ?>",
+            'success': "<?php echo __('success'); ?>"
+        };
     </script>
     <!-- Core filter module shared between frontend and admin -->
+    <script src="<?php echo asset('js/i18n.js'); ?>"></script>
     <script src="<?php echo asset('js/filter-core.js'); ?>"></script>
 </head>
 <!-- Added flex for sticky footer -->
@@ -49,10 +65,10 @@ require_once __DIR__ . '/bootstrap.php';
             </div>
             <nav class="main-nav">
                 <!-- Nav UL Styling: flex, mobile margin, md margin reset -->
-                <ul class="flex my-4 md:my-0 p-0 list-none">
+                <ul class="flex my-4 md:my-0 p-0 list-none gap-4">
                     <li>
                         <!-- Icon Link Styling: flex center, size, rounded, border, text color, hover, transition -->
-                        <a href="#" id="adminLink" class="icon-link flex items-center justify-center w-10 h-10 rounded-lg border border-gray-200 text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200" title="Admin Area">
+                        <a href="#" id="adminLink" class="icon-link flex items-center justify-center w-10 h-10 rounded-lg border border-gray-200 text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-colors duration-200" title="<?php echo __('admin_area'); ?>">
                             <!-- Use RemixIcon for login -->
                             <i class="ri-login-box-line text-lg"></i>
                         </a>
