@@ -28,18 +28,18 @@ Before uploading files, you need to configure the application:
    DB_USER=your_database_username
    DB_PASS=your_database_password
    DB_NAME=staff_dir
-   
+
    # Admin Credentials
    ADMIN_USERNAME=your_admin_username
    ADMIN_PASSWORD=your_admin_password
    USE_SECURE_COOKIES=true
-   
+
    # Session and Cookie Configuration
    SESSION_LIFETIME=86400
    SESSION_UPDATE_INTERVAL=3600
    COOKIE_PATH=/
    COOKIE_LIFETIME=2592000
-   
+
    # Application Settings
    DEV_MODE=false
    ```
@@ -65,6 +65,7 @@ Upload the following directories to your web server:
 | `staff_dir_env/` | `/path/to/your/private/staff_dir_env/` | Environment variables (outside web root) |
 | `vendor/` | `/path/to/your/private/vendor/` | Composer dependencies (outside web root) |
 | `logs/` | `/path/to/your/private/logs/` | Application logs (outside web root) |
+| `languages/` | `/path/to/your/private/languages/` | Translation files (outside web root) |
 | `public/staff-directory/` | `/path/to/your/public_html/staff-directory/` | Public web files (in web root) |
 
 ### Required Files
@@ -75,7 +76,10 @@ Make sure these specific files are included:
    - `config/auth_config.php`
    - `config/database.php`
    - `config/env_loader.php`
+   - `config/languages.php`
    - `staff_dir_env/.env` (create this file as described above)
+   - `languages/en/` (English translation files)
+   - `languages/fr/` (French translation files)
 
 2. **Core Application Files**:
    - `public/staff-directory/front-controller.php`
@@ -100,6 +104,7 @@ chmod 755 /path/to/your/private/config
 chmod 755 /path/to/your/private/staff_dir_env
 chmod 755 /path/to/your/private/logs
 chmod 755 /path/to/your/private/vendor
+chmod 755 /path/to/your/private/languages
 chmod 775 /path/to/your/public_html/staff-directory/uploads
 chmod 775 /path/to/your/public_html/staff-directory/uploads/companies
 chmod 775 /path/to/your/public_html/staff-directory/uploads/logos
