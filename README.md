@@ -2,6 +2,8 @@
 
 A web-based staff directory application that allows administrators to manage staff members and provides a user-friendly interface for employees to browse the directory.
 
+Live demo available at: [https://staff-directory.jensen-siu.net/](https://staff-directory.jensen-siu.net/)
+
 ## Features
 
 ### Admin Dashboard
