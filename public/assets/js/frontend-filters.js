@@ -197,10 +197,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const sortBy = sortSelect.value
         const staffCards = Array.from(document.querySelectorAll('.staff-card'))
 
-        // Store current order of visible cards before sorting
-        const currentOrder = Array.from(staffGrid.children)
+        // Only consider currently visible cards
+        const currentlyVisibleCards = Array.from(staffCards).filter(card =>
+            card.style.display !== 'none' && card.classList.contains('card-visible')
+        )
 
-        staffCards.sort((a, b) => {
+        // Sort only the visible cards
+        const sortedVisibleCards = [...currentlyVisibleCards].sort((a, b) => {
             let valueA, valueB
 
             if (sortBy === 'name-asc' || sortBy === 'name-desc') {
@@ -238,8 +241,10 @@ document.addEventListener('DOMContentLoaded', function() {
             return valueA.localeCompare(valueB) * sortDir
         })
 
-        // Check if order has changed
-        const hasChanged = staffCards.some((card, index) => card !== currentOrder[index])
+        // Check if the visible cards order has actually changed
+        const hasChanged =
+            currentlyVisibleCards.length !== sortedVisibleCards.length ||
+            !currentlyVisibleCards.every((card, index) => card === sortedVisibleCards[index])
 
         if (hasChanged) {
             // Kill existing animations
@@ -254,12 +259,12 @@ document.addEventListener('DOMContentLoaded', function() {
             })
 
             // Reappend the sorted cards to the grid
-            staffCards.forEach(card => {
+            sortedVisibleCards.forEach(card => {
                 staffGrid.appendChild(card)
             })
 
             // Only animate if we have cards
-            if (staffCards.length > 0) {
+            if (sortedVisibleCards.length > 0) {
                 setTimeout(() => {
                     staffCards.forEach(card => {
                         card.style.transitionDelay = ''
