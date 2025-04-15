@@ -202,6 +202,9 @@ document.addEventListener('DOMContentLoaded', function() {
             card.style.display !== 'none' && card.classList.contains('card-visible')
         )
 
+        // Get current order before sorting
+        const currentOrder = [...currentlyVisibleCards]
+
         // Sort only the visible cards
         const sortedVisibleCards = [...currentlyVisibleCards].sort((a, b) => {
             let valueA, valueB
@@ -241,10 +244,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return valueA.localeCompare(valueB) * sortDir
         })
 
-        // Check if the visible cards order has actually changed
-        const hasChanged =
-            currentlyVisibleCards.length !== sortedVisibleCards.length ||
-            !currentlyVisibleCards.every((card, index) => card === sortedVisibleCards[index])
+        // Compare the arrays element by element to see if the order is actually different
+        const hasChanged = currentOrder.some((card, index) => card !== sortedVisibleCards[index])
 
         if (hasChanged) {
             // Kill existing animations
