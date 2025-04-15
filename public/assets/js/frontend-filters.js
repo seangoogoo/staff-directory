@@ -16,7 +16,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Event Listeners
     if (searchInput) {
-        searchInput.addEventListener('input', filterStaff)
+        const debouncedFilterStaff = debounce(filterStaff, 600)
+        searchInput.addEventListener('input', debouncedFilterStaff)
     }
 
     if (departmentFilter) {
@@ -118,36 +119,86 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Functions
     function filterStaff() {
-        const searchTerm = searchInput ? searchInput.value.toLowerCase() : ''
-        const selectedDepartment = departmentFilter ? departmentFilter.value : ''
-        const selectedCompany = companyFilter ? companyFilter.value : ''
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+        const selectedDepartment = departmentFilter ? departmentFilter.value : '';
+        const selectedCompany = companyFilter ? companyFilter.value : '';
 
         // Get all staff cards
-        const staffCards = document.querySelectorAll('.staff-card')
+        const staffCards = document.querySelectorAll('.staff-card');
 
-        staffCards.forEach(card => {
-            const name = card.querySelector('.staff-name').textContent.toLowerCase()
-            const job = card.querySelector('.staff-job').textContent.toLowerCase()
-            const department = card.querySelector('.staff-department').textContent.toLowerCase()
-            const company = card.querySelector('.company-name')?.textContent.toLowerCase() || ''
+        // First, determine which cards should be visible based on filters
+        const newVisibleCards = Array.from(staffCards).filter(card => {
+            const name = card.querySelector('.staff-name').textContent.toLowerCase();
+            const job = card.querySelector('.staff-job').textContent.toLowerCase();
+            const department = card.querySelector('.staff-department').textContent.toLowerCase();
+            const company = card.querySelector('.company-name')?.textContent.toLowerCase() || '';
 
-            // Check if card matches all filters
-            const matchesSearch = name.includes(searchTerm) || job.includes(searchTerm)
-            const matchesDepartment = selectedDepartment === '' || department.includes(selectedDepartment.toLowerCase())
-            const matchesCompany = selectedCompany === '' || company.includes(selectedCompany.toLowerCase())
+            const matchesSearch = name.includes(searchTerm) || job.includes(searchTerm);
+            const matchesDepartment = selectedDepartment === '' || department.includes(selectedDepartment.toLowerCase());
+            const matchesCompany = selectedCompany === '' || company.includes(selectedCompany.toLowerCase());
 
-            // Show or hide the card
-            if (matchesSearch && matchesDepartment && matchesCompany) {
-                card.style.display = 'block'
+            return matchesSearch && matchesDepartment && matchesCompany;
+        });
+
+        // Compare with currently visible cards
+        const currentlyVisibleCards = Array.from(staffCards).filter(card =>
+            card.style.display !== 'none' && card.classList.contains('card-visible')
+        );
+
+        // Check if the visible cards have actually changed by comparing the actual elements
+        const hasChanged =
+            currentlyVisibleCards.length !== newVisibleCards.length ||
+            !currentlyVisibleCards.every(card => newVisibleCards.includes(card)) ||
+            !newVisibleCards.every(card => currentlyVisibleCards.includes(card));
+
+        if (hasChanged) {
+            // Only kill and reset if we need to change visibility
+            ScrollAnimator.killAllInstances();
+
+            document.body.style.overflow = 'clip';
+
+            // Hide all cards first
+            staffCards.forEach(card => {
+                card.style.transitionDelay = '0ms';
+                card.classList.remove('card-visible');
+
+                if (newVisibleCards.includes(card)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Only animate if we have visible cards
+            if (newVisibleCards.length > 0) {
+                setTimeout(() => {
+                    staffCards.forEach(card => {
+                        card.style.transitionDelay = '';
+                    });
+
+                    const scrollAnimator = new ScrollAnimator({
+                        selector: '.staff-card:not([style*="display: none"])',
+                        delay: 65,
+                        batchThreshold: 20,
+                        threshold: 0.35,
+                        visibleClass: 'card-visible'
+                    });
+                    document.body.style.overflow = '';
+
+                    scrollAnimator.revealAboveViewportOnLoad();
+                }, 200);
             } else {
-                card.style.display = 'none'
+                document.body.style.overflow = '';
             }
-        })
+        }
     }
 
     function sortStaff() {
         const sortBy = sortSelect.value
         const staffCards = Array.from(document.querySelectorAll('.staff-card'))
+
+        // Store current order of visible cards before sorting
+        const currentOrder = Array.from(staffGrid.children)
 
         staffCards.sort((a, b) => {
             let valueA, valueB
@@ -187,21 +238,69 @@ document.addEventListener('DOMContentLoaded', function() {
             return valueA.localeCompare(valueB) * sortDir
         })
 
-        // Reappend the sorted cards to the grid
-        staffCards.forEach(card => {
-            staffGrid.appendChild(card)
-        })
+        // Check if order has changed
+        const hasChanged = staffCards.some((card, index) => card !== currentOrder[index])
+
+        if (hasChanged) {
+            // Kill existing animations
+            ScrollAnimator.killAllInstances()
+
+            document.body.style.overflow = 'clip'
+
+            // Reset animation states
+            staffCards.forEach(card => {
+                card.style.transitionDelay = '0ms'
+                card.classList.remove('card-visible')
+            })
+
+            // Reappend the sorted cards to the grid
+            staffCards.forEach(card => {
+                staffGrid.appendChild(card)
+            })
+
+            // Only animate if we have cards
+            if (staffCards.length > 0) {
+                setTimeout(() => {
+                    staffCards.forEach(card => {
+                        card.style.transitionDelay = ''
+                    })
+
+                    const scrollAnimator = new ScrollAnimator({
+                        selector: '.staff-card:not([style*="display: none"])',
+                        delay: 65,
+                        batchThreshold: 20,
+                        threshold: 0.35,
+                        visibleClass: 'card-visible'
+                    })
+                    document.body.style.overflow = ''
+
+                    scrollAnimator.revealAboveViewportOnLoad()
+                }, 200)
+            } else {
+                document.body.style.overflow = ''
+            }
+        }
     }
 
+    //! this has nothing to do here
     // Delete confirmation for admin
-    const deleteButtons = document.querySelectorAll('.outline-danger')
-    if (deleteButtons) {
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                if (!confirm('Are you sure you want to delete this staff member?')) {
-                    e.preventDefault()
-                }
-            })
-        })
-    }
+    // const deleteButtons = document.querySelectorAll('.outline-danger')
+    // if (deleteButtons) {
+    //     deleteButtons.forEach(button => {
+    //         button.addEventListener('click', function(e) {
+    //             if (!confirm('Are you sure you want to delete this staff member?')) {
+    //                 e.preventDefault()
+    //             }
+    //         })
+    //     })
+    // }
 })
+
+function debounce(func, wait) {
+    let timeout
+    return function(...args) {
+        const context = this
+        clearTimeout(timeout)
+        timeout = setTimeout(() => func.apply(context, args), wait)
+    };
+}

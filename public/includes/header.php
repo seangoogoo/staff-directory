@@ -39,6 +39,7 @@ require_once __DIR__ . '/bootstrap.php';
     </script>
     <!-- Core filter module shared between frontend and admin -->
     <script src="<?php echo asset('js/i18n.js'); ?>"></script>
+    <script src="<?php echo asset('js/scroll-animator.js'); ?>"></script>
     <script src="<?php echo asset('js/filter-core.js'); ?>"></script>
 </head>
 <!-- Added flex for sticky footer -->

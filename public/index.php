@@ -88,6 +88,17 @@ $companies = get_active_company_names($conn);
 </div>
 
 <!-- Staff Grid Styling: grid, cols, gap -->
+<style>
+    .staff-card {
+        opacity: 0;
+        transform: translateY(80px);
+    }
+    .card-visible {
+        opacity: 1;
+        transform: translateY(0);
+        transition: opacity 350ms ease-out, transform 350ms cubic-bezier(.17, .84, .44, 1);
+    }
+</style>
 <div class="staff-grid grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-6 mb-8" id="staff-grid">
     <?php if (count($staff_members) > 0): ?>
         <?php foreach ($staff_members as $staff): ?>
@@ -149,6 +160,33 @@ $companies = get_active_company_names($conn);
         <p class="col-span-full text-center text-gray-500"><?php echo __('no_staff_found'); ?></p> <?php // Added styling for no results ?>
     <?php endif; ?>
 </div>
+<script>
+'use  strict'
+document.addEventListener('DOMContentLoaded', () => {
+    // --- Configuration Constants ---
+    const VISIBLE_CLASS_NAME = 'card-visible' // CSS class for the visible state
+    const ANIMATE_SELECTOR = '.staff-card' // CSS selector for elements to animate
+    const ANIMATION_DELAY = 65 // Base delay (ms) within an animation batch
+    const BATCH_THRESHOLD = 20 // Time threshold (ms) to define a new batch
+    const OBSERVER_THRESHOLD = 0.35 // Intersection Observer threshold (0.0 to 1.0)
+
+    // --- Scroll Animation Initialization ---
+    if(document.querySelectorAll(ANIMATE_SELECTOR).length > 0) {
+        // Initialize the ScrollAnimator first
+        const scrollAnimator = new ScrollAnimator({
+            visibleClass: VISIBLE_CLASS_NAME,
+            selector: ANIMATE_SELECTOR,
+            delay: ANIMATION_DELAY,
+            batchThreshold: BATCH_THRESHOLD,
+            threshold: OBSERVER_THRESHOLD
+        })
+
+        // Then reveal elements above the viewport
+        scrollAnimator.revealAboveViewportOnLoad()
+    }
+})
+
+</script>
 <script src="assets/js/frontend-filters.js"></script>
 
 <?php require_once 'includes/footer.php'; ?>
