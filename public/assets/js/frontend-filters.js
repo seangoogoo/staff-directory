@@ -195,19 +195,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function sortStaff() {
         const sortBy = sortSelect.value
+
+        // Get fresh reference to all cards in their CURRENT order
         const staffCards = Array.from(document.querySelectorAll('.staff-card'))
 
-        // Only consider currently visible cards
-        const currentlyVisibleCards = Array.from(staffCards).filter(card =>
+        // Only consider currently visible cards (in their current order)
+        const currentlyVisibleCards = staffCards.filter(card =>
             card.style.display !== 'none' && card.classList.contains('card-visible')
         )
 
-        // Get current order before sorting
-        const currentOrder = [...currentlyVisibleCards]
-
-        // Sort only the visible cards
+        // Create a new array and sort it
         const sortedVisibleCards = [...currentlyVisibleCards].sort((a, b) => {
             let valueA, valueB
+            let comparison = 0
 
             if (sortBy === 'name-asc' || sortBy === 'name-desc') {
                 // Extract the full name
@@ -223,29 +223,59 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Get the first name
                     const firstNameA = fullNameA.split(' ').slice(0, -1).join(' ').toLowerCase()
                     const firstNameB = fullNameB.split(' ').slice(0, -1).join(' ').toLowerCase()
-                    valueA = firstNameA
-                    valueB = firstNameB
+                    comparison = firstNameA.localeCompare(firstNameB)
                 } else {
-                    valueA = lastNameA
-                    valueB = lastNameB
+                    comparison = lastNameA.localeCompare(lastNameB)
                 }
             } else if (sortBy === 'department-asc' || sortBy === 'department-desc') {
                 valueA = a.querySelector('.staff-department').textContent.toLowerCase()
                 valueB = b.querySelector('.staff-department').textContent.toLowerCase()
+
+                comparison = valueA.localeCompare(valueB)
+
+                // If departments are equal, sort by last name then first name
+                if (comparison === 0) {
+                    const fullNameA = a.querySelector('.staff-name').textContent.trim()
+                    const fullNameB = b.querySelector('.staff-name').textContent.trim()
+                    const lastNameA = fullNameA.split(' ').pop().toLowerCase()
+                    const lastNameB = fullNameB.split(' ').pop().toLowerCase()
+
+                    comparison = lastNameA.localeCompare(lastNameB)
+                    if (comparison === 0) {
+                        const firstNameA = fullNameA.split(' ').slice(0, -1).join(' ').toLowerCase()
+                        const firstNameB = fullNameB.split(' ').slice(0, -1).join(' ').toLowerCase()
+                        comparison = firstNameA.localeCompare(firstNameB)
+                    }
+                }
             } else if (sortBy === 'company-asc' || sortBy === 'company-desc') {
                 valueA = (a.querySelector('.company-name')?.textContent || '').toLowerCase()
                 valueB = (b.querySelector('.company-name')?.textContent || '').toLowerCase()
+
+                comparison = valueA.localeCompare(valueB)
+
+                // If companies are equal, sort by last name then first name
+                if (comparison === 0) {
+                    const fullNameA = a.querySelector('.staff-name').textContent.trim()
+                    const fullNameB = b.querySelector('.staff-name').textContent.trim()
+                    const lastNameA = fullNameA.split(' ').pop().toLowerCase()
+                    const lastNameB = fullNameB.split(' ').pop().toLowerCase()
+
+                    comparison = lastNameA.localeCompare(lastNameB)
+                    if (comparison === 0) {
+                        const firstNameA = fullNameA.split(' ').slice(0, -1).join(' ').toLowerCase()
+                        const firstNameB = fullNameB.split(' ').slice(0, -1).join(' ').toLowerCase()
+                        comparison = firstNameA.localeCompare(firstNameB)
+                    }
+                }
             }
 
             // Determine sort direction
             const sortDir = sortBy.endsWith('-asc') ? 1 : -1
-
-            // Use localeCompare for better string comparison
-            return valueA.localeCompare(valueB) * sortDir
+            return comparison * sortDir
         })
 
-        // Compare the arrays element by element to see if the order is actually different
-        const hasChanged = currentOrder.some((card, index) => card !== sortedVisibleCards[index])
+        // Compare current DOM order with desired sorted order
+        const hasChanged = currentlyVisibleCards.some((card, index) => card !== sortedVisibleCards[index])
 
         if (hasChanged) {
             // Kill existing animations
