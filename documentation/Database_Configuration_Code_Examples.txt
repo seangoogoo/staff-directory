@@ -1,0 +1,152 @@
+/**
+ * Get all staff members with filtering and sorting
+ *
+ * @param mysqli $conn Database connection
+ * @param string $search Optional search term
+ * @param string $department Optional department filter
+ * @param string $company Optional company filter
+ * @param string $sort_by Field to sort by (default: last_name)
+ * @param string $sort_order Sort direction (ASC or DESC)
+ * @return array Array of staff members
+ */
+function get_all_staff_members($conn, $search = '', $department = '', $company = '', $sort_by = 'last_name', $sort_order = 'ASC') {
+    // Validate sort parameters to prevent SQL injection
+    $allowed_sort_fields = ['first_name', 'last_name', 'job_title', 'email', 'department', 'company'];
+    if (!in_array($sort_by, $allowed_sort_fields)) {
+        $sort_by = 'last_name'; // Default if invalid
+    }
+
+    $sort_order = strtoupper($sort_order) === 'DESC' ? 'DESC' : 'ASC';
+
+    // Base query without conditions
+    $params = [];
+    $types = '';
+
+    // Start building the prepared statement - JOIN with departments and companies tables
+    // BEFORE: Direct table references with hardcoded database name
+    // $sql = "SELECT s.*, d.name as department, d.color as department_color, "
+    //      . "c.name as company, c.id as company_id, c.logo as company_logo "
+    //      . "FROM staff_dir.staff_members s "
+    //      . "JOIN staff_dir.departments d ON s.department_id = d.id "
+    //      . "JOIN staff_dir.companies c ON s.company_id = c.id "
+    //      . "WHERE 1=1";
+
+    // AFTER: Using table constants with database name and prefix support
+    $sql = "SELECT s.*, d.name as department, d.color as department_color, "
+         . "c.name as company, c.id as company_id, c.logo as company_logo "
+         . "FROM " . TABLE_STAFF_MEMBERS . " s "
+         . "JOIN " . TABLE_DEPARTMENTS . " d ON s.department_id = d.id "
+         . "JOIN " . TABLE_COMPANIES . " c ON s.company_id = c.id "
+         . "WHERE 1=1";
+
+    // Add search condition if provided
+    if (!empty($search)) {
+        $search_param = "%{$search}%";
+        $sql .= " AND (s.first_name LIKE ? OR s.last_name LIKE ? OR s.job_title LIKE ? OR c.name LIKE ?)";
+        $types .= 'ssss';
+        $params[] = $search_param;
+        $params[] = $search_param;
+        $params[] = $search_param;
+        $params[] = $search_param;
+    }
+
+    // Add department filter if provided
+    if (!empty($department)) {
+        $sql .= " AND d.name = ?";
+        $types .= 's';
+        $params[] = $department;
+    }
+
+    // Add company filter if provided
+    if (!empty($company)) {
+        $sql .= " AND c.name = ?";
+        $types .= 's';
+        $params[] = $company;
+    }
+
+    // Adjust sort field if it's department or company
+    if ($sort_by === 'department') {
+        $sort_by = 'd.name';
+    } elseif ($sort_by === 'company') {
+        $sort_by = 'c.name';
+    } else {
+        $sort_by = 's.' . $sort_by;
+    }
+
+    // Add sorting - these values are already validated above
+    $sql .= " ORDER BY {$sort_by} {$sort_order}";
+
+    // Prepare and execute statement
+    $stmt = $conn->prepare($sql);
+
+    if (!empty($params)) {
+        $stmt->bind_param($types, ...$params);
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $staff = [];
+
+    if ($result->num_rows > 0) {
+        while($row = $result->fetch_assoc()) {
+            $staff[] = $row;
+        }
+    }
+
+    $stmt->close();
+    return $staff;
+}
+
+/**
+ * Get a staff member by ID
+ */
+function get_staff_member_by_id($conn, $id) {
+    // BEFORE: Direct table references with hardcoded database name
+    // $sql = "SELECT s.*, d.name as department, d.id as department_id, c.id as company_id, c.name as company "
+    //      . "FROM staff_dir.staff_members s "
+    //      . "JOIN staff_dir.departments d ON s.department_id = d.id "
+    //      . "JOIN staff_dir.companies c ON s.company_id = c.id "
+    //      . "WHERE s.id = ?";
+
+    // AFTER: Using table constants with database name and prefix support
+    $sql = "SELECT s.*, d.name as department, d.id as department_id, c.id as company_id, c.name as company "
+         . "FROM " . TABLE_STAFF_MEMBERS . " s "
+         . "JOIN " . TABLE_DEPARTMENTS . " d ON s.department_id = d.id "
+         . "JOIN " . TABLE_COMPANIES . " c ON s.company_id = c.id "
+         . "WHERE s.id = ?";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $staff = $result->fetch_assoc();
+        $stmt->close();
+        return $staff;
+    }
+
+    $stmt->close();
+    return null;
+}
+
+/**
+ * Example of a function that creates a new record with foreign key constraints
+ */
+function add_staff_member($conn, $first_name, $last_name, $company_id, $department_id, $job_title, $email, $profile_picture = '') {
+    // BEFORE: Direct table references with hardcoded database name
+    // $sql = "INSERT INTO staff_dir.staff_members (first_name, last_name, company_id, department_id, job_title, email, profile_picture)
+    //         VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+    // AFTER: Using table constants with database name and prefix support
+    $sql = "INSERT INTO " . TABLE_STAFF_MEMBERS . " (first_name, last_name, company_id, department_id, job_title, email, profile_picture)
+            VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ssiisss", $first_name, $last_name, $company_id, $department_id, $job_title, $email, $profile_picture);
+
+    $result = $stmt->execute();
+    $stmt->close();
+
+    return $result;
+}

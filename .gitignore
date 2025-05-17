@@ -61,3 +61,5 @@ public/uploads/**/*
 
 # Cached files
 *.cache
+.shopify/
+.shopify/**/*

@@ -721,8 +721,10 @@ The authentication system has been optimized with a centralized configuration ap
 - ~~Set a customizable path and folder name to set up the application access to a subdirectory like /public/staffdirectory and could configured on any kind of Apache server with locked configuration~~
 - ~~Create a favicon~~
 - ~~Add internationalization support (FR/EN translation files)~~
+- ~~Install example app. on staffdirectory.jensen-siu.net~~
+- Add the ability to customize a prefix for the database tables
 - Improve unused placeholder images management to remove them when not needed either by programming a folder cleanup once a day and/or by using temporary images when editing settings or creating/editing users
-- Install example app. on staffdirectory.jensen-siu.net
+
 
 #### Version 1.3 (Planned)
 - Add staff counts by departments in company statistics
