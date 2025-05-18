@@ -20,7 +20,7 @@ if (isset($_GET['delete']) && !empty($_GET['delete'])) {
     $id = sanitize_input($_GET['delete']);
 
     // Check if department is in use by any staff members
-    $sql = "SELECT COUNT(*) as count FROM staff_members WHERE department_id = ?";
+    $sql = "SELECT COUNT(*) as count FROM " . TABLE_STAFF_MEMBERS . " WHERE department_id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param('i', $id);
     $stmt->execute();
@@ -31,7 +31,7 @@ if (isset($_GET['delete']) && !empty($_GET['delete'])) {
 
     // Only delete if the department is not in use
     if ($staff_count == 0) {
-        $sql = "DELETE FROM departments WHERE id = ?";
+        $sql = "DELETE FROM " . TABLE_DEPARTMENTS . " WHERE id = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param('i', $id);
 
@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Check if this is an edit or add operation
         if ($department_id) {
             // Update existing department
-            $sql = "UPDATE departments SET name = ?, description = ?, color = ? WHERE id = ?";
+            $sql = "UPDATE " . TABLE_DEPARTMENTS . " SET name = ?, description = ?, color = ? WHERE id = ?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("sssi", $name, $description, $color, $department_id);
 
@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } else {
             // Add new department
-            $sql = "INSERT INTO departments (name, description, color) VALUES (?, ?, ?)";
+            $sql = "INSERT INTO " . TABLE_DEPARTMENTS . " (name, description, color) VALUES (?, ?, ?)";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("sss", $name, $description, $color);
 

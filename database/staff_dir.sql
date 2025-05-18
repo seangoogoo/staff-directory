@@ -1,10 +1,12 @@
 -- Database schema for Staff Directory Application
 
-CREATE DATABASE IF NOT EXISTS `staff_dir`;
-USE `staff_dir`;
+-- {DB_CREATE}
+CREATE DATABASE IF NOT EXISTS `{DB_NAME}`;
+-- {/DB_CREATE}
+USE `{DB_NAME}`;
 
 -- Companies Table
-CREATE TABLE IF NOT EXISTS `companies` (
+CREATE TABLE IF NOT EXISTS `{PREFIX}companies` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
   `description` text,
@@ -16,13 +18,13 @@ CREATE TABLE IF NOT EXISTS `companies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Insert example companies
-INSERT INTO `companies` (`name`, `description`, `logo`) VALUES
+INSERT INTO `{PREFIX}companies` (`name`, `description`, `logo`) VALUES
 ('NeuroSoft GmbH', 'Leading software development company specializing in enterprise solutions and cutting-edge technologies', '/uploads/companies/software-company.svg'),
 ('EcoVert Consultants', 'Environmental consulting firm helping businesses implement sustainable practices', '/uploads/companies/environmental-company.svg'),
 ('MediTech AG', 'Healthcare provider focusing on innovative medical technologies and patient care', '/uploads/companies/healthcare-company.svg');
 
 -- Departments Table
-CREATE TABLE IF NOT EXISTS `departments` (
+CREATE TABLE IF NOT EXISTS `{PREFIX}departments` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
   `description` text,
@@ -34,7 +36,7 @@ CREATE TABLE IF NOT EXISTS `departments` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Insert default departments
-INSERT INTO `departments` (`name`, `description`, `color`) VALUES
+INSERT INTO `{PREFIX}departments` (`name`, `description`, `color`) VALUES
 ('Product Management', 'Defines product vision, roadmaps, and requirements', '#94C2F3'),
 ('Frontend Development', 'Develops user interfaces and client-side logic', '#A8D8AD'),
 ('Backend Development', 'Builds server-side logic, APIs, and databases', '#F4B8B8'),
@@ -49,7 +51,7 @@ INSERT INTO `departments` (`name`, `description`, `color`) VALUES
 ('General IT/Systems', 'Manages internal company computer systems, and network', '#7DCEA0');
 
 -- Staff Members Table
-CREATE TABLE IF NOT EXISTS `staff_members` (
+CREATE TABLE IF NOT EXISTS `{PREFIX}staff_members` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `first_name` varchar(100) NOT NULL,
   `last_name` varchar(100) NOT NULL,
@@ -64,13 +66,13 @@ CREATE TABLE IF NOT EXISTS `staff_members` (
   UNIQUE KEY `email` (`email`),
   KEY `company_id` (`company_id`),
   KEY `department_id` (`department_id`),
-  CONSTRAINT `staff_members_ibfk_1` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT `staff_members_ibfk_2` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+  CONSTRAINT `staff_members_ibfk_1` FOREIGN KEY (`department_id`) REFERENCES `{PREFIX}departments` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `staff_members_ibfk_2` FOREIGN KEY (`company_id`) REFERENCES `{PREFIX}companies` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Insert some sample data for NeuroSoft GmbH (company_id=1)
 -- Note: We're using department IDs now instead of department names
-INSERT INTO `staff_members` (`first_name`, `last_name`, `company_id`, `department_id`, `job_title`, `email`, `profile_picture`) VALUES
+INSERT INTO `{PREFIX}staff_members` (`first_name`, `last_name`, `company_id`, `department_id`, `job_title`, `email`, `profile_picture`) VALUES
 ('Antoine', 'Dupont', 1, 2, 'Frontend Developer', 'antoine.dupont@staffdirectory.com', ''),
 ('Sophia', 'Müller', 1, 3, 'Backend Developer', 'sophia.muller@staffdirectory.com', ''),
 ('Marco', 'Rossi', 1, 4, 'Mobile Developer (iOS)', 'marco.rossi@staffdirectory.com', ''),
@@ -96,21 +98,21 @@ INSERT INTO `staff_members` (`first_name`, `last_name`, `company_id`, `departmen
 ('Jens', 'Hoffmann', 1, 12, 'Network Administrator', 'jens.hoffmann@staffdirectory.com', '');
 
 -- Sample staff for EcoVert Consultants (company_id=2)
-INSERT INTO `staff_members` (`first_name`, `last_name`, `company_id`, `department_id`, `job_title`, `email`, `profile_picture`) VALUES
+INSERT INTO `{PREFIX}staff_members` (`first_name`, `last_name`, `company_id`, `department_id`, `job_title`, `email`, `profile_picture`) VALUES
 ('Léa', 'Dubois', 2, 1, 'Environmental Analyst', 'lea.dubois@ecovert.com', ''),
 ('Matthias', 'Wagner', 2, 9, 'Sustainability Data Scientist', 'matthias.wagner@ecovert.com', ''),
 ('Sofia', 'Lombardi', 2, 7, 'Environmental UI Designer', 'sofia.lombardi@ecovert.com', ''),
 ('Pascal', 'Lefevre', 2, 11, 'Project Coordinator', 'pascal.lefevre@ecovert.com', '');
 
 -- Sample staff for MediTech AG (company_id=3)
-INSERT INTO `staff_members` (`first_name`, `last_name`, `company_id`, `department_id`, `job_title`, `email`, `profile_picture`) VALUES
+INSERT INTO `{PREFIX}staff_members` (`first_name`, `last_name`, `company_id`, `department_id`, `job_title`, `email`, `profile_picture`) VALUES
 ('Astrid', 'Bergman', 3, 2, 'Healthcare Frontend Developer', 'astrid.bergman@meditech.com', ''),
 ('Klaus', 'Müller', 3, 3, 'Medical Systems Developer', 'klaus.muller@meditech.com', ''),
 ('Charlotte', 'Rousseau', 3, 5, 'Healthcare QA Specialist', 'charlotte.rousseau@meditech.com', ''),
 ('Mikkel', 'Jensen', 3, 8, 'Healthcare Security Officer', 'mikkel.jensen@meditech.com', '');
 
 -- Application Settings Table
-CREATE TABLE IF NOT EXISTS `app_settings` (
+CREATE TABLE IF NOT EXISTS `{PREFIX}app_settings` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `setting_key` varchar(50) NOT NULL,
   `setting_value` varchar(255) NOT NULL,
@@ -121,7 +123,7 @@ CREATE TABLE IF NOT EXISTS `app_settings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Insert default application settings
-INSERT INTO `app_settings` (`setting_key`, `setting_value`) VALUES
+INSERT INTO `{PREFIX}app_settings` (`setting_key`, `setting_value`) VALUES
 ('font_weight', 'Regular'),
 ('font_size_factor', '3'),
 ('custom_logo_path', ''),

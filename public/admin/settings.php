@@ -395,7 +395,7 @@ function process_logo_removal() {
 
         // Remove logo by setting empty path in database
         $empty_path = '';
-        $stmt = $conn->prepare("UPDATE app_settings SET setting_value = ?, updated_at = NOW() WHERE setting_key = 'custom_logo_path'");
+        $stmt = $conn->prepare("UPDATE " . TABLE_APP_SETTINGS . " SET setting_value = ?, updated_at = NOW() WHERE setting_key = 'custom_logo_path'");
         $stmt->bind_param("s", $empty_path);
         $stmt->execute();
         $stmt->close();

@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            $sql = "INSERT INTO staff_members (first_name, last_name, company_id, department_id, job_title, email, profile_picture)
+            $sql = "INSERT INTO " . TABLE_STAFF_MEMBERS . " (first_name, last_name, company_id, department_id, job_title, email, profile_picture)
                     VALUES (?, ?, ?, ?, ?, ?, ?)";
 
             $stmt = $conn->prepare($sql);

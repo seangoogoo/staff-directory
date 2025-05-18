@@ -478,9 +478,9 @@ function get_all_staff_members($conn, $sort_by = 'last_name', $sort_order = 'ASC
     // Start building the prepared statement - JOIN with departments and companies tables
     $sql = "SELECT s.*, d.name as department, d.color as department_color, "
          . "c.name as company, c.id as company_id, c.logo as company_logo "
-         . "FROM staff_members s "
-         . "JOIN departments d ON s.department_id = d.id "
-         . "JOIN companies c ON s.company_id = c.id "
+         . "FROM " . TABLE_STAFF_MEMBERS . " s "
+         . "JOIN " . TABLE_DEPARTMENTS . " d ON s.department_id = d.id "
+         . "JOIN " . TABLE_COMPANIES . " c ON s.company_id = c.id "
          . "WHERE 1=1";
 
     // Add search condition if provided
@@ -546,9 +546,9 @@ function get_all_staff_members($conn, $sort_by = 'last_name', $sort_order = 'ASC
  */
 function get_staff_member_by_id($conn, $id) {
     $sql = "SELECT s.*, d.name as department, d.id as department_id, c.id as company_id, c.name as company "
-         . "FROM staff_members s "
-         . "JOIN departments d ON s.department_id = d.id "
-         . "JOIN companies c ON s.company_id = c.id "
+         . "FROM " . TABLE_STAFF_MEMBERS . " s "
+         . "JOIN " . TABLE_DEPARTMENTS . " d ON s.department_id = d.id "
+         . "JOIN " . TABLE_COMPANIES . " c ON s.company_id = c.id "
          . "WHERE s.id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param('i', $id);
@@ -572,7 +572,7 @@ function delete_staff_member($conn, $id) {
     // Get the profile picture filename
     $staff = get_staff_member_by_id($conn, $id);
 
-    $sql = "DELETE FROM staff_members WHERE id = ?";
+    $sql = "DELETE FROM " . TABLE_STAFF_MEMBERS . " WHERE id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param('i', $id);
     $result = $stmt->execute();
@@ -599,7 +599,7 @@ function delete_staff_member($conn, $id) {
  * @return array Array of companies with id, name, description, and logo
  */
 function get_all_companies($conn) {
-    $sql = "SELECT id, name, description, logo FROM companies ORDER BY name";
+    $sql = "SELECT id, name, description, logo FROM " . TABLE_COMPANIES . " ORDER BY name";
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -622,7 +622,7 @@ function get_all_companies($conn) {
  * @return array Array of company names
  */
 function get_all_company_names($conn) {
-    $sql = "SELECT name FROM companies ORDER BY name";
+    $sql = "SELECT name FROM " . TABLE_COMPANIES . " ORDER BY name";
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -642,7 +642,7 @@ function get_all_company_names($conn) {
  * Get department by ID
  */
 function get_department_by_id($conn, $id) {
-    $sql = "SELECT * FROM departments WHERE id = ?";
+    $sql = "SELECT * FROM " . TABLE_DEPARTMENTS . " WHERE id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param('i', $id);
     $stmt->execute();
@@ -665,7 +665,7 @@ function get_department_by_id($conn, $id) {
  * @return array Array of departments with id, name, description, and color
  */
 function get_all_departments($conn) {
-    $sql = "SELECT id, name, description, color FROM departments ORDER BY name";
+    $sql = "SELECT id, name, description, color FROM " . TABLE_DEPARTMENTS . " ORDER BY name";
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -688,7 +688,7 @@ function get_all_departments($conn) {
  * @return array Array of department names
  */
 function get_all_department_names($conn) {
-    $sql = "SELECT name FROM departments ORDER BY name";
+    $sql = "SELECT name FROM " . TABLE_DEPARTMENTS . " ORDER BY name";
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -719,9 +719,9 @@ function get_departments_by_company($conn, $company_name) {
 
     // Query to find departments that have staff members in the specified company
     $sql = "SELECT DISTINCT d.name
-            FROM departments d
-            JOIN staff_members s ON d.id = s.department_id
-            JOIN companies c ON s.company_id = c.id
+            FROM " . TABLE_DEPARTMENTS . " d
+            JOIN " . TABLE_STAFF_MEMBERS . " s ON d.id = s.department_id
+            JOIN " . TABLE_COMPANIES . " c ON s.company_id = c.id
             WHERE c.name = ?
             ORDER BY d.name";
 
@@ -757,9 +757,9 @@ function get_companies_by_department($conn, $department_name) {
 
     // Query to find companies that have staff members in the specified department
     $sql = "SELECT DISTINCT c.name
-            FROM companies c
-            JOIN staff_members s ON c.id = s.company_id
-            JOIN departments d ON s.department_id = d.id
+            FROM " . TABLE_COMPANIES . " c
+            JOIN " . TABLE_STAFF_MEMBERS . " s ON c.id = s.company_id
+            JOIN " . TABLE_DEPARTMENTS . " d ON s.department_id = d.id
             WHERE d.name = ?
             ORDER BY c.name";
 
@@ -784,7 +784,7 @@ function get_companies_by_department($conn, $department_name) {
  * Get department by name
  */
 function get_department_by_name($conn, $name) {
-    $sql = "SELECT * FROM departments WHERE name = ?";
+    $sql = "SELECT * FROM " . TABLE_DEPARTMENTS . " WHERE name = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param('s', $name);
     $stmt->execute();
@@ -948,7 +948,7 @@ function load_app_settings()
 
     if (isset($conn) && !$conn->connect_error) {
         // Using mysqli instead of PDO
-        $stmt = $conn->prepare("SELECT setting_key, setting_value FROM app_settings");
+        $stmt = $conn->prepare("SELECT setting_key, setting_value FROM " . TABLE_APP_SETTINGS);
 
         if ($stmt) {
             $stmt->execute();
@@ -998,7 +998,7 @@ function debug_log($data, $label = '', $print_r = true) {
  * @return array|null Company data or null if not found
  */
 function get_company_by_id($conn, $id) {
-    $sql = "SELECT * FROM companies WHERE id = ?";
+    $sql = "SELECT * FROM " . TABLE_COMPANIES . " WHERE id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param('i', $id);
     $stmt->execute();
@@ -1065,7 +1065,7 @@ function upload_company_logo($file) {
  * @return int Number of staff members associated with the company
  */
 function get_company_staff_count($conn, $company_id) {
-    $sql = "SELECT COUNT(*) as count FROM staff_members WHERE company_id = ?";
+    $sql = "SELECT COUNT(*) as count FROM " . TABLE_STAFF_MEMBERS . " WHERE company_id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param('i', $company_id);
     $stmt->execute();
@@ -1085,8 +1085,8 @@ function get_company_staff_count($conn, $company_id) {
 function get_all_company_statistics($conn) {
     // Get all companies with their staff counts
     $sql = "SELECT c.id, c.name, c.logo, COUNT(s.id) as staff_count
-            FROM companies c
-            LEFT JOIN staff_members s ON c.id = s.company_id
+            FROM " . TABLE_COMPANIES . " c
+            LEFT JOIN " . TABLE_STAFF_MEMBERS . " s ON c.id = s.company_id
             GROUP BY c.id
             ORDER BY staff_count DESC";
 
@@ -1124,8 +1124,8 @@ function get_all_company_statistics($conn) {
  */
 function get_active_department_names($conn) {
     $sql = "SELECT DISTINCT d.name
-            FROM departments d
-            INNER JOIN staff_members s ON d.id = s.department_id
+            FROM " . TABLE_DEPARTMENTS . " d
+            INNER JOIN " . TABLE_STAFF_MEMBERS . " s ON d.id = s.department_id
             ORDER BY d.name ASC";
 
     $stmt = $conn->prepare($sql);
@@ -1149,8 +1149,8 @@ function get_active_department_names($conn) {
  */
 function get_active_company_names($conn) {
     $sql = "SELECT DISTINCT c.name
-            FROM companies c
-            INNER JOIN staff_members s ON c.id = s.company_id
+            FROM " . TABLE_COMPANIES . " c
+            INNER JOIN " . TABLE_STAFF_MEMBERS . " s ON c.id = s.company_id
             ORDER BY c.name ASC";
 
     $stmt = $conn->prepare($sql);
@@ -1179,7 +1179,7 @@ function check_staff_duplicate($conn, $first_name, $last_name, $email) {
     $result = ['duplicate' => false, 'message' => ''];
 
     // Check for duplicate name (case insensitive)
-    $sql_name = "SELECT id FROM staff_members WHERE LOWER(first_name) = LOWER(?) AND LOWER(last_name) = LOWER(?)";
+    $sql_name = "SELECT id FROM " . TABLE_STAFF_MEMBERS . " WHERE LOWER(first_name) = LOWER(?) AND LOWER(last_name) = LOWER(?)";
     $stmt_name = $conn->prepare($sql_name);
     $stmt_name->bind_param("ss", $first_name, $last_name);
     $stmt_name->execute();
@@ -1194,7 +1194,7 @@ function check_staff_duplicate($conn, $first_name, $last_name, $email) {
     $stmt_name->close();
 
     // Check for duplicate email (case insensitive)
-    $sql_email = "SELECT id FROM staff_members WHERE LOWER(email) = LOWER(?)";
+    $sql_email = "SELECT id FROM " . TABLE_STAFF_MEMBERS . " WHERE LOWER(email) = LOWER(?)";
     $stmt_email = $conn->prepare($sql_email);
     $stmt_email->bind_param("s", $email);
     $stmt_email->execute();

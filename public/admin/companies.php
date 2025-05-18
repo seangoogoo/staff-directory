@@ -27,7 +27,7 @@ if (isset($_GET['delete']) && !empty($_GET['delete'])) {
         // Get company info to delete logo if exists
         $company = get_company_by_id($conn, $id);
 
-        $sql = "DELETE FROM companies WHERE id = ?";
+        $sql = "DELETE FROM " . TABLE_COMPANIES . " WHERE id = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param('i', $id);
 
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // First check if new logo is uploaded - this takes precedence over delete flag
             if (!empty($logo_path)) {
                 // New logo uploaded, update it and delete old one if exists
-                $sql = "UPDATE companies SET name = ?, description = ?, logo = ? WHERE id = ?";
+                $sql = "UPDATE " . TABLE_COMPANIES . " SET name = ?, description = ?, logo = ? WHERE id = ?";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("sssi", $name, $description, $logo_path, $company_id);
 
@@ -98,12 +98,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     unlink(__DIR__ . '/..' . $current_company['logo']);
                 }
                 // Set logo to empty in the database
-                $sql = "UPDATE companies SET name = ?, description = ?, logo = '' WHERE id = ?";
+                $sql = "UPDATE " . TABLE_COMPANIES . " SET name = ?, description = ?, logo = '' WHERE id = ?";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("ssi", $name, $description, $company_id);
             } else {
                 // No new logo, keep existing one
-                $sql = "UPDATE companies SET name = ?, description = ? WHERE id = ?";
+                $sql = "UPDATE " . TABLE_COMPANIES . " SET name = ?, description = ? WHERE id = ?";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("ssi", $name, $description, $company_id);
             }
@@ -127,11 +127,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             // Add new company
             if (!empty($logo_path)) {
-                $sql = "INSERT INTO companies (name, description, logo) VALUES (?, ?, ?)";
+                $sql = "INSERT INTO " . TABLE_COMPANIES . " (name, description, logo) VALUES (?, ?, ?)";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("sss", $name, $description, $logo_path);
             } else {
-                $sql = "INSERT INTO companies (name, description) VALUES (?, ?)";
+                $sql = "INSERT INTO " . TABLE_COMPANIES . " (name, description) VALUES (?, ?)";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("ss", $name, $description);
             }

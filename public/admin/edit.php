@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // If no new file and delete not checked, $profile_picture remains the current one
 
         // Update staff member in DB
-        $sql = "UPDATE staff_members SET
+        $sql = "UPDATE " . TABLE_STAFF_MEMBERS . " SET
                 first_name = ?, last_name = ?, company_id = ?, department_id = ?,
                 job_title = ?, email = ?, profile_picture = ?
                 WHERE id = ?";

@@ -1,11 +1,13 @@
 -- Database schema for Staff Directory Application (Clean Version)
 -- This file creates the database structure without any example data
 
-CREATE DATABASE IF NOT EXISTS `staff_dir`;
-USE `staff_dir`;
+-- {DB_CREATE}
+CREATE DATABASE IF NOT EXISTS `{DB_NAME}`;
+-- {/DB_CREATE}
+USE `{DB_NAME}`;
 
 -- Companies Table
-CREATE TABLE IF NOT EXISTS `companies` (
+CREATE TABLE IF NOT EXISTS `{PREFIX}companies` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
   `description` text,
@@ -17,11 +19,11 @@ CREATE TABLE IF NOT EXISTS `companies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Insert a default company (required for foreign key constraints)
-INSERT INTO `companies` (`name`, `description`, `logo`) VALUES
+INSERT INTO `{PREFIX}companies` (`name`, `description`, `logo`) VALUES
 ('My Company', 'Default company', '');
 
 -- Departments Table
-CREATE TABLE IF NOT EXISTS `departments` (
+CREATE TABLE IF NOT EXISTS `{PREFIX}departments` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
   `description` text,
@@ -33,11 +35,11 @@ CREATE TABLE IF NOT EXISTS `departments` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Insert a default department (required for foreign key constraints)
-INSERT INTO `departments` (`name`, `description`, `color`) VALUES
+INSERT INTO `{PREFIX}departments` (`name`, `description`, `color`) VALUES
 ('General', 'Default department', '#6c757d');
 
 -- Staff Members Table
-CREATE TABLE IF NOT EXISTS `staff_members` (
+CREATE TABLE IF NOT EXISTS `{PREFIX}staff_members` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `first_name` varchar(100) NOT NULL,
   `last_name` varchar(100) NOT NULL,
@@ -52,12 +54,12 @@ CREATE TABLE IF NOT EXISTS `staff_members` (
   UNIQUE KEY `email` (`email`),
   KEY `company_id` (`company_id`),
   KEY `department_id` (`department_id`),
-  CONSTRAINT `staff_members_ibfk_1` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT `staff_members_ibfk_2` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+  CONSTRAINT `staff_members_ibfk_1` FOREIGN KEY (`department_id`) REFERENCES `{PREFIX}departments` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `staff_members_ibfk_2` FOREIGN KEY (`company_id`) REFERENCES `{PREFIX}companies` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Application Settings Table
-CREATE TABLE IF NOT EXISTS `app_settings` (
+CREATE TABLE IF NOT EXISTS `{PREFIX}app_settings` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `setting_key` varchar(50) NOT NULL,
   `setting_value` varchar(255) NOT NULL,
@@ -68,7 +70,7 @@ CREATE TABLE IF NOT EXISTS `app_settings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Insert default application settings
-INSERT INTO `app_settings` (`setting_key`, `setting_value`) VALUES
+INSERT INTO `{PREFIX}app_settings` (`setting_key`, `setting_value`) VALUES
 ('font_weight', 'Regular'),
 ('font_size_factor', '3'),
 ('custom_logo_path', ''),
