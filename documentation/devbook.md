@@ -4,6 +4,22 @@
 
 ### Version 1.2 (March 2025)
 
+#### April 15, 2025
+*Special Character Encoding Fix*
+
+- Fixed HTML entity encoding issues in form submissions
+  - Modified `sanitize_input()` function to make HTML encoding optional with a new parameter
+  - Updated form processing in companies.php and settings.php to avoid HTML encoding when storing data
+  - Ensured proper HTML encoding is still applied when displaying data in templates
+  - Fixed issues with special characters like "&" being double-encoded
+  - Created test scripts to verify encoding behavior
+- Technical implementation details
+  - Updated `sanitize_input()` function in functions.php to include an `$encode_html` parameter
+  - Modified `process_title_settings()` in settings.php to use the updated function
+  - Replaced `filter_input()` with `sanitize_input()` for consistent handling
+  - Ensured backward compatibility with existing code
+  - Added comprehensive testing for various special characters
+
 #### April 14, 2025
 *Internationalization Implementation (FR/EN)*
 
@@ -550,6 +566,70 @@ The authentication system has been optimized with a centralized configuration ap
 - Used settings hash to track changes and avoid unnecessary regeneration
 - Optimized font sizing algorithm based on image dimensions
 
+### Version 1.2.8 (November 2023)
+
+#### June 13, 2024
+*Installer UI Redesign, Internationalization, and Table Prefix Fixes*
+
+- Enhanced installer UI to match admin interface design
+  - Redesigned install.php to use Tailwind CSS exclusively with no inline styles
+  - Implemented consistent styling with the admin interface for better user experience
+  - Used the Outfit font for typography consistency across the application
+  - Matched logo sizing with the public homepage for brand consistency
+  - Created proper form layout with responsive design
+  - Added improved message styling for success and error notifications
+  - Ensured proper spacing, colors, and visual hierarchy
+  - Fixed form field styling to match admin interface patterns
+
+- Implemented internationalization for the installer page
+  - Added translation keys for all installer text in both English and French language files
+  - Updated install.php to use the LanguageManager for language detection and translation
+  - Implemented proper path constants in install.php to support the LanguageManager
+  - Replaced all hardcoded text with calls to the `__()` translation function
+  - Ensured session handling for language persistence
+  - Added language switching support via URL parameter (?lang=fr)
+  - Maintained consistent internationalization approach with the rest of the application
+  - Verified proper display of translations in both English and French
+
+- Fixed table prefix implementation in database setup
+  - Ensured proper handling of table prefixes with automatic underscore addition
+  - Added clear user feedback about prefix formatting in the installer UI
+  - Improved error logging for better troubleshooting during installation
+  - Enhanced prefix validation to prevent common configuration errors
+  - Fixed edge cases in SQL processing with prefixes
+  - Added comprehensive debugging to track prefix application in SQL files
+  - Fixed hardcoded table name in departments.php that was causing SQL errors
+  - Ensured consistent use of TABLE_* constants throughout the application for proper prefix handling
+
+#### November 15, 2023
+*Database Configuration and Installer Implementation*
+
+- Implemented flexible database configuration system
+  - Added support for custom database names via `DB_NAME` environment variable
+  - Implemented table prefix support with `DB_TABLE_PREFIX` environment variable
+  - Added database creation control with `DB_CREATE_DATABASE` flag
+  - Created installation status tracking with `DB_INSTALLED` flag
+  - Updated all SQL queries to use table constants instead of direct table references
+- Created comprehensive database migration tools
+  - Implemented `migrate_tables.php` script for renaming existing tables with prefixes
+  - Added safety checks to prevent overwriting existing tables
+  - Implemented dry-run mode for testing migrations without making changes
+  - Added force option to skip confirmation prompts for automated migrations
+  - Created detailed migration summary with success/error/skipped counts
+- Developed web-based installer for easy setup
+  - Created `install.php` with user-friendly interface for database configuration
+  - Implemented database connection testing functionality
+  - Added form validation and error handling
+  - Created database initialization with proper table creation
+  - Added installation status checking to prevent reinstallation
+  - Implemented admin account setup during installation
+- Enhanced documentation and testing
+  - Updated README.md with database configuration information
+  - Updated FTP_Deployment_Guide.md with installer instructions
+  - Created comprehensive test scripts for all aspects of the implementation
+  - Added detailed error handling and user feedback throughout the system
+  - Implemented proper environment variable handling for configuration
+
 ### Version 1.2.5 (April 2025)
 
 #### April 6, 2025
@@ -609,6 +689,8 @@ The authentication system has been optimized with a centralized configuration ap
 - Local image storage in `uploads` directory
 - Custom authentication system for admin area (previously was `.htaccess`/`.htpasswd`)
 - Development URL: https://staffdirectory.local (configured via local hosts file)
+- Flexible database configuration with support for custom database names and table prefixes
+- Web-based installer for easy setup and configuration
 
 ## Project Roadmap
 
@@ -722,7 +804,7 @@ The authentication system has been optimized with a centralized configuration ap
 - ~~Create a favicon~~
 - ~~Add internationalization support (FR/EN translation files)~~
 - ~~Install example app. on staffdirectory.jensen-siu.net~~
-- Add the ability to customize a prefix for the database tables
+- ~~Add the ability to customize a prefix for the database tables~~ (November 15, 2023)
 - Improve unused placeholder images management to remove them when not needed either by programming a folder cleanup once a day and/or by using temporary images when editing settings or creating/editing users
 
 

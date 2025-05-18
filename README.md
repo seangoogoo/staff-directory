@@ -38,6 +38,17 @@ Live demo available at: [https://staff-directory.jensen-siu.net/](https://staff-
 
 ## Installation
 
+### Web-Based Installer
+The application includes a web-based installer that simplifies the setup process:
+1. Upload the application files to your server
+2. Navigate to `http://your-domain.com/install.php` in your browser
+3. Follow the on-screen instructions to configure your database and admin account
+4. The installer will automatically:
+   - Test the database connection
+   - Create the database if it doesn't exist (optional)
+   - Initialize the database with the required tables
+   - Configure your application settings
+
 ### Local Development
 1. Clone the repository
 2. Import the database schema from `database/staff_dir.sql`
@@ -52,11 +63,26 @@ For deploying to a remote server with only FTP and phpMyAdmin access:
 2. Follow the detailed instructions in `documentation/FTP_Deployment_Guide.md`
 3. Use the checklist in `documentation/Minimal_Directory_Structure.md` to ensure all required files are uploaded
 
+### Custom Database Configuration
+The application supports custom database configurations:
+1. **Custom Database Name**: You can use an existing database by setting the `DB_NAME` variable in your `.env` file
+2. **Table Prefixes**: Add a prefix to all tables by setting the `DB_TABLE_PREFIX` variable (e.g., `sd_`)
+3. **Database Creation**: Control whether the application should create the database by setting `DB_CREATE_DATABASE` to `true` or `false`
+
+If you need to migrate an existing installation to use table prefixes, use the migration script:
+```bash
+php database/migrate_tables.php
+```
+
 ## Directory structure
 The application follows a secure directory structure:
 
 ```
 ├── `public/`                       # Web accessible files (the web root)
+│   ├── `.htaccess`                 # Apache configuration for the web root
+│   ├── `install.php`               # Web-based installer
+│   ├── `front-controller.php`      # Front controller entry point
+│   ├── `index.php`                 # Main entry point
 │   ├── `staff-directory/`          # Application files (can be deployed in a subdirectory)
 │   │   ├── `admin/`                # Admin interface files
 │   │   │   ├── `auth/`             # Authentication system
@@ -111,12 +137,11 @@ The application follows a secure directory structure:
 │   │   │   ├── `companies/`        # Company logo images
 │   │   │   ├── `logos/`            # Application logo images
 │   │   │   └── `placeholders/`     # Generated placeholder images (WebP format)
-│   │   ├── `front-controller.php`  # Front controller entry point
-│   │   ├── `.htaccess`             # Apache configuration for routing
-│   │   └── `index.php`             # Main entry point
+│   │   └── `.htaccess`             # Apache configuration for subdirectory routing
 ├── `config/`                       # Configuration files (moved outside web root for security)
+│   ├── `app.php`                   # Application configuration settings
 │   ├── `auth_config.php`           # Centralized authentication configuration
-│   ├── `database.php`              # Database connection configuration
+│   ├── `database.php`              # Database connection configuration with table prefix support
 │   ├── `env_loader.php`            # Environment variables loader
 │   └── `languages.php`             # Language configuration
 ├── `src/`                          # Source files for development
@@ -129,13 +154,17 @@ The application follows a secure directory structure:
 │   ├── `intermediate.css`          # Intermediate CSS (generated)
 │   └── `intermediate.css.map`      # Source mapping for CSS
 ├── `database/`                     # Database schema and migration scripts
-│   ├── `migrate_departments.sql`   # Migration script for department management
-│   └── `staff_dir.sql`             # Initial database schema and data
+│   ├── `migrate_tables.php`        # Script to rename tables with prefix
+│   ├── `process_sql.php`           # SQL processor for table prefixes
+│   ├── `staff_dir.sql`             # Initial database schema and data
+│   └── `staff_dir_clean.sql`       # Clean schema without example data
 ├── `documentation/`                # Project documentation
 │   ├── `devbook.md`                # Developer documentation
 │   ├── `Subdirectory_Deployment_Configuration_Checklist.md` # Subdirectory deployment guide
 │   ├── `debugging.md`              # Debugging guide
-│   └── `internationalization.md`   # Internationalization documentation
+│   ├── `internationalization.md`   # Internationalization documentation
+│   ├── `Database_Configuration_Tracker.md` # Database configuration implementation tracker
+│   └── `FTP_Deployment_Guide.md`   # Guide for deploying via FTP
 ├── `languages/`                    # Translation files
 │   ├── `en/`                       # English translations
 │   │   ├── `common.php`            # Common translations
@@ -149,8 +178,15 @@ The application follows a secure directory structure:
 ├── `vendor/`                       # Composer dependencies
 ├── `node_modules/`                 # NPM dependencies
 ├── `staff_dir_env/`                # Environment variables (outside web root for security)
-│   ├── `.env`                      # Environment variables file
+│   ├── `.env`                      # Environment variables file (DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_TABLE_PREFIX, etc.)
 │   └── `.env_example`              # Example environment file template
+├── `tests/`                        # Test scripts for database configuration and installer
+│   ├── `run_all_tests.php`         # Script to run all tests
+│   ├── `test_default_config.php`   # Test default database configuration
+│   ├── `test_custom_db_name.php`   # Test custom database name
+│   ├── `test_table_prefix.php`     # Test table prefix functionality
+│   ├── `test_migration_script.php` # Test database migration script
+│   └── `test_web_installer.php`    # Test web-based installer
 ├── `.vscode/`                      # VS Code configuration
 │   └── `settings.json`             # Editor settings
 ├── `package.json`                  # NPM package configuration
@@ -188,6 +224,9 @@ DB_HOST=localhost
 DB_USER=your_database_user
 DB_PASS=your_database_password
 DB_NAME=staff_dir
+DB_TABLE_PREFIX=
+DB_CREATE_DATABASE=true
+DB_INSTALLED=false
 
 # Admin Credentials
 ADMIN_USERNAME=admin

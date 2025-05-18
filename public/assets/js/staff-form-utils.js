@@ -21,9 +21,12 @@ function updateDepartmentColorPreview(departmentSelect, colorPreviewElement) {
         const luminance = ((r * 299) + (g * 587) + (b * 114)) / 1000
         const textColor = (luminance > 150) ? 'dark-text' : 'light-text'
 
+        // Use translations if available (passed from the page)
+        const selectedText = window.translations?.selected || 'Selected:'
+
         colorPreviewElement.innerHTML = `
             <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium ${textColor}" style="background-color: ${color}; --dept-color: ${color}">
-                Selected: ${deptName}
+                ${selectedText} ${deptName}
             </span>
         `
         colorPreviewElement.style.display = 'block'
@@ -68,12 +71,16 @@ function getPlaceholderImageUrl(firstName, lastName, departmentSelect, defaultIm
 function handleFileSelection(file, imagePreview, removeButton = null) {
     if (file) {
         if (!file.type.match('image.*')) {
-            alert('Please upload an image file')
+            // Use translations if available (passed from the page)
+            const errorMsg = window.translations?.uploadImageFile || 'Please upload an image file'
+            alert(errorMsg)
             return false
         }
 
         if (file.size > 10 * 1024 * 1024) {
-            alert('File is too large. Maximum size is 10MB')
+            // Use translations if available (passed from the page)
+            const errorMsg = window.translations?.fileTooLarge || 'File is too large. Maximum size is 10MB'
+            alert(errorMsg)
             return false
         }
 

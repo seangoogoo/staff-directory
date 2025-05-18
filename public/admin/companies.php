@@ -17,7 +17,7 @@ $success_message = get_session_message('success_message');
 
 // Process delete request if submitted
 if (isset($_GET['delete']) && !empty($_GET['delete'])) {
-    $id = sanitize_input($_GET['delete']);
+    $id = sanitize_input($_GET['delete'], false);
 
     // Check if company is in use by any staff members
     $staff_count = get_company_staff_count($conn, $id);
@@ -53,9 +53,10 @@ if (isset($_GET['delete']) && !empty($_GET['delete'])) {
 // Process form submission for Add/Edit
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Sanitize and validate input
-    $name = sanitize_input($_POST['name']);
+    // Don't encode HTML entities for database storage
+    $name = sanitize_input($_POST['name'], false);
     $description = isset($_POST['description']) ? $_POST['description'] : ''; // Don't sanitize as it may contain HTML from editor
-    $company_id = isset($_POST['company_id']) ? sanitize_input($_POST['company_id']) : null;
+    $company_id = isset($_POST['company_id']) ? sanitize_input($_POST['company_id'], false) : null;
 
     // Process logo upload if provided
     $logo_path = '';
@@ -158,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Load company for editing if ID is provided
 if (isset($_GET['edit']) && !empty($_GET['edit'])) {
-    $edit_id = sanitize_input($_GET['edit']);
+    $edit_id = sanitize_input($_GET['edit'], false);
     $company = get_company_by_id($conn, $edit_id);
 
     if ($company) {

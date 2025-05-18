@@ -415,11 +415,20 @@ function get_staff_image_url($staff, $size = '600x600', $font_weight = null, $bg
 
 /**
  * Sanitize input data
+ *
+ * @param string $data The input data to sanitize
+ * @param bool $encode_html Whether to encode HTML special characters (default: false)
+ * @return string The sanitized data
  */
-function sanitize_input($data) {
+function sanitize_input($data, $encode_html = false) {
     $data = trim($data);
     $data = stripslashes($data);
-    $data = htmlspecialchars($data);
+
+    // Only encode HTML special characters if requested
+    if ($encode_html) {
+        $data = htmlspecialchars($data);
+    }
+
     return $data;
 }
 
@@ -887,19 +896,19 @@ function update_settings_in_db($settings)
 
     foreach ($settings as $key => $value) {
         // Check if setting exists
-        $check = $conn->prepare("SELECT id FROM app_settings WHERE setting_key = ?");
+        $check = $conn->prepare("SELECT id FROM " . TABLE_APP_SETTINGS . " WHERE setting_key = ?");
         $check->bind_param("s", $key);
         $check->execute();
         $result = $check->get_result();
 
         if ($result->num_rows > 0) {
             // Update existing setting
-            $stmt = $conn->prepare("UPDATE app_settings SET setting_value = ?, updated_at = NOW() WHERE setting_key = ?");
+            $stmt = $conn->prepare("UPDATE " . TABLE_APP_SETTINGS . " SET setting_value = ?, updated_at = NOW() WHERE setting_key = ?");
             $stmt->bind_param("ss", $value, $key);
             $stmt->execute();
         } else {
             // Insert new setting
-            $stmt = $conn->prepare("INSERT INTO app_settings (setting_key, setting_value) VALUES (?, ?)");
+            $stmt = $conn->prepare("INSERT INTO " . TABLE_APP_SETTINGS . " (setting_key, setting_value) VALUES (?, ?)");
             $stmt->bind_param("ss", $key, $value);
             $stmt->execute();
         }

@@ -12,10 +12,20 @@
 require_once __DIR__ . '/../config/env_loader.php';
 
 // Define database name and table prefix
-$db_name = isset($_ENV['DB_NAME']) ? $_ENV['DB_NAME'] : 'staff_dir';
-$prefix = isset($_ENV['DB_TABLE_PREFIX']) ? $_ENV['DB_TABLE_PREFIX'] : '';
-$create_db = isset($_ENV['DB_CREATE_DATABASE']) ?
-    (strtolower($_ENV['DB_CREATE_DATABASE']) === 'true') : true;
+// First check if values were passed via putenv (from install.php)
+$db_name_env = getenv('DB_NAME');
+$prefix_env = getenv('DB_TABLE_PREFIX');
+$create_db_env = getenv('DB_CREATE_DATABASE');
+
+// If not set via putenv, fall back to $_ENV (from .env file)
+$db_name_default = $db_name_env !== false ? $db_name_env : (isset($_ENV['DB_NAME']) ? $_ENV['DB_NAME'] : 'staff_dir');
+$prefix_default = $prefix_env !== false ? $prefix_env : (isset($_ENV['DB_TABLE_PREFIX']) ? $_ENV['DB_TABLE_PREFIX'] : '');
+$create_db_default = $create_db_env !== false ?
+    (strtolower($create_db_env) === 'true') :
+    (isset($_ENV['DB_CREATE_DATABASE']) ? (strtolower($_ENV['DB_CREATE_DATABASE']) === 'true') : true);
+
+// Debug log
+error_log("Default values from environment: DB_NAME=$db_name_default, DB_TABLE_PREFIX=$prefix_default, DB_CREATE_DATABASE=" . ($create_db_default ? 'true' : 'false'));
 
 /**
  * Process SQL file by replacing placeholders
@@ -30,6 +40,16 @@ $create_db = isset($_ENV['DB_CREATE_DATABASE']) ?
 function process_sql_file($input_file, $output_file = null, $db_name = 'staff_dir', $prefix = '', $create_db = true) {
     // If no output file specified, use temporary file
     $output_file = $output_file ?: $input_file . '.tmp';
+
+    // Ensure prefix is properly formatted
+    if ($prefix !== '' && substr($prefix, -1) !== '_') {
+        $prefix .= '_';
+        error_log("Added underscore to prefix: $prefix");
+    }
+
+    // Always use the parameters passed to this function, not the global variables
+    // This ensures that the values from install.php are used, not from .env
+    error_log("process_sql_file called with parameters: db_name=$db_name, prefix=$prefix");
 
     // Read input file
     $sql = file_get_contents($input_file);
@@ -48,11 +68,32 @@ function process_sql_file($input_file, $output_file = null, $db_name = 'staff_di
     }
 
     // Replace placeholders
+    // Debug: Log the values being used for replacement
+    error_log("Replacing placeholders: DB_NAME=$db_name, PREFIX=$prefix");
+
+    // Ensure prefix is properly handled
+    $prefix_value = (is_string($prefix) && $prefix !== '') ? $prefix : '';
+
+    // Make sure the prefix ends with an underscore
+    if ($prefix_value !== '' && substr($prefix_value, -1) !== '_') {
+        $prefix_value .= '_';
+        error_log("Added underscore to prefix_value: $prefix_value");
+    }
+
     $processed_sql = str_replace(
         ['{DB_NAME}', '{PREFIX}'],
-        [$db_name, $prefix],
+        [$db_name, $prefix_value],
         $sql
     );
+
+    // Verify that the prefix was properly applied
+    $sample_table = "CREATE TABLE IF NOT EXISTS `" . $prefix_value . "companies`";
+    if (strpos($processed_sql, $sample_table) === false) {
+        error_log("WARNING: Prefix not properly applied in SQL. Expected: $sample_table");
+        error_log("First 500 chars of processed SQL: " . substr($processed_sql, 0, 500));
+    } else {
+        error_log("Prefix successfully applied in SQL: $sample_table");
+    }
 
     // Write to output file
     if (file_put_contents($output_file, $processed_sql) === false) {
@@ -128,7 +169,7 @@ if (PHP_SAPI === 'cli' && basename($_SERVER['PHP_SELF']) === 'process_sql.php') 
     $execute = in_array('--execute', $argv);
 
     // Process the SQL file
-    $result = process_sql_file($input_file, $output_file, $db_name, $prefix, $create_db);
+    $result = process_sql_file($input_file, $output_file, $db_name_default, $prefix_default, $create_db_default);
     if ($result) {
         echo "SQL file processed successfully. Output: $result\n";
 

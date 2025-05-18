@@ -231,7 +231,7 @@ require_once '../includes/admin_header.php';
                         <?php foreach ($departments as $dept): ?>
                             <?php
                             // Get staff count for this department
-                            $sql = "SELECT COUNT(*) as count FROM staff_members WHERE department_id = ?";
+                            $sql = "SELECT COUNT(*) as count FROM " . TABLE_STAFF_MEMBERS . " WHERE department_id = ?";
                             $stmt = $conn->prepare($sql);
                             $stmt->bind_param('i', $dept['id']);
                             $stmt->execute();

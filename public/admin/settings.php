@@ -313,7 +313,7 @@ function process_logo_visibility($post_data) {
 
     try {
         // Update show_logo setting
-        $stmt = $conn->prepare("UPDATE app_settings SET setting_value = ?, updated_at = NOW() WHERE setting_key = 'show_logo'");
+        $stmt = $conn->prepare("UPDATE " . TABLE_APP_SETTINGS . " SET setting_value = ?, updated_at = NOW() WHERE setting_key = 'show_logo'");
         $stmt->bind_param("s", $show_logo);
         $stmt->execute();
         $stmt->close();
@@ -378,7 +378,7 @@ function process_logo_removal() {
 
     try {
         // Re-query the database to ensure we have the most up-to-date logo path
-        $logo_path_query = $conn->prepare("SELECT setting_value FROM app_settings WHERE setting_key = 'custom_logo_path'");
+        $logo_path_query = $conn->prepare("SELECT setting_value FROM " . TABLE_APP_SETTINGS . " WHERE setting_key = 'custom_logo_path'");
         $logo_path_query->execute();
         $logo_path_result = $logo_path_query->get_result();
         $logo_path_row = $logo_path_result->fetch_assoc();
@@ -545,8 +545,9 @@ function process_title_settings() {
     $result = ['success' => false, 'message' => ''];
 
     // Update titles - allow empty values
-    $frontend_title = filter_input(INPUT_POST, 'frontend_title', FILTER_SANITIZE_SPECIAL_CHARS);
-    $admin_title = filter_input(INPUT_POST, 'admin_title', FILTER_SANITIZE_SPECIAL_CHARS);
+    // Don't encode HTML entities for database storage
+    $frontend_title = isset($_POST['frontend_title']) ? sanitize_input($_POST['frontend_title'], false) : '';
+    $admin_title = isset($_POST['admin_title']) ? sanitize_input($_POST['admin_title'], false) : '';
 
     $titles = [
         'frontend_title' => $frontend_title,

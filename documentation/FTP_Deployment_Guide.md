@@ -10,6 +10,18 @@ This guide provides step-by-step instructions for deploying the Staff Directory 
 
 ## Step 1: Database Setup
 
+### Option A: Using the Web Installer (Recommended)
+
+1. Upload the application files to your server (see Step 3 for required files)
+2. Navigate to `https://your-domain.com/staff-directory/install.php` in your browser
+3. Follow the on-screen instructions to:
+   - Configure your database connection
+   - Set up your admin account
+   - Initialize the database with the required tables
+4. The installer will automatically create the database and tables for you
+
+### Option B: Manual Database Setup
+
 1. Log in to phpMyAdmin on your web server
 2. Create a new database (e.g., `staff_dir`)
 3. Select the newly created database
@@ -28,6 +40,9 @@ Before uploading files, you need to configure the application:
    DB_USER=your_database_username
    DB_PASS=your_database_password
    DB_NAME=staff_dir
+   DB_TABLE_PREFIX=
+   DB_CREATE_DATABASE=true
+   DB_INSTALLED=false
 
    # Admin Credentials
    ADMIN_USERNAME=your_admin_username
@@ -42,6 +57,9 @@ Before uploading files, you need to configure the application:
 
    # Application Settings
    DEV_MODE=false
+
+   # Language Configuration
+   DEFAULT_LANGUAGE=en
    ```
 
 2. Update the `public/includes/bootstrap.php` file to match your server's directory structure:
@@ -80,6 +98,9 @@ Make sure these specific files are included:
    - `staff_dir_env/.env` (create this file as described above)
    - `languages/en/` (English translation files)
    - `languages/fr/` (French translation files)
+   - `database/staff_dir_clean.sql` (for manual database setup)
+   - `database/process_sql.php` (for the installer)
+   - `database/migrate_tables.php` (for table prefix migration)
 
 2. **Core Application Files**:
    - `public/staff-directory/front-controller.php`
@@ -88,6 +109,7 @@ Make sure these specific files are included:
    - `public/staff-directory/includes/MiddlewareStack.php`
    - `public/staff-directory/includes/functions.php`
    - `public/staff-directory/.htaccess`
+   - `public/staff-directory/install.php` (web-based installer)
 
 3. **Upload Directories** (create these if they don't exist):
    - `public/staff-directory/uploads/companies/`
@@ -132,6 +154,18 @@ If you see database connection errors:
 - Verify your database credentials in the `.env` file
 - Check that the database exists and tables are created
 - Ensure the database user has the necessary permissions
+- If using table prefixes, make sure all queries use the correct prefix
+
+### Table Prefix Issues
+
+If you're using table prefixes and encounter issues:
+- Check that the `DB_TABLE_PREFIX` setting in your `.env` file is correct
+- Verify that the tables in your database have the correct prefix
+- If migrating an existing installation, run the migration script:
+  ```bash
+  php database/migrate_tables.php
+  ```
+- If the migration fails, check the error messages and ensure you have proper database permissions
 
 ### Path Configuration Issues
 
