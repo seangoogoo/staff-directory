@@ -4,6 +4,26 @@
 
 ### Version 1.2 (March 2025)
 
+#### April 16, 2025
+*Centralized Path Configuration System*
+
+- Implemented a centralized path configuration system for improved deployment flexibility
+  - Extracted path definitions from bootstrap.php into a dedicated paths.php file
+  - Created a shared configuration approach used by both bootstrap.php and install.php
+  - Added support for custom path overrides via paths.local.php
+  - Improved installation process by eliminating the need to modify multiple files
+- Enhanced deployment documentation
+  - Updated FTP_Deployment_Guide.md with detailed path configuration instructions
+  - Added visual directory structure diagram for better understanding
+  - Created comprehensive troubleshooting section for path-related issues
+  - Provided examples for common hosting configurations
+- Technical implementation details
+  - Created public/includes/paths.php as the central path configuration file
+  - Modified bootstrap.php to include the new paths.php file
+  - Updated install.php to use the same paths.php file
+  - Added paths.local.php.example with documentation and examples
+  - Implemented conditional debug logging for path-related issues
+
 #### April 15, 2025
 *Special Character Encoding Fix*
 

@@ -1,0 +1,43 @@
+<?php
+/**
+ * Staff Directory Local Path Configuration
+ * 
+ * This is an example file for customizing path settings.
+ * To use it:
+ * 1. Copy this file to paths.local.php
+ * 2. Edit the path constants below to match your server configuration
+ * 3. Save the file
+ * 
+ * The paths.local.php file will override the default settings in paths.php
+ */
+
+// Uncomment and modify these lines to customize your paths
+// =======================================================
+
+// Project root directory (where all private files are stored)
+// define('BASE_PATH', '/home/username/private');
+
+// Private files directory (usually the same as BASE_PATH)
+// define('PRIVATE_PATH', BASE_PATH);
+
+// Public web directory (where web-accessible files are stored)
+// define('PUBLIC_PATH', '/home/username/public_html/staff-directory');
+
+// Base URI for routing (the URL path after your domain)
+// define('APP_BASE_URI', '/staff-directory');
+
+/**
+ * Examples for common hosting setups:
+ * 
+ * 1. Standard cPanel hosting (public_html with subdirectory):
+ *    define('BASE_PATH', '/home/username/private');
+ *    define('PRIVATE_PATH', BASE_PATH);
+ *    define('PUBLIC_PATH', '/home/username/public_html/staff-directory');
+ *    define('APP_BASE_URI', '/staff-directory');
+ * 
+ * 2. Subdomain installation:
+ *    define('BASE_PATH', '/home/username/private');
+ *    define('PRIVATE_PATH', BASE_PATH);
+ *    define('PUBLIC_PATH', '/home/username/staff.example.com');
+ *    define('APP_BASE_URI', '');
+ */
