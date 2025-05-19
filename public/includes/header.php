@@ -52,7 +52,11 @@ require_once __DIR__ . '/bootstrap.php';
             <div class="site-branding flex items-center gap-4">
                 <?php
                 // Use the app settings we already loaded above
-                $logo_path = !empty($app_settings['custom_logo_path']) ? $app_settings['custom_logo_path'] : url('assets/images/staff-directory-logo.svg');
+                $logo_path = !empty($app_settings['custom_logo_path'])
+                    ? (strpos($app_settings['custom_logo_path'], 'http') === 0
+                        ? $app_settings['custom_logo_path']
+                        : APP_BASE_URI . $app_settings['custom_logo_path'])
+                    : url('assets/images/staff-directory-logo.svg');
                 $show_logo = isset($app_settings['show_logo']) ? $app_settings['show_logo'] : '1';
 
                 // Only show the logo if the setting is enabled
