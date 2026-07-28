@@ -5,6 +5,17 @@
 ### Version 1.2 (March 2025)
 
 #### July 28, 2026
+*Installer POST Guard (Anonymous Reinstallation / Credential Overwrite)*
+
+- Closed a P1: `public/install.php` never checked `is_installed()` before processing a POST. The check existed (`is_installed()`, defined line 34) but was called exactly once, at line 421, purely to decide which HTML to render on **GET** — the `if ($_SERVER['REQUEST_METHOD'] === 'POST')` block at line 340 ran unconditionally regardless of installation state
+- Consequence: on an already-installed, internet-facing instance, an anonymous POST with `action=install` reached `initialize_database()` and `update_env_file()` exactly as during first setup — rewriting `staff_dir_env/.env` with attacker-supplied database **and** admin credentials, and re-running the schema initialization. No authentication gate exists before installation, by design, since there is no admin session to authenticate against yet
+- Fix: `if (is_installed())` at the entry of the POST block, before any `$_POST` read or validation — returns `403` with a translated message and `exit;`. Covers both POST actions handled by that block, `test_connection` and `install`, alike; neither reaches the database or the filesystem once the guard trips
+- Unchanged: GET behavior (the "already installed" screen, now at line ~524, keeps rendering from the same `$installed` flag set at line 454) and the legitimate first-run install path (`DB_INSTALLED=false` or absent) — the guard only trips when `is_installed()` is already true
+- Added the `installer_disabled` key to `languages/en/common.php` and `languages/fr/common.php` (81 keys each, verified in parity), reusing the existing `is_installed` / `reinstall_instructions` keys for the rest of the 403 message
+- Verified on the Apache vhost with `DB_INSTALLED=true`: `POST action=install` with dummy credentials → 403, `POST action=test_connection` → 403, a POST with no `action` at all → 403, `GET` → 200 still showing the "already installed" screen, and the `md5sum` of `staff_dir_env/.env` identical before and after all of them. The 403 page renders in French under `?lang=fr`. With `DB_INSTALLED` temporarily set to `false`, an empty `POST action=install` reached `validate_form_data()` and returned the required-field errors, confirming the guard does not block a genuine installation
+- Note the guard's dependency: it trusts `DB_INSTALLED` in `staff_dir_env/.env`, so an unreadable or reset `.env` reopens the installer. Deleting `install.php` after deployment remains the primary defense, and the deployment guides now say so in that order
+
+#### July 28, 2026
 *Duplicate Detection on Edit*
 
 - Closed the duplicate-detection gap in `admin/edit.php`: the uniqueness constraint only existed on creation, so `Jean Martin` could be created once and then reached a second time by renaming any other record. `edit.php` contained no duplicate check at all, neither server-side nor AJAX

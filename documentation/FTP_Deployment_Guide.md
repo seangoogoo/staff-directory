@@ -21,7 +21,8 @@ This guide provides step-by-step instructions for deploying the Staff Directory 
    - Set up your admin account
    - Initialize the database with the required tables
 4. The installer will automatically create the database and tables for you
-5. ⚠️ **Security — delete the installer:** as soon as the installation succeeds, delete `install.php` from the server (web root or subdirectory). It is **not** removed automatically, and anyone who reaches it can rerun the installation and overwrite `staff_dir_env/.env`.
+5. ⚠️ **Security — delete the installer:** as soon as the installation succeeds, delete `install.php` from the server (web root or subdirectory). It is **not** removed automatically.
+6. Since this version the installer refuses every POST — connection test and install alike — with an HTTP 403 once `DB_INSTALLED=true` in `.env`. That is a safety net, **not** a reason to keep the file: the guard reads `DB_INSTALLED` from `staff_dir_env/.env`, so anything that makes that file unreadable or resets the flag reopens the installer to anyone, who could then overwrite your database and admin credentials. Delete it.
 
 ### Option B: Manual Database Setup
 
@@ -187,7 +188,8 @@ The web installer (`install.php`) is the recommended way to set up your database
    - Set your admin username and password
    - Choose whether to include example data
    - Click "Install Now" to complete the setup
-   - ⚠️ **Security — delete the installer:** once the installer reports success, delete `install.php` from the server. It is **not** removed automatically, and anyone who reaches it can rerun the installation and overwrite `staff_dir_env/.env`. Only re-upload it if you deliberately need to reinstall.
+   - ⚠️ **Security — delete the installer:** once the installer reports success, delete `install.php` from the server. It is **not** removed automatically. Only re-upload it if you deliberately need to reinstall.
+   - Since this version, once `DB_INSTALLED=true`, the installer rejects every POST with an HTTP 403 — the connection test included — while still showing the "already installed" screen on GET. It is defense in depth, not a replacement for deleting the file: the check reads `DB_INSTALLED` from `staff_dir_env/.env`, so a missing or unreadable `.env` reopens the installer. To reinstall deliberately, see the "Already installed message" entry below, which lifts both the screen and the 403.
 
 3. **Common Installer Issues**:
    - **"SQL processor not found" error**: Check that the `database/process_sql.php` file exists and is readable

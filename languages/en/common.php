@@ -71,6 +71,7 @@ return [
     'configure_database_admin' => 'Configure your database and admin account',
     'is_installed' => 'Application is installed!',
     'reinstall_instructions' => 'If you want to reinstall, please delete the <code class="bg-gray-100 px-2 py-1 rounded text-sm">DB_INSTALLED=true</code> line from your <code class="bg-gray-100 px-2 py-1 rounded text-sm">.env</code> file.',
+    'installer_disabled' => 'The installer is disabled because the application is already installed. Please delete <code class="bg-gray-100 px-2 py-1 rounded text-sm">public/install.php</code> from the server.',
     'go_to_application' => 'Go to Application',
     'database_configuration' => 'Database Configuration',
     'database_host' => 'Database Host',

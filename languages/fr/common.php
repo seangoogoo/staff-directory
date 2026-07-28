@@ -71,6 +71,7 @@ return [
     'configure_database_admin' => 'Configurez votre base de données et votre compte administrateur',
     'is_installed' => 'L\'application est installée !',
     'reinstall_instructions' => 'Si vous souhaitez réinstaller, veuillez supprimer la ligne <code class="bg-gray-100 px-2 py-1 rounded text-sm">DB_INSTALLED=true</code> de votre fichier <code class="bg-gray-100 px-2 py-1 rounded text-sm">.env</code>.',
+    'installer_disabled' => 'Le programme d\'installation est désactivé car l\'application est déjà installée. Merci de supprimer le fichier <code class="bg-gray-100 px-2 py-1 rounded text-sm">public/install.php</code> du serveur.',
     'go_to_application' => 'Accéder à l\'application',
     'database_configuration' => 'Configuration de la base de données',
     'database_host' => 'L\'hôte de la base de données',

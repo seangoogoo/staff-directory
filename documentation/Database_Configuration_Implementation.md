@@ -722,7 +722,8 @@ The Staff Directory application supports custom database configuration:
 1. Upload the application files to your web server
 2. Navigate to `https://your-domain.com/install.php` in your browser
 3. Follow the on-screen instructions to configure your database and admin account
-4. ⚠️ **Security:** delete `public/install.php` from the server as soon as the installation succeeds — it is **not** removed automatically, and anyone reaching it can overwrite your configuration.
+4. ⚠️ **Security:** delete `public/install.php` from the server as soon as the installation succeeds — it is **not** removed automatically.
+5. As a safety net, the installer refuses every POST with an HTTP 403 once `DB_INSTALLED=true`. This does not replace step 4: the guard reads that flag from `staff_dir_env/.env`, so a missing or unreadable `.env` reopens the installer to anyone.
 
 #### Manual Installation
 
@@ -780,6 +781,7 @@ The application includes a web-based installer (`public/install.php`) that:
 - Processes SQL schema files with the correct database name and table prefixes
 - Creates the `.env` file with the provided settings
 - Must be deleted manually from the server once the installation succeeds (it does **not** delete itself)
+- As a safety net for the case where the file is *not* deleted, refuses every POST (`test_connection` and `install` alike) with an HTTP 403 response once `DB_INSTALLED=true` — this does not replace deleting the file, since the installer's mere presence is still an information-disclosure and future-vulnerability surface
 
 For security, the installer helper functions are located in the non-public `config/installer.php` file.
 ```
@@ -832,7 +834,8 @@ If you prefer manual installation:
 2. Navigate to `https://your-domain.com/install.php` in your browser
 3. Fill in the database configuration and admin credentials
 4. Click "Install Application"
-5. ⚠️ **Security:** delete `public/install.php` from the server as soon as the installation succeeds — it is **not** removed automatically, and anyone reaching it can overwrite your configuration.
+5. ⚠️ **Security:** delete `public/install.php` from the server as soon as the installation succeeds — it is **not** removed automatically.
+6. As a safety net, the installer refuses every POST with an HTTP 403 once `DB_INSTALLED=true` — which does not replace step 5, the guard depending on that flag being readable in `staff_dir_env/.env`. To deliberately reinstall, set `DB_INSTALLED=false` there (see the FTP Deployment Guide's "Already installed message" note).
 
 ## Conclusion
 

@@ -338,6 +338,39 @@ $form_data = [];
 $form_errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Refuse to process any installer request once the application is
+    // already installed. This must run before any $_POST access, form
+    // validation, or database/.env write below.
+    if (is_installed()) {
+        http_response_code(403);
+        ?>
+<!DOCTYPE html>
+<html lang="<?php echo current_language(); ?>">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo APP_NAME; ?> <?php echo __('installer'); ?></title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body class="bg-gray-50 min-h-screen antialiased font-sans text-gray-900 flex flex-col">
+    <main class="container w-full max-w-screen-xl mx-auto px-4 py-6 flex-grow bg-gray-50">
+        <div class="max-w-2xl mx-auto bg-white shadow-sm rounded-md p-6 border border-gray-200">
+            <div class="bg-red-50 border-l-4 border-red-500 px-4 py-3 rounded-md flex items-center">
+                <i class="ri-forbid-line text-2xl mr-3 mt-1 text-red-600"></i>
+                <div>
+                    <p class="font-semibold text-lg text-red-800"><?php echo __('installer_disabled'); ?></p>
+                    <p class="mt-2 text-red-700"><?php echo __('is_installed'); ?></p>
+                    <p class="mt-2 text-red-700"><?php echo __('reinstall_instructions'); ?></p>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
+        <?php
+        exit;
+    }
+
     // Get form data
     $db_prefix = isset($_POST['db_prefix']) ? trim($_POST['db_prefix']) : 'sd_';
 
