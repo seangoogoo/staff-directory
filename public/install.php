@@ -299,7 +299,6 @@ function initialize_database($host, $user, $pass, $name, $prefix, $create_db, $u
 
         // This is a critical error - the prefix from the form is not being applied
         error_log("CRITICAL ERROR: The table prefix '$prefix' from the form is not being applied to the SQL!");
-        error_log("Form data: " . print_r($form_data ?? [], true));
         error_log("Environment variables: DB_TABLE_PREFIX=" . getenv('DB_TABLE_PREFIX') . ", DB_NAME=" . getenv('DB_NAME'));
     } else {
         error_log("Prefix found in processed SQL: $sample_table");
@@ -390,9 +389,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'ADMIN_PASSWORD' => $_POST['admin_pass'] ?? '',
         'USE_EXAMPLE_DATA' => isset($_POST['use_example_data']) ? 'true' : 'false'
     ];
-
-    // Debug: Log the form data
-    error_log("Form data: DB_NAME={$form_data['DB_NAME']}, DB_TABLE_PREFIX={$form_data['DB_TABLE_PREFIX']}");
 
     // Check action
     $action = $_POST['action'] ?? '';
