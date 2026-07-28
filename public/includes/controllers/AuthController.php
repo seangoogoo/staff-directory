@@ -113,9 +113,12 @@ class AuthController {
                 // Return success response with the return URL
                 echo json_encode(['success' => true, 'returnUrl' => $returnUrl]);
             } else {
-                // Login failed
+                // Login failed. Distinguish a wrong password from an installation that
+                // has no ADMIN_PASSWORD_HASH at all: the second case is a configuration
+                // problem and is undiagnosable if reported as bad credentials.
                 $logger->warning("Login failed for user: $username");
-                echo json_encode(['success' => false, 'message' => 'Invalid username or password']);
+                $message = admin_password_configured() ? __('login_failed') : __('admin_password_not_configured');
+                echo json_encode(['success' => false, 'message' => $message]);
             }
         } catch (Exception $e) {
             // If any error occurs, still return valid JSON

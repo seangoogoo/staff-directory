@@ -151,7 +151,11 @@ function test_db_connection($host, $user, $pass, $name = '', $create_db = false)
 }
 
 // Create or update .env file
-function update_env_file($data) {
+//
+// $data        keys to write (created when absent, replaced when already present)
+// $remove_keys keys that must not survive in the file; their line is replaced by a
+//              marker comment, so no readable value is left behind
+function update_env_file($data, $remove_keys = []) {
     // If .env file doesn't exist, copy from .env_example
     if (!file_exists(ENV_FILE_PATH) && file_exists(ENV_EXAMPLE_PATH)) {
         copy(ENV_EXAMPLE_PATH, ENV_FILE_PATH);
@@ -170,14 +174,30 @@ function update_env_file($data) {
         // Escape any quotes in the value
         $value = str_replace('"', '\"', $value);
 
+        $pattern = '/^' . preg_quote($key, '/') . '=.*$/m';
+        $line = $key . '=' . $value;
+
         // Check if the key already exists
-        if (preg_match('/^' . $key . '=.*$/m', $content)) {
-            // Update existing key
-            $content = preg_replace('/^' . $key . '=.*$/m', $key . '=' . $value, $content);
+        if (preg_match($pattern, $content)) {
+            // Update existing key. The new line is produced by a callback instead of a
+            // replacement string: a value containing $ or \ — a bcrypt hash starts with
+            // $2y$ — would otherwise be read as backreferences and written corrupted.
+            $content = preg_replace_callback($pattern, function () use ($line) {
+                return $line;
+            }, $content);
         } else {
             // Add new key
-            $content .= "\n" . $key . '=' . $value;
+            $content .= "\n" . $line;
         }
+    }
+
+    // Drop keys that must disappear from the file
+    foreach ($remove_keys as $key) {
+        $content = preg_replace(
+            '/^' . preg_quote($key, '/') . '=.*$/m',
+            '# ' . $key . ' removed by the installer: the admin password is stored in ADMIN_PASSWORD_HASH',
+            $content
+        );
     }
 
     // Write back to file
@@ -333,6 +353,7 @@ function initialize_database($host, $user, $pass, $name, $prefix, $create_db, $u
 // Handle form submission
 $message = '';
 $message_type = '';
+$install_notice = '';
 $form_data = [];
 $form_errors = [];
 
@@ -427,13 +448,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
 
             if ($result['success']) {
+                // Store the admin password as a hash only: nothing readable about it
+                // reaches .env, and ADMIN_PASSWORD is dropped from the file if a previous
+                // install left one there. PASSWORD_ALGO lives in config/auth_config.php,
+                // which the installer does not load, hence PASSWORD_DEFAULT directly.
+                $form_data['ADMIN_PASSWORD_HASH'] = password_hash($form_data['ADMIN_PASSWORD'], PASSWORD_DEFAULT);
+                unset($form_data['ADMIN_PASSWORD']);
+
                 // Update .env file with all settings
                 $form_data['DB_INSTALLED'] = 'true';
-                $update_result = update_env_file($form_data);
+                $update_result = update_env_file($form_data, ['ADMIN_PASSWORD']);
 
                 if ($update_result) {
                     $message = __('installation_completed');
                     $message_type = 'success';
+                    $install_notice = __('admin_password_hashed_notice');
                 } else {
                     $message = __('database_initialized_env_failed');
                     $message_type = 'error';
@@ -513,6 +542,20 @@ if (file_exists(ENV_EXAMPLE_PATH) && empty($form_data)) {
                 <p class="text-gray-500 mt-1 text-sm"><?php echo __('configure_database_admin'); ?></p>
             </div>
 
+        <?php // Rendered outside the branch below: a successful install flips $installed
+              // to true, so a message left inside the else branch would never be seen. ?>
+        <?php if (!empty($message)): ?>
+            <div class="<?php echo $message_type === 'success' ? 'bg-green-50 border-l-4 border-green-500 text-green-700' : 'bg-red-50 border-l-4 border-red-500 text-red-700'; ?> px-4 mb-4 rounded-md flex items-center">
+                <i class="ri-<?php echo $message_type === 'success' ? 'check-line text-green-600' : 'error-warning-line text-red-600'; ?> text-2xl mr-3 mt-1"></i>
+                <div>
+                    <?php echo $message; ?>
+                    <?php if (!empty($install_notice)): ?>
+                        <p class="mt-2 font-medium"><?php echo $install_notice; ?></p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <?php if ($installed): ?>
             <div class="bg-green-50 border-l-4 border-green-500 px-4 mb-4 rounded-md flex items-center">
                 <i class="ri-check-line text-2xl mr-3 mt-1 text-green-600"></i>
@@ -528,15 +571,6 @@ if (file_exists(ENV_EXAMPLE_PATH) && empty($form_data)) {
                 </a>
             </p>
         <?php else: ?>
-            <?php if (!empty($message)): ?>
-                <div class="<?php echo $message_type === 'success' ? 'bg-green-50 border-l-4 border-green-500 text-green-700' : 'bg-red-50 border-l-4 border-red-500 text-red-700'; ?> px-4 mb-4 rounded-md flex items-center">
-                    <i class="ri-<?php echo $message_type === 'success' ? 'check-line text-green-600' : 'error-warning-line text-red-600'; ?> text-2xl mr-3 mt-1"></i>
-                    <div>
-                        <?php echo $message; ?>
-                    </div>
-                </div>
-            <?php endif; ?>
-
             <form method="POST" action="install.php" class="space-y-6">
                 <div class="mb-6">
                     <h2 class="text-lg font-medium mb-4 text-gray-800 flex items-center">

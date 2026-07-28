@@ -31,11 +31,37 @@ The following environment variables are used for authentication:
 
 ```
 ADMIN_USERNAME=your_admin_username
-ADMIN_PASSWORD=your_strong_password
+ADMIN_PASSWORD_HASH=paste_the_generated_hash_here
 USE_SECURE_COOKIES=true
 ```
 
-⚠️ **Never deploy with the default credentials** (`admin` / `admin`, the fallbacks in `config/auth_config.php`): set a unique username and a strong password before the site is reachable.
+The admin password is stored **only as a hash**. There is no cleartext form: `ADMIN_PASSWORD`
+is no longer read, and a `.env` that still has it will not authenticate anybody.
+
+Produce a hash with:
+
+```bash
+php -r 'echo password_hash("your-password", PASSWORD_DEFAULT), PHP_EOL;'
+```
+
+`PASSWORD_DEFAULT` is bcrypt, whose default cost depends on the PHP running the command —
+`$2y$10$…` under 7.4, `$2y$12$…` since 8.4. Either is accepted: `password_verify()` reads
+the cost from the hash itself, so generate it with whatever PHP is at hand.
+
+`public/install.php` writes the key itself from the password typed in its form. An
+installation created before this change migrates its own `.env` in place with:
+
+```bash
+php tools/hash_admin_password.php [--dry-run]
+```
+
+⚠️ **The password is not recoverable from `.env`.** Write it down: there is a single admin
+account and no reset mechanism, so a lost password means editing `.env` by hand with a
+freshly generated hash.
+
+⚠️ **Never deploy with the default username** (`admin`, the fallback in `config/auth_config.php`).
+An empty `ADMIN_PASSWORD_HASH` has no fallback: login simply becomes impossible, and the
+login form says so instead of reporting wrong credentials.
 
 The `USE_SECURE_COOKIES` variable controls whether secure cookies are used, regardless of the HTTPS detection. Set it to `true` to always use secure cookies, or `false` to never use them. If not specified, the system will automatically detect HTTPS.
 
@@ -108,7 +134,7 @@ graph TD
 
 - **Configuration Protection**: All config files are protected from direct access
 - **Session Security**: Secure session cookies with HttpOnly flag
-- **Password verification**: two forms are accepted in `.env`, checked in this order — `ADMIN_PASSWORD_HASH`, verified with `password_verify()` (produce one with `password_hash($password, PASSWORD_DEFAULT)`), or `ADMIN_PASSWORD` in cleartext, compared with `hash_equals()`. Prefer the hash: the cleartext form is the historical one, kept so existing deployments keep working. The hash is **never** computed at include time — doing so on every request cost about 180 ms per page load and protected nothing.
+- **Password verification**: the submitted password is checked with `password_verify()` against `ADMIN_PASSWORD_HASH`, the only form `.env` accepts. The hash is **never** computed at include time — doing so on every request cost about 180 ms per page load and protected nothing, since a hash derived from the expected password makes `password_verify()` a string comparison in disguise. An empty hash makes every login fail, and the endpoint returns a dedicated configuration message rather than "invalid credentials", so the cause is diagnosable.
 - **Anti-Caching**: Proper cache-control headers prevent authentication state caching
 - **Environment Variables**: Credentials stored in environment variables outside web root
 

@@ -20,6 +20,20 @@
 - Session-based authentication
 - Seamless user experience
 
+## Login Failure
+
+`verify_login()` checks the submitted password with `password_verify()` against
+`ADMIN_PASSWORD_HASH`; there is no cleartext form (see `authentication-system.md`).
+The login endpoint therefore distinguishes two failures:
+
+- wrong username or password → the generic `login_failed` message in the modal
+- `ADMIN_PASSWORD_HASH` empty or absent from `.env` → a dedicated configuration
+  message, since no credential can ever match and reporting bad credentials would
+  hide the real cause. Fix it by generating a hash
+  (`php -r 'echo password_hash("your-password", PASSWORD_DEFAULT), PHP_EOL;'`) or, on
+  an installation still holding a cleartext `ADMIN_PASSWORD`, by running
+  `php tools/hash_admin_password.php`
+
 ## Example Flow
 
 1. User visits `/admin/settings`

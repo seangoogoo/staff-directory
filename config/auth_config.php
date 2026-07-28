@@ -58,17 +58,16 @@ define('USE_SECURE_COOKIES',
 // User credential constants
 define('ADMIN_USERNAME', isset($_ENV['ADMIN_USERNAME']) ? $_ENV['ADMIN_USERNAME'] : 'admin');
 
-// Admin credentials. The password is NEVER hashed here: doing it on every request
-// cost ~180 ms per page load under PHP 8.4 (bcrypt cost 12) and protected nothing,
-// since the hash was derived from the expected password itself and thrown away —
-// password_verify() against it was a string comparison in disguise.
+// Admin password hash, read from .env. It is NEVER computed here: doing it on every
+// request cost ~180 ms per page load under PHP 8.4 (bcrypt cost 12) and protected
+// nothing, since the hash was derived from the expected password itself and thrown
+// away — password_verify() against it was a string comparison in disguise.
 //
-// Two accepted forms in .env, checked in this order by verify_login():
-//   1. ADMIN_PASSWORD_HASH — a real hash produced by password_hash(). Preferred.
-//   2. ADMIN_PASSWORD      — cleartext, the historical form. Still supported so
-//                            existing deployments keep working.
+// Produce one with:
+//   php -r 'echo password_hash("your-password", PASSWORD_DEFAULT), PHP_EOL;'
+// or let public/install.php write it. Existing installations migrate with
+// tools/hash_admin_password.php. An empty value means no admin can log in.
 define('ADMIN_PASSWORD_HASH', isset($_ENV['ADMIN_PASSWORD_HASH']) ? $_ENV['ADMIN_PASSWORD_HASH'] : '');
-define('ADMIN_PASSWORD', isset($_ENV['ADMIN_PASSWORD']) ? $_ENV['ADMIN_PASSWORD'] : 'admin');
 
 // =============================================
 // Login Behavior

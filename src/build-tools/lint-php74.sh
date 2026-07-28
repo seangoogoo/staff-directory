@@ -25,7 +25,7 @@ fi
 echo "Linting against $("$PHP74" -r 'echo PHP_VERSION;')"
 
 failed=0
-for file in $(find public config database -name '*.php' -not -path '*/vendor/*'); do
+for file in $(find public config database tools -name '*.php' -not -path '*/vendor/*'); do
     if ! output=$("$PHP74" -l "$file" 2>&1); then
         echo "$output"
         failed=1

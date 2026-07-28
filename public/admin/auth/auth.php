@@ -104,13 +104,12 @@ function is_logged_in() {
 // No custom logging function needed - using Monolog
 
 /**
- * Verify login credentials with improved security
+ * Verify login credentials
  *
- * Accepts either form the .env may provide, checked in this order:
- *   1. ADMIN_PASSWORD_HASH — verified with password_verify(). Preferred.
- *   2. ADMIN_PASSWORD      — cleartext, compared with hash_equals() so the
- *                            comparison stays constant-time.
- * The hash is no longer computed on every request (see config/auth_config.php).
+ * The password is checked with password_verify() against ADMIN_PASSWORD_HASH, the
+ * only form .env accepts. A missing or unusable hash means the installation has no
+ * admin password at all, so no login can succeed: callers should say so explicitly
+ * rather than report wrong credentials (see admin_password_configured()).
  *
  * @param string $username Username to verify
  * @param string $password Password to verify
@@ -120,21 +119,43 @@ function verify_login($username, $password) {
     global $logger;
     $logger->debug("verify_login called", ["username" => $username]);
 
+    if (!admin_password_configured()) {
+        $logger->error("ADMIN_PASSWORD_HASH is empty or not a usable hash: no admin password is configured, login is impossible", ["length" => strlen(ADMIN_PASSWORD_HASH)]);
+        return false;
+    }
+
     if ($username !== ADMIN_USERNAME) {
         $logger->debug("Username does not match ADMIN_USERNAME");
         return false;
     }
 
-    if (ADMIN_PASSWORD_HASH !== '') {
-        $logger->debug("Verifying against ADMIN_PASSWORD_HASH");
-        $valid = password_verify($password, ADMIN_PASSWORD_HASH);
-    } else {
-        $logger->debug("No ADMIN_PASSWORD_HASH set, comparing against cleartext ADMIN_PASSWORD");
-        $valid = hash_equals((string)ADMIN_PASSWORD, (string)$password);
-    }
+    $valid = password_verify($password, ADMIN_PASSWORD_HASH);
 
     $logger->debug($valid ? "Password verified successfully" : "Password verification failed");
     return $valid;
+}
+
+/**
+ * Whether the installation has a usable admin password
+ *
+ * Lets a login endpoint tell "wrong credentials" apart from "nothing to log in
+ * against", which is otherwise impossible to diagnose from the outside. A value that
+ * password_hash() could not have produced counts as absent: a hash truncated by a
+ * botched FTP upload or a hand edit would otherwise reject every password while
+ * looking perfectly configured. Verified on 7.4.33 and 8.4.23 — password_get_info()
+ * returns algo '2y' for a complete bcrypt hash and null for everything else, whether
+ * truncated at 12 or at 59 characters; empty() also covers the integer 0 that PHP
+ * before 7.4 returned.
+ *
+ * @return bool True if ADMIN_PASSWORD_HASH holds a hash password_verify() can use
+ */
+function admin_password_configured() {
+    if (ADMIN_PASSWORD_HASH === '') {
+        return false;
+    }
+
+    $info = password_get_info(ADMIN_PASSWORD_HASH);
+    return !empty($info['algo']);
 }
 
 /**

@@ -652,7 +652,8 @@ function install_application($db_host, $db_user, $db_pass, $db_name, $db_prefix,
                      . "DB_CREATE_DATABASE=$create_db\n\n"
                      . "# Admin Credentials\n"
                      . "ADMIN_USERNAME=$admin_user\n"
-                     . "ADMIN_PASSWORD=$admin_pass\n"
+                     // Only a hash is stored: the cleartext password never reaches .env
+                     . "ADMIN_PASSWORD_HASH=" . password_hash($admin_pass, PASSWORD_DEFAULT) . "\n"
                      . "USE_SECURE_COOKIES=true\n\n"
                      . "# Session and Cookie Configuration\n"
                      . "SESSION_LIFETIME=86400\n"

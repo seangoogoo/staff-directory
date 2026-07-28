@@ -99,6 +99,7 @@ return [
     'connection_successful' => 'Connexion réussie !',
     'connection_failed' => 'Échec de la connexion : %s',
     'installation_completed' => 'Installation terminée avec succès !',
+    'admin_password_hashed_notice' => 'Votre mot de passe admin a été enregistré sous forme de hash : le fichier d\'environnement ne le contient plus en clair et il n\'y est plus récupérable. Assurez-vous de l\'avoir noté avant de quitter cette page.',
     'database_initialized_env_failed' => 'Base de données initialisée mais échec de la mise à jour du fichier .env.',
     'database_creation_failed' => 'Erreur lors de la création de la base de données : %s',
 ];

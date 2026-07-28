@@ -99,6 +99,7 @@ return [
     'connection_successful' => 'Connection successful!',
     'connection_failed' => 'Connection failed: %s',
     'installation_completed' => 'Installation completed successfully!',
+    'admin_password_hashed_notice' => 'Your admin password was stored as a hash: the environment file no longer holds it in readable form, and it cannot be recovered from there. Make sure you have written it down before leaving this page.',
     'database_initialized_env_failed' => 'Database initialized but failed to update .env file.',
     'database_creation_failed' => 'Error creating database: %s',
 ];

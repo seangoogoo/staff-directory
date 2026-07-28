@@ -25,5 +25,6 @@ return [
     'remember_me' => 'Remember Me',
     'forgot_password' => 'Forgot Password?',
     'login_failed' => 'Login failed. Please check your credentials.',
+    'admin_password_not_configured' => 'This installation has no usable admin password. Check that ADMIN_PASSWORD_HASH in the environment file holds a complete hash produced by password_hash().',
     'login_required' => 'Login required to access the admin area.',
 ];

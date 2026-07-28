@@ -228,7 +228,7 @@ DB_INSTALLED=false
 
 # Admin Credentials
 ADMIN_USERNAME=your_admin_username
-ADMIN_PASSWORD=your_secure_password
+ADMIN_PASSWORD_HASH=paste_the_generated_hash_here
 
 # Application Settings
 DEV_MODE=false
@@ -244,6 +244,15 @@ COOKIE_PATH=/
 COOKIE_LIFETIME=2592000
 ```
 3. Make sure the `.env` file has appropriate permissions (readable by the web server but not by other users)
+4. The admin password is stored **only as a hash** — there is no cleartext `ADMIN_PASSWORD`.
+   Generate one and paste it into `ADMIN_PASSWORD_HASH`:
+   ```bash
+   php -r 'echo password_hash("your-password", PASSWORD_DEFAULT), PHP_EOL;'
+   ```
+   The web installer (`/install.php`) writes this key itself from the password you type.
+   Write the password down: it cannot be read back from `.env`. An installation created
+   before this change migrates its `.env` in place with
+   `php tools/hash_admin_password.php` (timestamped backup, `--dry-run` available).
 
 ## Routing System
 

@@ -64,8 +64,11 @@ try {
         // Return success response with the return URL
         echo json_encode(['success' => true, 'returnUrl' => $returnUrl]);
     } else {
-        // Login failed
-        echo json_encode(['success' => false, 'message' => 'Invalid username or password']);
+        // Login failed. Distinguish a wrong password from an installation that has no
+        // ADMIN_PASSWORD_HASH at all: the second case is a configuration problem and is
+        // undiagnosable if it is reported as bad credentials.
+        $message = admin_password_configured() ? __('login_failed') : __('admin_password_not_configured');
+        echo json_encode(['success' => false, 'message' => $message]);
     }
 } catch (Exception $e) {
     // If any error occurs, still return valid JSON

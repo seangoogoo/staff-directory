@@ -50,7 +50,7 @@ Before uploading files, you need to configure the application:
 
    # Admin Credentials
    ADMIN_USERNAME=your_admin_username
-   ADMIN_PASSWORD=your_admin_password
+   ADMIN_PASSWORD_HASH=paste_the_generated_hash_here
    USE_SECURE_COOKIES=true
 
    # Session and Cookie Configuration
@@ -120,6 +120,7 @@ Upload the following directories to your web server:
 | `logs/` | `/path/to/your/private/logs/` | Application logs (outside web root) |
 | `languages/` | `/path/to/your/private/languages/` | Translation files (outside web root) |
 | `database/` | `/path/to/your/private/database/` | SQL files and database utilities (outside web root) |
+| `tools/` | `/path/to/your/private/tools/` | Maintenance CLI scripts, only needed for a migration (outside web root) |
 | `public/` | `/path/to/your/public_html/` | Public web files (in web root) |
 
 ### Required Files
@@ -137,6 +138,7 @@ Make sure these specific files are included:
    - `database/staff_dir_clean.sql` (for manual database setup)
    - `database/process_sql.php` (for the installer)
    - `database/migrate_tables.php` (for table prefix migration)
+   - `tools/hash_admin_password.php` (only when updating a deployment whose `.env` still holds a cleartext `ADMIN_PASSWORD`)
 
 2. **Core Application Files**:
    - `public/front-controller.php`
@@ -206,7 +208,17 @@ The web installer (`install.php`) is the recommended way to set up your database
       - Set database credentials (DB_HOST, DB_USER, DB_PASS, DB_NAME)
       - Set `DB_TABLE_PREFIX=sd_` (or your preferred prefix)
       - Set `DB_INSTALLED=true`
-      - Set admin credentials (ADMIN_USERNAME, ADMIN_PASSWORD)
+      - Set `ADMIN_USERNAME`
+      - Set `ADMIN_PASSWORD_HASH` — the admin password is stored **only as a hash**, never in
+        cleartext. Generate one locally and paste the result:
+        ```bash
+        php -r 'echo password_hash("your-password", PASSWORD_DEFAULT), PHP_EOL;'
+        ```
+        Write the password down: it cannot be recovered from `.env`. If you are updating an
+        older deployment whose `.env` still has a cleartext `ADMIN_PASSWORD`, upload the
+        `tools/` directory and run `php tools/hash_admin_password.php` on the server instead —
+        it hashes the existing password in place, after a timestamped backup. A `.env` left
+        with only `ADMIN_PASSWORD` can no longer log in.
    3. Navigate to your website to verify it works
 
 ## Step 6: Verify Installation
