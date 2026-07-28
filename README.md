@@ -227,7 +227,7 @@ DB_CREATE_DATABASE=true
 DB_INSTALLED=false
 
 # Admin Credentials
-ADMIN_USERNAME=admin
+ADMIN_USERNAME=your_admin_username
 ADMIN_PASSWORD=your_secure_password
 
 # Application Settings
