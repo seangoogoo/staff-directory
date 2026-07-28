@@ -109,14 +109,13 @@ This document outlines the minimal directory structure required for deploying th
 
 ## Minimum Vendor Dependencies
 
-If you want to minimize the size of the vendor directory, these are the essential packages:
+These are all the packages the application depends on — `vendor/` holds nothing else:
 
 - [ ] `vendor/autoload.php`
 - [ ] `vendor/composer/`
 - [ ] `vendor/nikic/fast-route/`
 - [ ] `vendor/monolog/monolog/`
 - [ ] `vendor/psr/log/`
-- [ ] `vendor/intervention/image/`
 
 ## Important Notes
 

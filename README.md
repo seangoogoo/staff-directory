@@ -28,9 +28,9 @@ Live demo available at: [https://staff-directory.jensen-siu.net/](https://staff-
 
 ## Tech Stack
 - Frontend: HTML, Tailwind, Vanilla JavaScript
-- Backend: PHP 7.4, MySQL
+- Backend: PHP 7.4 (runs on PHP 8.x as well), MySQL
 - Routing: FastRoute for URL routing, Front Controller pattern
-- Image Processing: Intervention Image 2.7 (WebP support)
+- Image Processing: native GD (WebP placeholders, no image library)
 - Image Storage: Local upload folder
 - Logging: Monolog for structured logging
 - Internationalization: Custom i18n system with language files
