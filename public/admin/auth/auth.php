@@ -106,6 +106,12 @@ function is_logged_in() {
 /**
  * Verify login credentials with improved security
  *
+ * Accepts either form the .env may provide, checked in this order:
+ *   1. ADMIN_PASSWORD_HASH — verified with password_verify(). Preferred.
+ *   2. ADMIN_PASSWORD      — cleartext, compared with hash_equals() so the
+ *                            comparison stays constant-time.
+ * The hash is no longer computed on every request (see config/auth_config.php).
+ *
  * @param string $username Username to verify
  * @param string $password Password to verify
  * @return bool True if credentials are valid, false otherwise
@@ -113,22 +119,22 @@ function is_logged_in() {
 function verify_login($username, $password) {
     global $logger;
     $logger->debug("verify_login called", ["username" => $username]);
-    $logger->debug("ADMIN_USERNAME: " . (defined('ADMIN_USERNAME') ? ADMIN_USERNAME : 'Not defined'));
-    $logger->debug("ADMIN_PASSWORD_HASH: " . (defined('ADMIN_PASSWORD_HASH') ? 'Hash exists' : 'Not defined'));
 
-    // Check credentials against configured values from auth_config.php
-    if ($username === ADMIN_USERNAME) {
-        $logger->debug("Username matches ADMIN_USERNAME");
-        if (password_verify($password, ADMIN_PASSWORD_HASH)) {
-            $logger->debug("Password verified successfully");
-            return true;
-        } else {
-            $logger->debug("Password verification failed");
-        }
-    } else {
+    if ($username !== ADMIN_USERNAME) {
         $logger->debug("Username does not match ADMIN_USERNAME");
+        return false;
     }
-    return false;
+
+    if (ADMIN_PASSWORD_HASH !== '') {
+        $logger->debug("Verifying against ADMIN_PASSWORD_HASH");
+        $valid = password_verify($password, ADMIN_PASSWORD_HASH);
+    } else {
+        $logger->debug("No ADMIN_PASSWORD_HASH set, comparing against cleartext ADMIN_PASSWORD");
+        $valid = hash_equals((string)ADMIN_PASSWORD, (string)$password);
+    }
+
+    $logger->debug($valid ? "Password verified successfully" : "Password verification failed");
+    return $valid;
 }
 
 /**

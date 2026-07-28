@@ -108,7 +108,7 @@ graph TD
 
 - **Configuration Protection**: All config files are protected from direct access
 - **Session Security**: Secure session cookies with HttpOnly flag
-- **Password Hashing**: Uses PHP's PASSWORD_DEFAULT algorithm
+- **Password verification**: two forms are accepted in `.env`, checked in this order — `ADMIN_PASSWORD_HASH`, verified with `password_verify()` (produce one with `password_hash($password, PASSWORD_DEFAULT)`), or `ADMIN_PASSWORD` in cleartext, compared with `hash_equals()`. Prefer the hash: the cleartext form is the historical one, kept so existing deployments keep working. The hash is **never** computed at include time — doing so on every request cost about 180 ms per page load and protected nothing.
 - **Anti-Caching**: Proper cache-control headers prevent authentication state caching
 - **Environment Variables**: Credentials stored in environment variables outside web root
 

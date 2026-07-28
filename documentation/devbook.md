@@ -5,6 +5,16 @@
 ### Version 1.2 (March 2025)
 
 #### July 28, 2026
+*Password Hashing Off the Request Path, Debounced Placeholder Preview*
+
+- Removed a bcrypt hash from every single page load. `config/auth_config.php` computed `define('ADMIN_PASSWORD_HASH', password_hash($admin_password, PASSWORD_ALGO))` at include time — on **every** request, public pages included — while `verify_login()` then called `password_verify()` against that freshly derived hash. Hashing the expected password to compare it with the submitted one is a string comparison in disguise: the hash was never at rest, so it protected nothing and the cost was pure waste
+- Measured: `password_hash()` with the default algorithm costs **178 ms** under PHP 8.4 (bcrypt cost 12) versus 45 ms under PHP 7.4 (cost 10) — so the effective move to 8.4 had quietly quadrupled it. The home page answered in ~195 ms, meaning roughly **90% of every response was this discarded hash**. After the change the same page answers in **~16 ms**
+- `auth_config.php` now reads two keys instead of deriving one: `ADMIN_PASSWORD_HASH` (empty when absent) and `ADMIN_PASSWORD`. `verify_login()` picks the path: a non-empty hash goes through `password_verify()`, otherwise the cleartext is compared with `hash_equals()` to keep the comparison constant-time. This finally makes true what the documentation already claimed — that either form works — and keeps every existing `.env` working untouched
+- Verified both paths against the real credentials: with the current cleartext `.env`, login succeeds and a wrong password is rejected; with a temporary `ADMIN_PASSWORD_HASH` added, login succeeds through `password_verify()` and a wrong password is still rejected; `.env` restored afterwards, checksum identical
+- Debounced the placeholder preview in `admin/add.php`. `updatePlaceholderImage` was bound straight to `input` on both name fields, so every keystroke fired a `generate_placeholder.php` request that generated and wrote a WebP server-side — 10 requests for an 11-character name, measured in the browser. On the single-process `php -S` dev server that queue delayed the duplicate-check response to ~2 s. Now wrapped in the `debounce()` already present in `staff-form-utils.js` (400 ms): typing an 18-character name produces **1** request, and the duplicate check still fires exactly once
+- A plan for the remaining work — storing a real hash in `.env` and dropping the cleartext path — lives outside the repository, since it documents this installation's migration steps
+
+#### July 28, 2026
 *Installer POST Guard (Anonymous Reinstallation / Credential Overwrite)*
 
 - Closed a P1: `public/install.php` never checked `is_installed()` before processing a POST. The check existed (`is_installed()`, defined line 34) but was called exactly once, at line 421, purely to decide which HTML to render on **GET** — the `if ($_SERVER['REQUEST_METHOD'] === 'POST')` block at line 340 ran unconditionally regardless of installation state

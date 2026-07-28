@@ -282,9 +282,12 @@ document.addEventListener('DOMContentLoaded', function() {
         updatePlaceholderImage()
     })
 
-    // Update placeholder when name fields change
-    firstName.addEventListener('input', updatePlaceholderImage)
-    lastName.addEventListener('input', updatePlaceholderImage)
+    // Update placeholder when name fields change. Debounced: undebounced, every
+    // keystroke fired a generate_placeholder.php request — 10 requests for a
+    // 10-character name, each one generating and writing a WebP file server-side.
+    const updatePlaceholderDebounced = debounce(updatePlaceholderImage, 400)
+    firstName.addEventListener('input', updatePlaceholderDebounced)
+    lastName.addEventListener('input', updatePlaceholderDebounced)
 
     // Set up file input change handler
     fileInput.addEventListener('change', function(e) {
