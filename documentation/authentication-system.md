@@ -65,6 +65,30 @@ login form says so instead of reporting wrong credentials.
 
 The `USE_SECURE_COOKIES` variable controls whether secure cookies are used, regardless of the HTTPS detection. Set it to `true` to always use secure cookies, or `false` to never use them. If not specified, the system will automatically detect HTTPS.
 
+## Changing the Admin Password
+
+There is no form for this: the admin area manages titles, logo, language and placeholder
+appearance, not credentials. Changing the password is a two-step manual procedure, and it is
+deliberately kept that way — a web form would need `staff_dir_env/.env` to be writable by the
+web server, and that file also holds the database credentials.
+
+1. Generate a hash for the new password, with any PHP at hand:
+
+   ```bash
+   php -r 'echo password_hash("your-new-password", PASSWORD_DEFAULT), PHP_EOL;'
+   ```
+
+2. Paste it as the `ADMIN_PASSWORD_HASH` value in `staff_dir_env/.env`, replacing the old
+   one, and upload the file if the installation is remote.
+
+The change takes effect on the next request; no restart and no cache clearing is needed,
+since `config/env_loader.php` reads `.env` on every request. Any session opened before the
+change stays valid — log out to close it.
+
+On an installation whose `.env` still holds a cleartext `ADMIN_PASSWORD` from before the
+hash-only change, run `php tools/hash_admin_password.php` instead: it hashes the existing
+password in place rather than setting a new one.
+
 ## Authentication Flow Diagram
 
 ```mermaid
