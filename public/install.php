@@ -590,7 +590,8 @@ if (file_exists(ENV_EXAMPLE_PATH) && empty($form_data)) {
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <i class="ri-lock-line text-gray-400"></i>
                                 </div>
-                                <input type="password" id="db_pass" name="db_pass" value="<?php echo htmlspecialchars($form_data['DB_PASS'] ?? ''); ?>" class="w-full pl-10 border-gray-300 <?php echo isset($form_errors['DB_PASS']) ? 'border-red-300' : ''; ?> rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                <!-- No value attribute: never echo a submitted password back into the HTML -->
+                                <input type="password" id="db_pass" name="db_pass" class="w-full pl-10 border-gray-300 <?php echo isset($form_errors['DB_PASS']) ? 'border-red-300' : ''; ?> rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                             </div>
                             <?php if (isset($form_errors['DB_PASS'])): ?>
                                 <p class="mt-1 text-sm text-red-600"><?php echo $form_errors['DB_PASS']; ?></p>
@@ -661,7 +662,8 @@ if (file_exists(ENV_EXAMPLE_PATH) && empty($form_data)) {
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <i class="ri-lock-password-line text-gray-400"></i>
                                 </div>
-                                <input type="password" id="admin_pass" name="admin_pass" value="<?php echo htmlspecialchars($form_data['ADMIN_PASSWORD'] ?? ''); ?>" class="w-full pl-10 border-gray-300 <?php echo isset($form_errors['ADMIN_PASSWORD']) ? 'border-red-300' : ''; ?> rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                <!-- No value attribute: never echo a submitted password back into the HTML -->
+                                <input type="password" id="admin_pass" name="admin_pass" class="w-full pl-10 border-gray-300 <?php echo isset($form_errors['ADMIN_PASSWORD']) ? 'border-red-300' : ''; ?> rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                             </div>
                             <?php if (isset($form_errors['ADMIN_PASSWORD'])): ?>
                                 <p class="mt-1 text-sm text-red-600"><?php echo $form_errors['ADMIN_PASSWORD']; ?></p>
