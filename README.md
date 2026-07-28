@@ -8,7 +8,7 @@ Live demo available at: [https://staff-directory.jensen-siu.net/](https://staff-
 
 ### Admin Dashboard
 - Add new staff members with details like name, company, department, job title, email, and profile picture
-  - Real-time duplicate checking prevents adding staff with identical names or email addresses
+  - Real-time duplicate checking prevents adding *or renaming* staff to identical names or email addresses
 - Edit existing staff members
 - Delete staff members
 - Manage companies with logo upload functionality

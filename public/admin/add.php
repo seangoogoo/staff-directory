@@ -239,7 +239,8 @@ require_once '../includes/admin_header.php';
 window.translations = {
     selected: "<?php echo __('selected'); ?>",
     uploadImageFile: "<?php echo __('upload_image_file'); ?>",
-    fileTooLarge: "<?php echo __('file_too_large'); ?>"
+    fileTooLarge: "<?php echo __('file_too_large'); ?>",
+    resolveDuplicates: "<?php echo __('resolve_duplicates'); ?>"
 };
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -258,14 +259,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Default image when no user image is available
     const defaultImagePath = '../assets/images/add-picture.svg'
 
-    // Create validation message elements
-    const nameValidationMsg = document.createElement('div')
-    nameValidationMsg.className = 'text-red-500 text-sm mt-1 hidden'
-    lastName.parentNode.appendChild(nameValidationMsg)
-
-    const emailValidationMsg = document.createElement('div')
-    emailValidationMsg.className = 'text-red-500 text-sm mt-1 hidden'
-    emailInput.parentNode.appendChild(emailValidationMsg)
+    // Real-time duplicate checking (no exclusion: this record does not exist yet)
+    setupDuplicateChecking(form, { firstName, lastName, email: emailInput }, null)
 
     // Set initial state if a department is already selected
     // Use the repopulated form_data if available
@@ -321,81 +316,6 @@ document.addEventListener('DOMContentLoaded', function() {
         imagePreview.dataset.isPlaceholder = 'true'
         removeButton.style.display = 'none'
     }
-
-    // Check for name duplicates when both first and last name have values
-    const checkNameDuplicate = debounce(function() {
-        const fName = firstName.value.trim()
-        const lName = lastName.value.trim()
-
-        if (fName && lName) {
-            fetch('../includes/check_duplicate.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `type=name&first_name=${encodeURIComponent(fName)}&last_name=${encodeURIComponent(lName)}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.duplicate) {
-                    nameValidationMsg.textContent = data.message
-                    nameValidationMsg.classList.remove('hidden')
-                    firstName.classList.add('border-red-500')
-                    lastName.classList.add('border-red-500')
-                } else {
-                    nameValidationMsg.classList.add('hidden')
-                    firstName.classList.remove('border-red-500')
-                    lastName.classList.remove('border-red-500')
-                }
-            })
-            .catch(error => {
-                console.error('Error checking name duplicate:', error)
-            })
-        }
-    }, 500)
-
-    // Check for email duplicates
-    const checkEmailDuplicate = debounce(function() {
-        const email = emailInput.value.trim()
-
-        if (email && email.includes('@')) {
-            fetch('../includes/check_duplicate.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `type=email&value=${encodeURIComponent(email)}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.duplicate) {
-                    emailValidationMsg.textContent = data.message
-                    emailValidationMsg.classList.remove('hidden')
-                    emailInput.classList.add('border-red-500')
-                } else {
-                    emailValidationMsg.classList.add('hidden')
-                    emailInput.classList.remove('border-red-500')
-                }
-            })
-            .catch(error => {
-                console.error('Error checking email duplicate:', error)
-            })
-        }
-    }, 500)
-
-    // Add event listeners for duplicate checking
-    firstName.addEventListener('blur', checkNameDuplicate)
-    lastName.addEventListener('blur', checkNameDuplicate)
-    emailInput.addEventListener('blur', checkEmailDuplicate)
-
-    // Prevent form submission if duplicates are found
-    form.addEventListener('submit', function(e) {
-        if (!nameValidationMsg.classList.contains('hidden') ||
-            !emailValidationMsg.classList.contains('hidden')) {
-            e.preventDefault()
-            alert('Please resolve duplicate entries before submitting.')
-        }
-    })
 })
 </script>
 

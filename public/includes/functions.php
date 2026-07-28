@@ -234,9 +234,12 @@ function get_staff_image_url($staff, $size = '600x600', $font_weight = null, $bg
     // producing a 200x100 image on a missing second dimension.
     $dimensions = explode('x', $size);
 
-    // Ensure minimum dimensions for readable text
-    $width = max(100, (int)$dimensions[0]);
-    $height = isset($dimensions[1]) ? max(100, (int)$dimensions[1]) : $width;
+    // Clamp both dimensions: the floor keeps the text readable, the ceiling stops a
+    // public request such as ?size=9999x9999 from asking GD for gigabytes of memory
+    // (imagecreatetruecolor allocates 4 bytes per pixel). 2000px covers every
+    // in-app size, the largest being 600x400.
+    $width = min(2000, max(100, (int)$dimensions[0]));
+    $height = isset($dimensions[1]) ? min(2000, max(100, (int)$dimensions[1])) : $width;
 
     // Generate a settings hash to automatically detect changes
     $settings_hash = md5($font_weight . $bg_color . $text_color . $font_size_factor);
@@ -358,8 +361,8 @@ function get_staff_image_url($staff, $size = '600x600', $font_weight = null, $bg
                 $font_size = 5; // Maximum GD built-in font size
                 $text_width = imagefontwidth($font_size) * strlen($initials);
                 $text_height = imagefontheight($font_size);
-                $x = ($width - $text_width) / 2;
-                $y = ($height - $text_height) / 2;
+                $x = (int) round(($width - $text_width) / 2);
+                $y = (int) round(($height - $text_height) / 2);
                 imagestring($fallback_image, $font_size, $x, $y, $initials, $text_color);
                 // Save fallback image as WebP with 85% quality
                 imagewebp($fallback_image, $placeholder_path, 85);
@@ -1186,36 +1189,43 @@ function get_active_company_names($conn) {
  * @param string $first_name First name to check
  * @param string $last_name Last name to check
  * @param string $email Email to check
+ * @param int|null $exclude_id Staff member to ignore, so editing a record does not
+ *                             report the record itself as its own duplicate
  * @return array Result with status and message
  */
-function check_staff_duplicate($conn, $first_name, $last_name, $email) {
+function check_staff_duplicate($conn, $first_name, $last_name, $email, $exclude_id = null) {
     $result = ['duplicate' => false, 'message' => ''];
 
+    // Normalise the exclusion to an int. id is AUTO_INCREMENT starting at 1, so 0 is a
+    // safe sentinel: "AND id != 0" is always true and excludes nothing, which lets both
+    // queries keep a single fixed shape instead of branching on the bound parameters.
+    $exclude_id = is_numeric($exclude_id) ? (int)$exclude_id : 0;
+
     // Check for duplicate name (case insensitive)
-    $sql_name = "SELECT id FROM " . TABLE_STAFF_MEMBERS . " WHERE LOWER(first_name) = LOWER(?) AND LOWER(last_name) = LOWER(?)";
+    $sql_name = "SELECT id FROM " . TABLE_STAFF_MEMBERS . " WHERE LOWER(first_name) = LOWER(?) AND LOWER(last_name) = LOWER(?) AND id != ?";
     $stmt_name = $conn->prepare($sql_name);
-    $stmt_name->bind_param("ss", $first_name, $last_name);
+    $stmt_name->bind_param("ssi", $first_name, $last_name, $exclude_id);
     $stmt_name->execute();
     $stmt_name->store_result();
 
     if ($stmt_name->num_rows > 0) {
         $result['duplicate'] = true;
-        $result['message'] = "A staff member with the same name already exists.";
+        $result['message'] = __('duplicate_name');
         $stmt_name->close();
         return $result;
     }
     $stmt_name->close();
 
     // Check for duplicate email (case insensitive)
-    $sql_email = "SELECT id FROM " . TABLE_STAFF_MEMBERS . " WHERE LOWER(email) = LOWER(?)";
+    $sql_email = "SELECT id FROM " . TABLE_STAFF_MEMBERS . " WHERE LOWER(email) = LOWER(?) AND id != ?";
     $stmt_email = $conn->prepare($sql_email);
-    $stmt_email->bind_param("s", $email);
+    $stmt_email->bind_param("si", $email, $exclude_id);
     $stmt_email->execute();
     $stmt_email->store_result();
 
     if ($stmt_email->num_rows > 0) {
         $result['duplicate'] = true;
-        $result['message'] = "A staff member with this email address already exists.";
+        $result['message'] = __('duplicate_email');
     }
     $stmt_email->close();
 

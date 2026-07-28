@@ -47,6 +47,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $profile_picture = $current_staff['profile_picture']; // Keep existing by default
 
+        // Reject a duplicate before touching any uploaded file: the record itself is
+        // excluded, so saving a fiche without renaming it stays valid
+        $duplicate_check = check_staff_duplicate($conn, $first_name, $last_name, $email, $id);
+
+        if ($duplicate_check['duplicate']) {
+            set_session_message('error_message', $duplicate_check['message']);
+            set_form_data($_POST);
+            header("Location: edit.php?id=" . $id);
+            exit;
+        }
+
         // First check if new profile picture is uploaded - this takes precedence over delete flag
         if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['size'] > 0) {
             // Handle new picture upload
@@ -292,7 +303,8 @@ require_once '../includes/admin_header.php';
 window.translations = {
     selected: "<?php echo __('selected'); ?>",
     uploadImageFile: "<?php echo __('upload_image_file'); ?>",
-    fileTooLarge: "<?php echo __('file_too_large'); ?>"
+    fileTooLarge: "<?php echo __('file_too_large'); ?>",
+    resolveDuplicates: "<?php echo __('resolve_duplicates'); ?>"
 };
 </script>
 
@@ -320,6 +332,14 @@ document.addEventListener('DOMContentLoaded', function() {
     departmentSelect.addEventListener('change', function() {
         updateDepartmentColorPreview(departmentSelect, colorPreview)
     })
+
+    // Real-time duplicate checking, excluding this staff member so saving it
+    // unchanged is not reported as a duplicate of itself
+    setupDuplicateChecking(document.querySelector('form'), {
+        firstName: document.getElementById('first_name'),
+        lastName: document.getElementById('last_name'),
+        email: document.getElementById('email')
+    }, <?php echo (int)$id; ?>)
 
     // Note: All image preview, dropzone, and remove button functionality is now handled by main.js
     // The remove button has been updated to use the standard ID and data attributes

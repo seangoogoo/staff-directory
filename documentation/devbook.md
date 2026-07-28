@@ -5,6 +5,20 @@
 ### Version 1.2 (March 2025)
 
 #### July 28, 2026
+*Duplicate Detection on Edit*
+
+- Closed the duplicate-detection gap in `admin/edit.php`: the uniqueness constraint only existed on creation, so `Jean Martin` could be created once and then reached a second time by renaming any other record. `edit.php` contained no duplicate check at all, neither server-side nor AJAX
+- `check_staff_duplicate()` (`functions.php`) takes an optional 5th parameter `$exclude_id`. Both queries carry `AND id != ?` unconditionally, with the parameter normalised to `0` when absent or non-numeric: `id` is `AUTO_INCREMENT` from 1, so `id != 0` is always true and excludes nothing. That keeps a single query shape instead of branching the SQL and the `bind_param()` signature. Without the exclusion the function would report the record being edited as its own duplicate and reject every save, even one that leaves the name untouched. The two existing `add.php` calls are unaffected
+- `edit.php` rejects a duplicate **before** handling the uploaded file, so a refused save never writes an orphan image to `uploads/`
+- `includes/check_duplicate.php` accepts an optional `exclude_id` POST field, same normalisation
+- The real-time check now lives once in `assets/js/staff-form-utils.js` as `setupDuplicateChecking(form, fields, excludeId)` — the file both pages already load and where the shared form logic already lives (`debounce`, drag & drop, placeholder URL). `add.php` lost ~80 lines of inline JS, `edit.php` calls the same helper with its own id instead of a second copy
+- Translated the duplicate messages, which were hardcoded English in `functions.php` and `check_duplicate.php` while the whole admin is bilingual: the `duplicate_name` / `duplicate_email` keys already existed in both language files and were used nowhere. Added `resolve_duplicates` (en/fr) for the submit-time alert, which was hardcoded in `add.php` too
+- Verified server-side by redirect target, distinguishing acceptance (`index.php?updated=1`) from refusal (`edit.php?id=`): saving a record unchanged passes; renaming it onto an existing homonym is refused, including on case differences (`BETA duptest2`); taking another record's email is refused, uppercase included; a free name and a free email pass. The database was checked after each case — nothing was written on refusal
+- Verified the AJAX endpoint: a record's own name and email return `duplicate:false` with `exclude_id`, `true` without it; another record's name or email returns `true`; `exclude_id=abc` excludes nothing
+- Verified in a real browser (authenticated session, PHP 8.4) on **both** pages: blur on the record's own name shows nothing, renaming onto a homonym shows the message with both fields outlined, submission is blocked by the alert without navigating and nothing is written to the database, returning to a free name clears both, a taken email flags the email field. In French the message and the alert are the French strings
+- Reviews (security, correctness, over-engineering, documentation) ran on the whole session. Nothing blocking; four findings applied: the forgotten `(int) round(...)` in the GD fallback branch of `get_staff_image_url()`, an upper bound of 2000px on placeholder dimensions (`?size=9999x9999` asked GD for gigabytes — and the single-number fix had widened it, since the height now mirrors the width), the unconditional `AND id != ?` above, and the JS factorisation. Two findings were rejected on purpose: replacing the `lint-php74.sh` loop with `xargs` (it would print one "No syntax errors" line per file instead of only failures) and merging the endpoint into `check_staff_duplicate()` (the helper tests name *and* email in one pass, the endpoint one *or* the other per `$_POST['type']`, so merging would fire a useless second query on every keystroke)
+
+#### July 28, 2026
 *Documentation Sanitization, PHP 7.4/8.x Dual Support, Duplicate Check and Logout Cleanup*
 
 - Reorganized the documentation for a public repository

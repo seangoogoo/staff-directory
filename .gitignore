@@ -9,6 +9,9 @@ documentation-private/
 # Agent guidance file, intentionally unversioned
 AGENTS.md
 
+# Local agent/LSP tooling config, intentionally unversioned
+.omp/
+
 # User-specific files
 .DS_Store
 Thumbs.db

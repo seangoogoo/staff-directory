@@ -50,6 +50,7 @@ return [
     'confirm_delete_staff' => 'Are you sure you want to delete this staff member?',
     'duplicate_name' => 'A staff member with this name already exists.',
     'duplicate_email' => 'A staff member with this email already exists.',
+    'resolve_duplicates' => 'Please resolve duplicate entries before submitting.',
     'no_staff_found' => 'No staff members found.',
     'staff_not_found' => 'Staff member not found.',
     'image_formats' => 'PNG, JPG, GIF up to 10MB',

@@ -50,6 +50,7 @@ return [
     'confirm_delete_staff' => 'Êtes-vous sûr de vouloir supprimer ce membre du personnel ?',
     'duplicate_name' => 'Un membre du personnel avec ce nom existe déjà.',
     'duplicate_email' => 'Un membre du personnel avec cet email existe déjà.',
+    'resolve_duplicates' => 'Veuillez résoudre les doublons avant de soumettre.',
     'no_staff_found' => 'Aucun membre du personnel trouvé.',
     'staff_not_found' => 'Membre du personnel non trouvé.',
     'image_formats' => 'PNG, JPG, GIF jusqu\'à 10MB',

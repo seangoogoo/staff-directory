@@ -170,3 +170,75 @@ function debounce(func, wait) {
         timeout = setTimeout(() => func.apply(context, args), wait)
     }
 }
+
+/**
+ * Wires real-time duplicate checking on a staff form (add or edit).
+ *
+ * Creates its own message elements, queries includes/check_duplicate.php on blur and
+ * blocks submission while a duplicate is displayed. The server re-checks on POST, so
+ * this is convenience, not enforcement.
+ *
+ * @param {HTMLFormElement} form - The staff form
+ * @param {object} fields - { firstName, lastName, email } input elements
+ * @param {string|number} excludeId - Staff member to ignore, i.e. the one being
+ *                                    edited. Falsy on the add form.
+ */
+function setupDuplicateChecking(form, fields, excludeId) {
+    const exclude = excludeId ? `&exclude_id=${encodeURIComponent(excludeId)}` : ''
+
+    const nameMessage = document.createElement('div')
+    nameMessage.className = 'text-red-500 text-sm mt-1 hidden'
+    fields.lastName.parentNode.appendChild(nameMessage)
+
+    const emailMessage = document.createElement('div')
+    emailMessage.className = 'text-red-500 text-sm mt-1 hidden'
+    fields.email.parentNode.appendChild(emailMessage)
+
+    function check(body, messageElement, inputs) {
+        fetch('../includes/check_duplicate.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: body + exclude
+        })
+        .then(response => response.json())
+        .then(data => {
+            messageElement.textContent = data.duplicate ? data.message : ''
+            messageElement.classList.toggle('hidden', !data.duplicate)
+            inputs.forEach(input => input.classList.toggle('border-red-500', data.duplicate))
+        })
+        .catch(error => {
+            console.error('Error checking duplicate:', error)
+        })
+    }
+
+    const checkName = debounce(function() {
+        const first = fields.firstName.value.trim()
+        const last = fields.lastName.value.trim()
+
+        if (first && last) {
+            check(`type=name&first_name=${encodeURIComponent(first)}&last_name=${encodeURIComponent(last)}`,
+                nameMessage, [fields.firstName, fields.lastName])
+        }
+    }, 500)
+
+    const checkEmail = debounce(function() {
+        const email = fields.email.value.trim()
+
+        if (email && email.includes('@')) {
+            check(`type=email&value=${encodeURIComponent(email)}`, emailMessage, [fields.email])
+        }
+    }, 500)
+
+    fields.firstName.addEventListener('blur', checkName)
+    fields.lastName.addEventListener('blur', checkName)
+    fields.email.addEventListener('blur', checkEmail)
+
+    form.addEventListener('submit', function(e) {
+        if (!nameMessage.classList.contains('hidden') || !emailMessage.classList.contains('hidden')) {
+            e.preventDefault()
+            alert(__('resolveDuplicates'))
+        }
+    })
+}
