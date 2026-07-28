@@ -229,12 +229,14 @@ function get_staff_image_url($staff, $size = '600x600', $font_weight = null, $bg
         $initials = 'NA';
     }
 
-    // Parse size dimensions
-    list($width, $height) = explode('x', $size);
+    // Parse size dimensions. $size comes straight from $_GET in generate_placeholder.php,
+    // so a single number ("200") must be treated as a square rather than silently
+    // producing a 200x100 image on a missing second dimension.
+    $dimensions = explode('x', $size);
 
     // Ensure minimum dimensions for readable text
-    $width = max(100, (int)$width);
-    $height = max(100, (int)$height);
+    $width = max(100, (int)$dimensions[0]);
+    $height = isset($dimensions[1]) ? max(100, (int)$dimensions[1]) : $width;
 
     // Generate a settings hash to automatically detect changes
     $settings_hash = md5($font_weight . $bg_color . $text_color . $font_size_factor);
@@ -309,9 +311,11 @@ function get_staff_image_url($staff, $size = '600x600', $font_weight = null, $bg
                     $text_width = $bbox[2] - $bbox[0];
                     $text_height = $bbox[1] - $bbox[7];
 
-                    // Calculate position to center the text
-                    $x = ($width - $text_width) / 2 - $bbox[0];
-                    $y = ($height - $text_height) / 2 - $bbox[7];
+                    // Calculate position to center the text. GD expects integer
+                    // coordinates: round explicitly, since PHP 8.1+ deprecates the
+                    // implicit float-to-int conversion these divisions produce.
+                    $x = (int) round(($width - $text_width) / 2 - $bbox[0]);
+                    $y = (int) round(($height - $text_height) / 2 - $bbox[7]);
 
                     // We're using the static Regular weight (400) version of the font
                     // This gives us the exact weight we want without needing variable font support
@@ -325,9 +329,9 @@ function get_staff_image_url($staff, $size = '600x600', $font_weight = null, $bg
                     $text_width = imagefontwidth($font_size) * strlen($initials);
                     $text_height = imagefontheight($font_size);
 
-                    // Calculate position to center the text
-                    $x = ($width - $text_width) / 2;
-                    $y = ($height - $text_height) / 2;
+                    // Calculate position to center the text (integers, see above)
+                    $x = (int) round(($width - $text_width) / 2);
+                    $y = (int) round(($height - $text_height) / 2);
 
                     // Add text to the image (initials) with built-in font
                     imagestring($image, $font_size, $x, $y, $initials, $text_color_resource);

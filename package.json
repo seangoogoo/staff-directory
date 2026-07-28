@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "lint:php74": "sh src/build-tools/lint-php74.sh",
     "build": "mkdir -p public/assets/fonts/Outfit && cp src/fonts/Outfit/Outfit-VariableFont_wght.ttf public/assets/fonts/Outfit/ && mkdir -p public/assets/fonts/remixicon && cp -r src/fonts/remixicon/* public/assets/fonts/remixicon/ && sass src/input.scss src/intermediate.css && npx postcss ./src/intermediate.css -o ./public/assets/css/styles.css",
     "dev": "concurrently \"mkdir -p public/assets/fonts/Outfit && cp src/fonts/Outfit/Outfit-VariableFont_wght.ttf public/assets/fonts/Outfit/ && mkdir -p public/assets/fonts/remixicon && cp -r src/fonts/remixicon/* public/assets/fonts/remixicon/\" \"php -S localhost:8000 -t public\" \"sass --watch src/input.scss:src/intermediate.css\" \"npx postcss ./src/intermediate.css -o ./public/assets/css/styles.css --watch\" \"browser-sync start --proxy localhost:8000 --files 'public/**/*.php, public/assets/css/styles.css' --no-notify\""
   },

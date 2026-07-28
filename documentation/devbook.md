@@ -4,6 +4,38 @@
 
 ### Version 1.2 (March 2025)
 
+#### July 28, 2026
+*Documentation Sanitization, PHP 7.4/8.x Dual Support, Duplicate Check and Logout Cleanup*
+
+- Reorganized the documentation for a public repository
+  - Moved 5 internal or outdated documents to the git-ignored `documentation-private/`: `php-functions-audit.md`, `Database_Configuration_Tracker.md`, `router_integration_roadmap.md`, `fast_route_technical_overview.md`, `Subdirectory_Deployment_&_Routing_Integration_roadmap.md`
+  - The three FastRoute documents described the integration as still pending, while it has been live in `Router.php` since April 2025 — an external reader would conclude the opposite of reality
+  - Removed the resulting dangling entry from the README directory tree
+- Corrected security-relevant documentation errors
+  - `Database_Configuration_Implementation.md`: the installer does **not** delete itself (the only `unlink()` in `install.php` removes a temporary SQL file). The two claims of automatic removal, and the "can be configured to self-delete" bullet, were replaced with a mandatory manual-deletion warning
+  - `Database_Configuration_Implementation.md`: fixed the migration script name (`migrate_prefix.php`, which does not exist, → `migrate_tables.php`)
+  - `FTP_Deployment_Guide.md`: added the missing "delete `install.php` once the installation succeeds" warning, both in the Option A quick path and in the installer section, ahead of the `DB_INSTALLED=false` reinstall note
+  - `authentication-system.md`: replaced the `admin` / `admin` sample credentials with placeholders plus a do-not-deploy-with-defaults warning
+- Fixed prefix-aware duplicate detection (`includes/check_duplicate.php`)
+  - The AJAX endpoint queried `staff_members` as a literal instead of `TABLE_STAFF_MEMBERS` — the last two unprefixed table references in the codebase
+  - On a prefixed install (`sd_`) every call raised `mysqli_sql_exception: Table 'staff_dir.staff_members' doesn't exist`, so the real-time duplicate checking advertised in the README was inoperative
+  - Kept the endpoint's own queries rather than reusing `check_staff_duplicate()`: the helper tests name *and* email in one pass, while the endpoint tests one *or* the other depending on `$_POST['type']`
+  - Verified: case-insensitive name and email lookups return `{"duplicate":true}` for an existing member and `{"duplicate":false}` otherwise
+- Cleaned up `logout_user()` (`admin/auth/auth.php`)
+  - `session_destroy()` is now guarded by `session_status() === PHP_SESSION_ACTIVE`
+  - Removed the `session_start()` → `session_regenerate_id(true)` → `session_destroy()` block that followed it: PHP assigns a fresh session id on the next `session_start()`, and restarting a session here re-issued the very cookie the preceding lines had just expired
+  - Verified with `error_reporting=E_ALL`: three session warnings per call before the change ("Session cannot be started after headers have already been sent", "Session ID cannot be regenerated when there is no active session", "Trying to destroy uninitialized session"), none after
+- Removed the dead asset `assets/js/filter-core.min.js`: referenced nowhere, absent from `manifest.json`, produced by no npm script, and frozen at its April 2025 content while `filter-core.js` kept evolving
+- Made the PHP 7.4 target explicit while running cleanly on PHP 8.x
+  - `composer.json`: added `"php": "^7.4 || ^8.0"` to `require`. `config.platform.php` stays at `7.4.33` — the two serve different purposes: `platform` *simulates* a PHP version during dependency resolution (so a `composer update` run on an 8.x workstation cannot pull 8-only packages that would break a 7.4 host), while `require.php` is what `composer install` and `composer check-platform-reqs` actually verify
+  - Removed `php-di/php-di`, declared but referenced nowhere (no `use DI`, no `ContainerBuilder`; dependencies come from globals). Its `functions.php` is autoloaded via `files`, so it emitted two `Implicitly marking parameter $className as nullable is deprecated` notices on **every** request under PHP 8.4. Removing it also dropped `php-di/invoker`, `php-di/phpdoc-reader`, `laravel/serializable-closure` and `psr/container`
+  - Updated `guzzlehttp/psr7` 2.7.1 → 2.13.0, clearing 4 medium-severity advisories reported by `composer audit` (CVE-2026-59882, CVE-2026-55766, CVE-2026-49214, CVE-2026-48998: host confusion and CRLF injection). The package is only present because `intervention/image` requires it — and `intervention/image` is itself unused, placeholder generation being raw GD
+  - Added `npm run lint:php74` (`src/build-tools/lint-php74.sh`), which lints every file under `public/`, `config/` and `database/` with a real PHP 7.4 binary. The local `php -l` runs 8.4 and happily accepts 8-only syntax that would be a fatal error in production; the script was verified to reject a `match()` expression that `php -l` passes. Override the interpreter with `PHP74=/path/to/php7.4`
+- Fixed two PHP 8.x issues found by walking the whole app with `error_reporting=E_ALL` (34 requests: frontend, authenticated admin, create with upload, edit with emptied fields, image deletion, departments, companies, settings, AJAX, placeholder generation, logout)
+  - `functions.php:233` raised `Undefined array key 1` on `list($width, $height) = explode('x', $size)`, because `generate_placeholder.php` passes `$_GET['size']` straight through: a single number produced a silent 200x100 image. A one-number size is now treated as a square, and a non-numeric one falls back to the 100px floor
+  - `functions.php:319` raised `Implicit conversion from float … to int loses precision` (deprecated since 8.1): the text-centering divisions feed `imagettftext()`/`imagestring()`, whose `$x`/`$y` are integers. Both are now `(int) round(...)`
+  - Both fixes are valid PHP 7.4 syntax. Verified after the change: `size=200` → 200x200, `size=600x400` → 600x400, `size=abc` → 100x100, and a full second pass emitting zero warnings or deprecations
+
 #### November 18, 2025
 *Web-Based Installer Restoration and Documentation Corrections*
 

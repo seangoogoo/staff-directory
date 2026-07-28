@@ -187,13 +187,10 @@ function logout_user() {
         setcookie('auth_check', '', time() - 42000, COOKIE_PATH, '', false, true);
     }
 
-    // Destroy the session
-    session_destroy();
-
-    // Force PHP to use a new session ID for the next session
-    if (session_status() !== PHP_SESSION_DISABLED) {
-        session_start();
-        session_regenerate_id(true);
+    // Destroy the session only if one is actually active. PHP assigns a fresh
+    // session id on the next session_start(), so there is nothing else to do here:
+    // restarting a session now would only re-issue the cookie cleared above.
+    if (session_status() === PHP_SESSION_ACTIVE) {
         session_destroy();
     }
 }

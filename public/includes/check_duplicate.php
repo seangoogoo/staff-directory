@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $result = ['duplicate' => false, 'message' => ''];
 
     if ($type === 'name' && !empty($first_name) && !empty($last_name)) {
-        $sql = "SELECT id FROM staff_members WHERE LOWER(first_name) = LOWER(?) AND LOWER(last_name) = LOWER(?)";
+        $sql = "SELECT id FROM " . TABLE_STAFF_MEMBERS . " WHERE LOWER(first_name) = LOWER(?) AND LOWER(last_name) = LOWER(?)";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("ss", $first_name, $last_name);
         $stmt->execute();
@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $stmt->close();
     } elseif ($type === 'email' && !empty($value)) {
-        $sql = "SELECT id FROM staff_members WHERE LOWER(email) = LOWER(?)";
+        $sql = "SELECT id FROM " . TABLE_STAFF_MEMBERS . " WHERE LOWER(email) = LOWER(?)";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("s", $value);
         $stmt->execute();
