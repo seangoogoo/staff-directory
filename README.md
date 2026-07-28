@@ -1,4 +1,4 @@
-# Staff Directory Application -- Version 1.2.10
+# Staff Directory Application -- Version 1.2.11
 
 A web-based staff directory application that allows administrators to manage staff members and provides a user-friendly interface for employees to browse the directory.
 
