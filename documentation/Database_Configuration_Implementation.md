@@ -722,7 +722,7 @@ The Staff Directory application supports custom database configuration:
 1. Upload the application files to your web server
 2. Navigate to `https://your-domain.com/install.php` in your browser
 3. Follow the on-screen instructions to configure your database and admin account
-4. After successful installation, the installer will be removed automatically
+4. ⚠️ **Security:** delete `public/install.php` from the server as soon as the installation succeeds — it is **not** removed automatically, and anyone reaching it can overwrite your configuration.
 
 #### Manual Installation
 
@@ -779,7 +779,7 @@ The application includes a web-based installer (`public/install.php`) that:
 - Provides a user-friendly interface for database configuration
 - Processes SQL schema files with the correct database name and table prefixes
 - Creates the `.env` file with the provided settings
-- Can be configured to self-delete after successful installation
+- Must be deleted manually from the server once the installation succeeds (it does **not** delete itself)
 
 For security, the installer helper functions are located in the non-public `config/installer.php` file.
 ```
@@ -824,7 +824,7 @@ If you prefer manual installation:
    - Process the SQL schema file: `php database/process_sql.php database/staff_dir.sql`
    - Import the processed SQL file into your database
 3. If migrating an existing installation:
-   - Run the migration script: `php database/migrate_prefix.php`
+   - Run the migration script: `php database/migrate_tables.php`
 
 ### 9.2 Using the Web Installer
 
@@ -832,7 +832,7 @@ If you prefer manual installation:
 2. Navigate to `https://your-domain.com/install.php` in your browser
 3. Fill in the database configuration and admin credentials
 4. Click "Install Application"
-5. After successful installation, the installer will be removed automatically (if selected)
+5. ⚠️ **Security:** delete `public/install.php` from the server as soon as the installation succeeds — it is **not** removed automatically, and anyone reaching it can overwrite your configuration.
 
 ## Conclusion
 

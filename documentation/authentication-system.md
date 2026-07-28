@@ -30,12 +30,12 @@ public/
 The following environment variables are used for authentication:
 
 ```
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=admin
+ADMIN_USERNAME=your_admin_username
+ADMIN_PASSWORD=your_strong_password
 USE_SECURE_COOKIES=true
 ```
 
-In production, these values should be changed to secure credentials.
+⚠️ **Never deploy with the default credentials** (`admin` / `admin`, the fallbacks in `config/auth_config.php`): set a unique username and a strong password before the site is reachable.
 
 The `USE_SECURE_COOKIES` variable controls whether secure cookies are used, regardless of the HTTPS detection. Set it to `true` to always use secure cookies, or `false` to never use them. If not specified, the system will automatically detect HTTPS.
 

@@ -162,7 +162,6 @@ The application follows a secure directory structure:
 │   ├── `Subdirectory_Deployment_Configuration_Checklist.md` # Subdirectory deployment guide
 │   ├── `debugging.md`              # Debugging guide
 │   ├── `internationalization.md`   # Internationalization documentation
-│   ├── `Database_Configuration_Tracker.md` # Database configuration implementation tracker
 │   └── `FTP_Deployment_Guide.md`   # Guide for deploying via FTP
 ├── `languages/`                    # Translation files
 │   ├── `en/`                       # English translations

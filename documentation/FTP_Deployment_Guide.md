@@ -21,6 +21,7 @@ This guide provides step-by-step instructions for deploying the Staff Directory 
    - Set up your admin account
    - Initialize the database with the required tables
 4. The installer will automatically create the database and tables for you
+5. ⚠️ **Security — delete the installer:** as soon as the installation succeeds, delete `install.php` from the server (web root or subdirectory). It is **not** removed automatically, and anyone who reaches it can rerun the installation and overwrite `staff_dir_env/.env`.
 
 ### Option B: Manual Database Setup
 
@@ -186,6 +187,7 @@ The web installer (`install.php`) is the recommended way to set up your database
    - Set your admin username and password
    - Choose whether to include example data
    - Click "Install Now" to complete the setup
+   - ⚠️ **Security — delete the installer:** once the installer reports success, delete `install.php` from the server. It is **not** removed automatically, and anyone who reaches it can rerun the installation and overwrite `staff_dir_env/.env`. Only re-upload it if you deliberately need to reinstall.
 
 3. **Common Installer Issues**:
    - **"SQL processor not found" error**: Check that the `database/process_sql.php` file exists and is readable

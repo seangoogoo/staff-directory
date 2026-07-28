@@ -1,9 +1,14 @@
 # Environment files
 .env
-.env.local
-.env.development
-.env.test
-.env.production
+.env.*
+
+# Local-only documentation — NEVER pushed to the public repo.
+# Put anything host-specific, credential-adjacent or infra-related here.
+documentation-private/
+
+# Agent guidance file, intentionally unversioned
+AGENTS.md
+
 # User-specific files
 .DS_Store
 Thumbs.db
