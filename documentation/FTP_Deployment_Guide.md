@@ -120,7 +120,7 @@ Upload the following directories to your web server:
 | `logs/` | `/path/to/your/private/logs/` | Application logs (outside web root) |
 | `languages/` | `/path/to/your/private/languages/` | Translation files (outside web root) |
 | `database/` | `/path/to/your/private/database/` | SQL files and database utilities (outside web root) |
-| `tools/` | `/path/to/your/private/tools/` | Maintenance CLI scripts, only needed for a migration (outside web root) |
+| `tools/` | `/path/to/your/private/tools/` | Maintenance CLI scripts, only needed for a migration (outside web root). Upload `hash_admin_password.php` **only** — `gsc.sh` is a local SEO tool, it has nothing to do on the server |
 | `public/` | `/path/to/your/public_html/` | Public web files (in web root) |
 
 ### Required Files
@@ -155,6 +155,19 @@ Make sure these specific files are included:
    - `public/uploads/companies/`
    - `public/uploads/logos/`
    - `public/uploads/placeholders/`
+
+### Files That Must NEVER Be Uploaded
+
+These live in the repository but must stay on the workstation. `.gitignore` protects
+the public repo, it protects nothing against an FTP client or an `rsync` of the repo
+root — pick the files to upload explicitly, never mirror the whole directory.
+
+| Path | Why |
+|---|---|
+| `.gsc-sa.json` | A Search Console service-account **private key**, if one is ever dropped here. It belongs outside the repository entirely, precisely so no upload can reach it: publishing it in a document root hands over the Search Console property. |
+| `tools/gsc.sh` | Local SEO client for that key — gitignored, useless on the server, and a pointer to the key. Upload `tools/hash_admin_password.php` alone when you need it. |
+| `AGENTS.md`, `documentation-private/` | Internal notes, host-specific details. |
+| `node_modules/`, `src/`, `.omp/`, `.git/` | Build inputs and tooling: nothing at runtime reads them. |
 
 ## Step 4: Set Directory Permissions
 

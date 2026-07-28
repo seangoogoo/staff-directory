@@ -56,7 +56,8 @@ return [
 
     // 404 Page
     'page_not_found' => 'Page Not Found',
-    'page_not_found_message' => 'The page you were looking for could not be found. You have been redirected to the Staff Directory.',
+    'page_not_found_message' => 'The page you were looking for does not exist or has been moved.',
+    'back_to_directory' => 'Back to the staff directory',
 
     // Language
     'language' => 'Language',

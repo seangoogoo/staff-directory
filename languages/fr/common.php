@@ -56,7 +56,8 @@ return [
 
     // 404 Page
     'page_not_found' => 'Page non trouvée',
-    'page_not_found_message' => 'La page que vous recherchiez n\'a pas été trouvée. Vous avez été redirigé vers l\'Annuaire du Personnel.',
+    'page_not_found_message' => 'La page que vous recherchez n\'existe pas ou a été déplacée.',
+    'back_to_directory' => 'Retour à l\'annuaire du personnel',
 
     // Language
     'language' => 'Langue',

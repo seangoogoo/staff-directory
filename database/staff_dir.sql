@@ -127,7 +127,7 @@ INSERT INTO `{PREFIX}app_settings` (`setting_key`, `setting_value`) VALUES
 ('font_weight', 'Regular'),
 ('font_size_factor', '3'),
 ('custom_logo_path', ''),
-('frontend_title', 'My company'),
+('frontend_title', 'Staff Directory'),
 ('admin_title', 'Staff Directory Admin'),
 ('show_logo', '1'), -- 1 = show logo, 0 = hide logo
 ('default_company_id', '1'); -- Default company to show when no company is selected

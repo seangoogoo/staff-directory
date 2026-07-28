@@ -9,7 +9,6 @@ use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
 
 class Router {
-    // Configuration is now handled directly in the constructor
 
     /**
      * @var \FastRoute\Dispatcher The FastRoute dispatcher
@@ -17,18 +16,9 @@ class Router {
     private $dispatcher;
 
     /**
-     * @var bool Whether to redirect all unmatched routes to index.php
-     */
-    private $redirectUnmatchedToIndex = true;
-
-    /**
      * Constructor
-     *
-     * @param array $config Configuration for the router
      */
-    public function __construct(array $config = []) {
-        // Extract configuration directly without storing the whole config
-        $this->redirectUnmatchedToIndex = $config['routing']['redirectUnmatchedToIndex'] ?? true;
+    public function __construct() {
         $this->initializeDispatcher();
     }
 
@@ -115,15 +105,8 @@ class Router {
 
         switch ($routeInfo[0]) {
             case Dispatcher::NOT_FOUND:
-                // Handle 404 responses
-                if ($this->redirectUnmatchedToIndex) {
-                    // Use dedicated 404 handler that redirects to index.php
-                    require PUBLIC_PATH . '/includes/404_handler.php';
-                } else {
-                    // If we don't want to redirect, show a 404 error
-                    http_response_code(404);
-                    echo '404 Not Found';
-                }
+                // Render the 404 page in place, with a 404 status - never a redirect
+                require PUBLIC_PATH . '/includes/404_handler.php';
                 break;
 
             case Dispatcher::METHOD_NOT_ALLOWED:

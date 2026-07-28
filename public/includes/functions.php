@@ -20,37 +20,6 @@ function url($path = '') {
 }
 
 /**
- * Load application configuration
- *
- * @return array The application configuration
- */
-function load_app_config() {
-    static $config = null;
-
-    if ($config === null) {
-        // Check both possible locations for the config file
-        $configPath = PRIVATE_PATH . '/config/app.php';
-        if (!file_exists($configPath)) {
-            $configPath = BASE_PATH . '/config/app.php';
-        }
-
-        if (file_exists($configPath)) {
-            $config = require $configPath;
-        } else {
-            // Fallback to empty config if file not found
-            $config = [];
-            // Log error if logger is available
-            global $logger;
-            if (isset($logger)) {
-                $logger->error('Config file not found at: ' . $configPath);
-            }
-        }
-    }
-
-    return $config;
-}
-
-/**
  * Get the URL for an asset using the AssetManager
  *
  * @param string $path Path to the asset relative to the assets directory
@@ -65,6 +34,51 @@ function asset($path) {
     }
 
     return $assetManager->asset($path);
+}
+
+/**
+ * Build the absolute canonical URL of the current request
+ *
+ * The query string is always dropped: `/`, `/index.php` and `/?page=1` render
+ * byte-identical documents, and the parameterised views (search, filters,
+ * legacy `not_found=1`) are subsets of the same list. A trailing `index.php`
+ * is folded into its directory (`/index.php` -> `/`) so that a single URL per
+ * page can be indexed.
+ *
+ * The host comes from `CANONICAL_HOST` when that key is set in `.env`, so the
+ * indexing signal of a live site never depends on a client-supplied `Host`
+ * header; otherwise it falls back to the request, which keeps the app working
+ * on any domain out of the box.
+ *
+ * @return string Absolute URL, e.g. https://example.com/
+ */
+function canonical_url() {
+    // Path only - here the query string never selects a different document
+    $path = strtok(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/', '?');
+
+    // Fold index.php into its directory: /index.php -> /, /admin/index.php -> /admin/
+    $path = preg_replace('#(^|/)index\.php$#', '$1', $path);
+
+    if ($path === '' || $path[0] !== '/') {
+        $path = '/' . $path;
+    }
+
+    // Host: the configured canonical host wins, so a forged Host header cannot
+    // reach the tag; empty or absent, the request decides. Filtered down to the
+    // characters legal in a host name either way.
+    $host = !empty($_ENV['CANONICAL_HOST'])
+        ? $_ENV['CANONICAL_HOST']
+        : (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : (isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : ''));
+    $host = preg_replace('/[^A-Za-z0-9.:\-]/', '', $host);
+
+    // The site is HTTPS only (.htaccess 301s http). Plain http is kept for a
+    // local dev host such as localhost:8000, where https is not reachable -
+    // behind a proxy that terminates TLS, $_SERVER['HTTPS'] is unset, so the
+    // scheme must not be inferred from it alone.
+    $is_local_http = (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off')
+        && preg_match('/^(localhost|127\.0\.0\.1|\[::1\])(:|$)|\.local(:|$)/', $host);
+
+    return ($is_local_http ? 'http' : 'https') . '://' . $host . $path;
 }
 
 /**

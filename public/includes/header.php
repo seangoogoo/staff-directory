@@ -8,11 +8,26 @@ require_once __DIR__ . '/bootstrap.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
     // Get application settings with defaults - make them globally accessible
-    global $app_settings;
+    global $app_settings, $page_title, $page_noindex;
     $app_settings = load_app_settings();
     $frontend_title = $app_settings['frontend_title'] ?? __('app_name'); // Use translation as fallback
+
+    // Document title: "<page> - <site name>". The site name on its own says
+    // nothing about the page and stays a placeholder until an admin sets it.
+    // A page script may override the first part through the global $page_title.
+    $head_title = isset($page_title) ? $page_title : __('staff_directory');
+    $document_title = ($frontend_title !== '' && $frontend_title !== $head_title)
+        ? $head_title . ' – ' . $frontend_title
+        : $head_title;
     ?>
-    <title><?php echo htmlspecialchars($frontend_title); ?></title>
+    <title><?php echo htmlspecialchars($document_title); ?></title>
+    <?php if (!empty($page_noindex)): ?>
+    <!-- Error page: no canonical, it would contradict the noindex -->
+    <meta name="robots" content="noindex, follow">
+    <?php else: ?>
+    <!-- Self-referencing canonical: /, /index.php and /?param=... are one page -->
+    <link rel="canonical" href="<?php echo htmlspecialchars(canonical_url()); ?>">
+    <?php endif; ?>
     <link rel="icon" href="<?php echo asset('favicon.ico'); ?>">
     <link href="<?php echo asset('css/styles.css'); ?>" rel="stylesheet">
     <!-- Make APP_BASE_URI and translations available to JavaScript -->

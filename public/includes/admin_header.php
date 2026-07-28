@@ -14,6 +14,8 @@ $admin_title = $app_settings['admin_title']; // Default is already provided by l
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($admin_title); ?></title>
+    <!-- Login-only area: keep it out of every index, no canonical needed -->
+    <meta name="robots" content="noindex, nofollow">
     <link rel="icon" href="<?php echo asset('favicon.ico'); ?>">
     <link href="<?php echo asset('css/styles.css'); ?>" rel="stylesheet">
     <!-- Make APP_BASE_URI and translations available to JavaScript -->

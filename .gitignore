@@ -2,6 +2,12 @@
 .env
 .env.*
 
+# Google Search Console tooling — local to this installation, never published.
+# The private key itself is kept OUTSIDE this tree; the entry below only catches
+# a stray copy dropped here, and .gitignore stops a commit, never an rsync.
+.gsc-sa.json
+tools/gsc.sh
+
 # Local-only documentation — NEVER pushed to the public repo.
 # Put anything host-specific, credential-adjacent or infra-related here.
 documentation-private/

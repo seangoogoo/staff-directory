@@ -1,4 +1,14 @@
 <?php
+// Legacy soft-404 URL: /index.php?not_found=1 used to answer 200 with a copy of
+// this page, so Google indexed one duplicate per dead link. Those URLs are now
+// what they always were - not found. Checked before anything is rendered, and
+// here rather than in HomeController because .htaccess only rewrites requests
+// that do not map to a file: /index.php is served directly by Apache.
+if (isset($_GET['not_found'])) {
+    require_once __DIR__ . '/includes/404_handler.php';
+    exit;
+}
+
 require_once 'includes/header.php';
 
 // Get filter parameters
@@ -17,22 +27,6 @@ $departments = get_active_department_names($conn);
 // Get company names that have at least one staff member for filter dropdown
 $companies = get_active_company_names($conn);
 ?>
-
-<?php if (isset($_GET['not_found']) && $_GET['not_found'] == '1'): ?>
-    <!-- 404 Message for redirected not found pages -->
-    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-        <div class="flex">
-            <div class="flex-shrink-0">
-                <i class="ri-error-warning-line text-yellow-400 text-xl"></i>
-            </div>
-            <div class="ml-3">
-                <p class="text-sm text-yellow-700">
-                    <?php echo __('page_not_found_message'); ?>
-                </p>
-            </div>
-        </div>
-    </div>
-<?php endif; ?>
 
 <!-- Page Title Styling: mb-6, text-gray-700, font-thin -->
 <h1 class="page-title mb-6 text-gray-700 font-thin text-4xl"><?php echo __('staff_directory'); ?></h1>

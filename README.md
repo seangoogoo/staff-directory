@@ -112,7 +112,7 @@ The application follows a secure directory structure:
 │   │   │   └── `main.js`           # Main application JavaScript
 │   │   └── `vendor/`               # Third-party libraries
 │   ├── `includes/`                 # PHP includes for the public pages
-│   │   ├── `404_handler.php`       # 404 error handler
+│   │   ├── `404_handler.php`       # Renders the 404 page with a real HTTP 404 status
 │   │   ├── `admin_footer.php`      # Admin page footer
 │   │   ├── `admin_header.php`      # Admin page header
 │   │   ├── `ajax_handlers.php`     # AJAX request handlers
@@ -138,7 +138,6 @@ The application follows a secure directory structure:
 │       ├── `logos/`                # Application logo images
 │       └── `placeholders/`         # Generated placeholder images (WebP format)
 ├── `config/`                       # Configuration files (moved outside web root for security)
-│   ├── `app.php`                   # Application configuration settings
 │   ├── `auth_config.php`           # Centralized authentication configuration
 │   ├── `database.php`              # Database connection configuration with table prefix support
 │   ├── `env_loader.php`            # Environment variables loader
@@ -262,6 +261,8 @@ The application uses a modern routing system based on the Front Controller patte
 - **Router**: The `Router` class uses FastRoute to map URLs to controller actions
 - **Controllers**: Organized in the `includes/controllers/` directory, handle specific application functionality
 - **Middleware**: The `MiddlewareStack` class provides a pipeline for request processing
+- **404 handling**: any URL that matches no route renders `includes/404_handler.php` in place, with a real `404` status and `X-Robots-Tag: noindex` — never a redirect to the home page
+- **Canonical URLs**: every frontend page emits a self-referencing `<link rel="canonical">` built by `canonical_url()` (absolute HTTPS, query string dropped, `index.php` folded into its directory), so `/`, `/index.php` and `/?param=…` count as one page for search engines. The admin area is `noindex, nofollow`
 
 ### Path Handling
 
